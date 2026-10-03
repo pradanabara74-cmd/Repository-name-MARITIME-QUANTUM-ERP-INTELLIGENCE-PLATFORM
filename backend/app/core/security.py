@@ -2,7 +2,8 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from .rbac import Role
@@ -26,8 +27,13 @@ def _jwt_settings() -> tuple[str, str, str]:
 
     return secret, issuer, audience
 
+bearer_scheme = HTTPBearer()
 
-def verify_access_token(token: str) -> TokenIdentity:
+
+def verify_access_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> TokenIdentity:
+    token = credentials.credentials
     secret, issuer, audience = _jwt_settings()
 
     try:
