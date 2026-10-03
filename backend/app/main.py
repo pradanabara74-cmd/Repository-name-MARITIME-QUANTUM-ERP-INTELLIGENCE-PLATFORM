@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from . import __platform__, __version__
+from .core.security import TokenIdentity, verify_access_token
 
 
 app = FastAPI(
@@ -48,4 +49,15 @@ async def platform_information():
             "Quantum-Inspired Optimization",
             "Maritime Command Center",
         ],
+    }
+
+@app.get("/api/v1/me", tags=["Security"])
+async def current_identity(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    return {
+        "user_id": identity.user_id,
+        "tenant_id": identity.tenant_id,
+        "role": identity.role.value,
+        "email": identity.email,
     }
