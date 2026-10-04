@@ -249,3 +249,38 @@ def get_vessel(
         result["created_at"] = result["created_at"].isoformat()
 
     return result
+
+@router.delete("/{vessel_id}", status_code=status.HTTP_200_OK)
+def delete_vessel(
+    vessel_id: str,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    sql = text(
+        """
+        DELETE FROM vessels
+        WHERE vessel_id = :vessel_id
+          AND tenant_id = :tenant_id
+        RETURNING vessel_id, vessel_name
+        """
+    )
+
+    with _engine().begin() as conn:
+        row = conn.execute(
+            sql,
+            {
+                "vessel_id": vessel_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vessel not found.",
+        )
+
+    return {
+        "deleted": True,
+        "vessel_id": row["vessel_id"],
+        "vessel_name": row["vessel_name"],
+    }
