@@ -1,9 +1,39 @@
 from datetime import datetime, timezone
+import os
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
+from jose import jwt
+from pydantic import BaseModel
 
 from . import __platform__, __version__
 from .core.security import TokenIdentity, verify_access_token
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def create_access_token(user_id: str, tenant_id: str, role: str, email: str | None = None) -> str:
+    secret = os.getenv("MQEIP_JWT_SECRET", "").strip()
+    issuer = os.getenv("MQEIP_JWT_ISSUER", "mqeip").strip()
+    audience = os.getenv("MQEIP_JWT_AUDIENCE", "mqeip-api").strip()
+
+    if not secret:
+        raise RuntimeError("MQEIP_JWT_SECRET is not configured.")
+
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": user_id,
+        "tenant_id": tenant_id,
+        "role": role,
+        "email": email,
+        "iss": issuer,
+        "aud": audience,
+        "iat": int(now.timestamp()),
+        "exp": int(now.timestamp()) + 3600,
+    }
+
+    return jwt.encode(payload, secret, algorithm="HS256")
 
 
 app = FastAPI(
@@ -11,6 +41,36 @@ app = FastAPI(
     description="Enterprise Maritime ERP, Integration and Intelligence API",
     version=__version__,
 )
+
+@app.post("/api/v1/login", tags=["Security"])
+async def login(request: LoginRequest):
+    admin_username = os.getenv("MQEIP_ADMIN_USERNAME", "").strip()
+    admin_password = os.getenv("MQEIP_ADMIN_PASSWORD", "").strip()
+
+    if not admin_username or not admin_password:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Login service is not configured.",
+        )
+
+    if request.username != admin_username or request.password != admin_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password.",
+        )
+
+    access_token = create_access_token(
+        user_id="admin-001",
+        tenant_id="client-001",
+        role="platform_admin",
+        email=None,
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": 3600,
+    }
 
 
 @app.get("/", tags=["Platform"])
