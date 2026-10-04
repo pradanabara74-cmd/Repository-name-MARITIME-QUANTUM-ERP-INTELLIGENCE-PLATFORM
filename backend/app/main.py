@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from . import __platform__, __version__
 from .core.security import TokenIdentity, verify_access_token
+from .modules.fleet import router as fleet_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -41,6 +42,7 @@ app = FastAPI(
     description="Enterprise Maritime ERP, Integration and Intelligence API",
     version=__version__,
 )
+app.include_router(fleet_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
