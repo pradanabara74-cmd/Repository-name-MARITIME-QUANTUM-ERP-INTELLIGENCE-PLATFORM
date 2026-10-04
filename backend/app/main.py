@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from . import __platform__, __version__
 from .core.security import TokenIdentity, verify_access_token
 from .modules.fleet import router as fleet_router
+from .modules.executive import router as executive_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -43,6 +44,7 @@ app = FastAPI(
     version=__version__,
 )
 app.include_router(fleet_router)
+app.include_router(executive_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
