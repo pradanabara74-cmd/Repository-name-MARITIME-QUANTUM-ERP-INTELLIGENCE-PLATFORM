@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from sqlalchemy import create_engine, text
 
 from ..core.security import TokenIdentity, verify_access_token
+from ..core.database import get_database_url
 
 
 router = APIRouter(
@@ -32,20 +35,72 @@ class VesselResponse(BaseModel):
     created_at: str
 
 
-# Temporary in-memory storage.
-# This will later be replaced by the MQEIP database layer.
-_fleet_store: dict[str, dict] = {}
+def _engine():
+    return create_engine(
+        get_database_url(),
+        pool_pre_ping=True,
+    )
+
+
+def _ensure_table() -> None:
+    sql = """
+    CREATE TABLE IF NOT EXISTS vessels (
+        vessel_id VARCHAR(120) PRIMARY KEY,
+        vessel_name VARCHAR(120) NOT NULL,
+        imo_number VARCHAR(20),
+        vessel_type VARCHAR(80) NOT NULL,
+        flag VARCHAR(80),
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        tenant_id VARCHAR(120) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS ix_vessels_tenant_id
+    ON vessels (tenant_id);
+    """
+
+    with _engine().begin() as conn:
+        conn.execute(text(sql))
 
 
 @router.get("")
 def list_vessels(
     identity: TokenIdentity = Depends(verify_access_token),
 ):
-    vessels = [
-        vessel
-        for vessel in _fleet_store.values()
-        if vessel["tenant_id"] == identity.tenant_id
-    ]
+    _ensure_table()
+
+    sql = text(
+        """
+        SELECT
+            vessel_id,
+            vessel_name,
+            imo_number,
+            vessel_type,
+            flag,
+            status,
+            tenant_id,
+            created_at
+        FROM vessels
+        WHERE tenant_id = :tenant_id
+        ORDER BY created_at DESC
+        """
+    )
+
+    with _engine().connect() as conn:
+        rows = conn.execute(
+            sql,
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+    vessels = []
+
+    for row in rows:
+        item = dict(row)
+
+        if item["created_at"] is not None:
+            item["created_at"] = item["created_at"].isoformat()
+
+        vessels.append(item)
 
     return {
         "platform": "MQEIP",
@@ -65,19 +120,65 @@ def create_vessel(
     vessel: VesselCreate,
     identity: TokenIdentity = Depends(verify_access_token),
 ):
+    _ensure_table()
+
     vessel_name = vessel.vessel_name.strip()
 
-    for existing in _fleet_store.values():
-        if (
-            existing["tenant_id"] == identity.tenant_id
-            and existing["vessel_name"].lower() == vessel_name.lower()
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Vessel already exists for this tenant.",
-            )
+    duplicate_sql = text(
+        """
+        SELECT vessel_id
+        FROM vessels
+        WHERE tenant_id = :tenant_id
+          AND LOWER(vessel_name) = LOWER(:vessel_name)
+        LIMIT 1
+        """
+    )
 
-    vessel_id = f"{identity.tenant_id}-vessel-{len(_fleet_store) + 1:04d}"
+    with _engine().connect() as conn:
+        existing = conn.execute(
+            duplicate_sql,
+            {
+                "tenant_id": identity.tenant_id,
+                "vessel_name": vessel_name,
+            },
+        ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Vessel already exists for this tenant.",
+        )
+
+    vessel_id = (
+        f"{identity.tenant_id}-vessel-{uuid4().hex[:12]}"
+    )
+
+    created_at = datetime.now(timezone.utc)
+
+    insert_sql = text(
+        """
+        INSERT INTO vessels (
+            vessel_id,
+            vessel_name,
+            imo_number,
+            vessel_type,
+            flag,
+            status,
+            tenant_id,
+            created_at
+        )
+        VALUES (
+            :vessel_id,
+            :vessel_name,
+            :imo_number,
+            :vessel_type,
+            :flag,
+            :status,
+            :tenant_id,
+            :created_at
+        )
+        """
+    )
 
     record = {
         "vessel_id": vessel_id,
@@ -87,25 +188,64 @@ def create_vessel(
         "flag": vessel.flag,
         "status": vessel.status.strip().lower(),
         "tenant_id": identity.tenant_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": created_at,
     }
 
-    _fleet_store[vessel_id] = record
+    with _engine().begin() as conn:
+        conn.execute(insert_sql, record)
 
-    return record
+    response = dict(record)
+    response["created_at"] = created_at.isoformat()
+
+    return response
 
 
-@router.get("/{vessel_id}", response_model=VesselResponse)
+@router.get(
+    "/{vessel_id}",
+    response_model=VesselResponse,
+)
 def get_vessel(
     vessel_id: str,
     identity: TokenIdentity = Depends(verify_access_token),
 ):
-    vessel = _fleet_store.get(vessel_id)
+    _ensure_table()
 
-    if vessel is None or vessel["tenant_id"] != identity.tenant_id:
+    sql = text(
+        """
+        SELECT
+            vessel_id,
+            vessel_name,
+            imo_number,
+            vessel_type,
+            flag,
+            status,
+            tenant_id,
+            created_at
+        FROM vessels
+        WHERE vessel_id = :vessel_id
+          AND tenant_id = :tenant_id
+        LIMIT 1
+        """
+    )
+
+    with _engine().connect() as conn:
+        row = conn.execute(
+            sql,
+            {
+                "vessel_id": vessel_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+    if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vessel not found.",
         )
 
-    return vessel
+    result = dict(row)
+
+    if result["created_at"] is not None:
+        result["created_at"] = result["created_at"].isoformat()
+
+    return result
