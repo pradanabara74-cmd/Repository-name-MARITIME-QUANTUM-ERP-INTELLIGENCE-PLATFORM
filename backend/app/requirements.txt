@@ -1,3 +1,5 @@
 fastapi
 uvicorn[standard]
 python-jose[cryptography]
+sqlalchemy
+psycopg[binary]
