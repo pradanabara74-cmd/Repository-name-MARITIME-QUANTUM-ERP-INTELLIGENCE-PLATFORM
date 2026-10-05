@@ -10,6 +10,7 @@ from .core.security import TokenIdentity, verify_access_token
 from .modules.fleet import router as fleet_router
 from .modules.executive import router as executive_router
 from .modules.crew import router as crew_router
+from .modules.sms import router as sms_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -47,6 +48,7 @@ app = FastAPI(
 app.include_router(fleet_router)
 app.include_router(executive_router)
 app.include_router(crew_router)
+app.include_router(sms_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
