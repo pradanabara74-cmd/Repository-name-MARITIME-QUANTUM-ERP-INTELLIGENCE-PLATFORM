@@ -190,7 +190,7 @@ def create_crew(
     }
 
 
-@router.get("/{crew_id}")
+@router.get("/{crew_id:uuid}")
 def get_crew(
     crew_id: str,
     identity: TokenIdentity = Depends(verify_access_token),
