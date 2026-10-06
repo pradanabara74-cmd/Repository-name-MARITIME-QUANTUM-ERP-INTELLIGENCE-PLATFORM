@@ -30,71 +30,25 @@ def init_supply_chain_tables():
     with engine.begin() as conn:
         conn.execute(
             text(
-                """
-                CREATE TABLE IF NOT EXISTS purchase_requisitions (
-                    id UUID PRIMARY KEY,
-                    tenant_id VARCHAR(255) NOT NULL,
-                    pr_number VARCHAR(100) NOT NULL,
-                    vessel_id VARCHAR(255),
-                    vessel_name VARCHAR(255),
-                    department VARCHAR(100) NOT NULL,
-                    requested_by VARCHAR(255) NOT NULL,
-                    request_date TIMESTAMPTZ NOT NULL,
-                    required_date DATE,
-                    priority VARCHAR(50) NOT NULL DEFAULT 'normal',
-                    description TEXT NOT NULL,
-                    justification TEXT,
-                    currency VARCHAR(10) NOT NULL DEFAULT 'USD',
-                    estimated_total NUMERIC(18,2) NOT NULL DEFAULT 0,
-                    status VARCHAR(50) NOT NULL DEFAULT 'draft',
-                    approved_by VARCHAR(255),
-                    approved_at TIMESTAMPTZ,
-                    rejection_reason TEXT,
-                    created_at TIMESTAMPTZ NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL,
-                    UNIQUE (tenant_id, pr_number)
-                )
-                """
+                """ CREATE TABLE IF NOT EXISTS purchase_requisitions ( id UUID PRIMARY KEY, tenant_id VARCHAR(255) NOT NULL, pr_number VARCHAR(100) NOT NULL, vessel_id VARCHAR(255), vessel_name VARCHAR(255), department VARCHAR(100) NOT NULL, requested_by VARCHAR(255) NOT NULL, request_date TIMESTAMPTZ NOT NULL, required_date DATE, priority VARCHAR(50) NOT NULL DEFAULT 'normal', description TEXT NOT NULL, justification TEXT, currency VARCHAR(10) NOT NULL DEFAULT 'USD', estimated_total NUMERIC(18,2) NOT NULL DEFAULT 0, status VARCHAR(50) NOT NULL DEFAULT 'draft', approved_by VARCHAR(255), approved_at TIMESTAMPTZ, rejection_reason TEXT, created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL, UNIQUE (tenant_id, pr_number) ) """
             )
         )
 
         conn.execute(
             text(
-                """
-                CREATE TABLE IF NOT EXISTS purchase_requisition_items (
-                    id UUID PRIMARY KEY,
-                    tenant_id VARCHAR(255) NOT NULL,
-                    requisition_id UUID NOT NULL
-                        REFERENCES purchase_requisitions(id)
-                        ON DELETE CASCADE,
-                    item_code VARCHAR(100),
-                    item_name VARCHAR(255) NOT NULL,
-                    specification TEXT,
-                    quantity NUMERIC(18,3) NOT NULL,
-                    unit VARCHAR(50) NOT NULL,
-                    estimated_unit_price NUMERIC(18,2) NOT NULL DEFAULT 0,
-                    estimated_total NUMERIC(18,2) NOT NULL DEFAULT 0,
-                    created_at TIMESTAMPTZ NOT NULL
-                )
-                """
+                """ CREATE TABLE IF NOT EXISTS purchase_requisition_items ( id UUID PRIMARY KEY, tenant_id VARCHAR(255) NOT NULL, requisition_id UUID NOT NULL REFERENCES purchase_requisitions(id) ON DELETE CASCADE, item_code VARCHAR(100), item_name VARCHAR(255) NOT NULL, specification TEXT, quantity NUMERIC(18,3) NOT NULL, unit VARCHAR(50) NOT NULL, estimated_unit_price NUMERIC(18,2) NOT NULL DEFAULT 0, estimated_total NUMERIC(18,2) NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL ) """
             )
         )
 
         conn.execute(
             text(
-                """
-                CREATE INDEX IF NOT EXISTS idx_pr_tenant_status
-                ON purchase_requisitions (tenant_id, status)
-                """
+                """ CREATE INDEX IF NOT EXISTS idx_pr_tenant_status ON purchase_requisitions (tenant_id, status) """
             )
         )
 
         conn.execute(
             text(
-                """
-                CREATE INDEX IF NOT EXISTS idx_pr_tenant_vessel
-                ON purchase_requisitions (tenant_id, vessel_id)
-                """
+                """ CREATE INDEX IF NOT EXISTS idx_pr_tenant_vessel ON purchase_requisitions (tenant_id, vessel_id) """
             )
         )
 
@@ -162,14 +116,8 @@ def serialize_row(row):
 # CREATE PURCHASE REQUISITION
 # ============================================================
 
-@router.post(
-    "/requisitions",
-    status_code=status.HTTP_201_CREATED,
-)
-def create_purchase_requisition(
-    payload: PurchaseRequisitionCreate,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+@router.post( "/requisitions", status_code=status.HTTP_201_CREATED, )
+def create_purchase_requisition( payload: PurchaseRequisitionCreate, identity: TokenIdentity = Depends(verify_access_token), ):
     init_supply_chain_tables()
 
     engine = get_engine()
@@ -186,46 +134,7 @@ def create_purchase_requisition(
     with engine.begin() as conn:
         conn.execute(
             text(
-                """
-                INSERT INTO purchase_requisitions (
-                    id,
-                    tenant_id,
-                    pr_number,
-                    vessel_id,
-                    vessel_name,
-                    department,
-                    requested_by,
-                    request_date,
-                    required_date,
-                    priority,
-                    description,
-                    justification,
-                    currency,
-                    estimated_total,
-                    status,
-                    created_at,
-                    updated_at
-                )
-                VALUES (
-                    :id,
-                    :tenant_id,
-                    :pr_number,
-                    :vessel_id,
-                    :vessel_name,
-                    :department,
-                    :requested_by,
-                    :request_date,
-                    :required_date,
-                    :priority,
-                    :description,
-                    :justification,
-                    :currency,
-                    :estimated_total,
-                    'submitted',
-                    :created_at,
-                    :updated_at
-                )
-                """
+                """ INSERT INTO purchase_requisitions ( id, tenant_id, pr_number, vessel_id, vessel_name, department, requested_by, request_date, required_date, priority, description, justification, currency, estimated_total, status, created_at, updated_at ) VALUES ( :id, :tenant_id, :pr_number, :vessel_id, :vessel_name, :department, :requested_by, :request_date, :required_date, :priority, :description, :justification, :currency, :estimated_total, 'submitted', :created_at, :updated_at ) """
             ),
             {
                 "id": requisition_id,
@@ -252,34 +161,7 @@ def create_purchase_requisition(
 
             conn.execute(
                 text(
-                    """
-                    INSERT INTO purchase_requisition_items (
-                        id,
-                        tenant_id,
-                        requisition_id,
-                        item_code,
-                        item_name,
-                        specification,
-                        quantity,
-                        unit,
-                        estimated_unit_price,
-                        estimated_total,
-                        created_at
-                    )
-                    VALUES (
-                        :id,
-                        :tenant_id,
-                        :requisition_id,
-                        :item_code,
-                        :item_name,
-                        :specification,
-                        :quantity,
-                        :unit,
-                        :estimated_unit_price,
-                        :estimated_total,
-                        :created_at
-                    )
-                    """
+                    """ INSERT INTO purchase_requisition_items ( id, tenant_id, requisition_id, item_code, item_name, specification, quantity, unit, estimated_unit_price, estimated_total, created_at ) VALUES ( :id, :tenant_id, :requisition_id, :item_code, :item_name, :specification, :quantity, :unit, :estimated_unit_price, :estimated_total, :created_at ) """
                 ),
                 {
                     "id": uuid4(),
@@ -311,9 +193,7 @@ def create_purchase_requisition(
 # ============================================================
 
 @router.get("/requisitions")
-def list_purchase_requisitions(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def list_purchase_requisitions( identity: TokenIdentity = Depends(verify_access_token), ):
     init_supply_chain_tables()
 
     engine = get_engine()
@@ -321,12 +201,7 @@ def list_purchase_requisitions(
     with engine.begin() as conn:
         rows = conn.execute(
             text(
-                """
-                SELECT *
-                FROM purchase_requisitions
-                WHERE tenant_id = :tenant_id
-                ORDER BY created_at DESC
-                """
+                """ SELECT * FROM purchase_requisitions WHERE tenant_id = :tenant_id ORDER BY created_at DESC """
             ),
             {"tenant_id": identity.tenant_id},
         ).mappings().all()
@@ -339,10 +214,7 @@ def list_purchase_requisitions(
 # ============================================================
 
 @router.get("/requisitions/{requisition_id}")
-def get_purchase_requisition(
-    requisition_id: UUID,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def get_purchase_requisition( requisition_id: UUID, identity: TokenIdentity = Depends(verify_access_token), ):
     init_supply_chain_tables()
 
     engine = get_engine()
@@ -350,12 +222,7 @@ def get_purchase_requisition(
     with engine.begin() as conn:
         requisition = conn.execute(
             text(
-                """
-                SELECT *
-                FROM purchase_requisitions
-                WHERE id = :id
-                  AND tenant_id = :tenant_id
-                """
+                """ SELECT * FROM purchase_requisitions WHERE id = :id AND tenant_id = :tenant_id """
             ),
             {
                 "id": requisition_id,
@@ -371,13 +238,7 @@ def get_purchase_requisition(
 
         items = conn.execute(
             text(
-                """
-                SELECT *
-                FROM purchase_requisition_items
-                WHERE requisition_id = :requisition_id
-                  AND tenant_id = :tenant_id
-                ORDER BY created_at
-                """
+                """ SELECT * FROM purchase_requisition_items WHERE requisition_id = :requisition_id AND tenant_id = :tenant_id ORDER BY created_at """
             ),
             {
                 "requisition_id": requisition_id,
@@ -396,11 +257,7 @@ def get_purchase_requisition(
 # ============================================================
 
 @router.post("/requisitions/{requisition_id}/decision")
-def decide_purchase_requisition(
-    requisition_id: UUID,
-    payload: PurchaseRequisitionDecision,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def decide_purchase_requisition( requisition_id: UUID, payload: PurchaseRequisitionDecision, identity: TokenIdentity = Depends(verify_access_token), ):
     init_supply_chain_tables()
 
     action = payload.action.strip().lower()
@@ -425,13 +282,7 @@ def decide_purchase_requisition(
     with engine.begin() as conn:
         existing = conn.execute(
             text(
-                """
-                SELECT id, status
-                FROM purchase_requisitions
-                WHERE id = :id
-                  AND tenant_id = :tenant_id
-                FOR UPDATE
-                """
+                """ SELECT id, status FROM purchase_requisitions WHERE id = :id AND tenant_id = :tenant_id FOR UPDATE """
             ),
             {
                 "id": requisition_id,
@@ -453,17 +304,7 @@ def decide_purchase_requisition(
 
         conn.execute(
             text(
-                """
-                UPDATE purchase_requisitions
-                SET
-                    status = :status,
-                    approved_by = :approved_by,
-                    approved_at = :approved_at,
-                    rejection_reason = :rejection_reason,
-                    updated_at = :updated_at
-                WHERE id = :id
-                  AND tenant_id = :tenant_id
-                """
+                """ UPDATE purchase_requisitions SET status = :status, approved_by = :approved_by, approved_at = :approved_at, rejection_reason = :rejection_reason, updated_at = :updated_at WHERE id = :id AND tenant_id = :tenant_id """
             ),
             {
                 "status": new_status,
@@ -489,9 +330,7 @@ def decide_purchase_requisition(
 # ============================================================
 
 @router.get("/dashboard")
-def supply_chain_dashboard(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def supply_chain_dashboard( identity: TokenIdentity = Depends(verify_access_token), ):
     init_supply_chain_tables()
 
     engine = get_engine()
@@ -499,27 +338,7 @@ def supply_chain_dashboard(
     with engine.begin() as conn:
         summary = conn.execute(
             text(
-                """
-                SELECT
-                    COUNT(*) AS total_requisitions,
-                    COUNT(*) FILTER (
-                        WHERE status = 'submitted'
-                    ) AS pending_approval,
-                    COUNT(*) FILTER (
-                        WHERE status = 'approved'
-                    ) AS approved,
-                    COUNT(*) FILTER (
-                        WHERE status = 'rejected'
-                    ) AS rejected,
-                    COALESCE(
-                        SUM(estimated_total) FILTER (
-                            WHERE status = 'approved'
-                        ),
-                        0
-                    ) AS approved_value
-                FROM purchase_requisitions
-                WHERE tenant_id = :tenant_id
-                """
+                """ SELECT COUNT(*) AS total_requisitions, COUNT(*) FILTER ( WHERE status = 'submitted' ) AS pending_approval, COUNT(*) FILTER ( WHERE status = 'approved' ) AS approved, COUNT(*) FILTER ( WHERE status = 'rejected' ) AS rejected, COALESCE( SUM(estimated_total) FILTER ( WHERE status = 'approved' ), 0 ) AS approved_value FROM purchase_requisitions WHERE tenant_id = :tenant_id """
             ),
             {"tenant_id": identity.tenant_id},
         ).mappings().first()
@@ -558,54 +377,19 @@ def init_rfq_tables():
     with engine.begin() as conn:
         conn.execute(
             text(
-                """
-                CREATE TABLE IF NOT EXISTS supply_chain_rfqs (
-                    id UUID PRIMARY KEY,
-                    tenant_id VARCHAR(255) NOT NULL,
-                    requisition_id UUID NOT NULL,
-                    rfq_number VARCHAR(100) NOT NULL,
-                    rfq_title VARCHAR(255) NOT NULL,
-                    closing_date DATE,
-                    status VARCHAR(50) NOT NULL DEFAULT 'open',
-                    notes TEXT,
-                    created_by VARCHAR(255) NOT NULL,
-                    created_at TIMESTAMPTZ NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL,
-                    UNIQUE (tenant_id, rfq_number)
-                )
-                """
+                """ CREATE TABLE IF NOT EXISTS supply_chain_rfqs ( id UUID PRIMARY KEY, tenant_id VARCHAR(255) NOT NULL, requisition_id UUID NOT NULL, rfq_number VARCHAR(100) NOT NULL, rfq_title VARCHAR(255) NOT NULL, closing_date DATE, status VARCHAR(50) NOT NULL DEFAULT 'open', notes TEXT, created_by VARCHAR(255) NOT NULL, created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL, UNIQUE (tenant_id, rfq_number) ) """
             )
         )
 
         conn.execute(
             text(
-                """
-                CREATE TABLE IF NOT EXISTS supply_chain_vendor_quotations (
-                    id UUID PRIMARY KEY,
-                    tenant_id VARCHAR(255) NOT NULL,
-                    rfq_id UUID NOT NULL,
-                    vendor_name VARCHAR(255) NOT NULL,
-                    vendor_code VARCHAR(100),
-                    currency VARCHAR(10) NOT NULL DEFAULT 'USD',
-                    quotation_amount NUMERIC(18,2) NOT NULL,
-                    delivery_days INTEGER NOT NULL DEFAULT 0,
-                    payment_terms VARCHAR(255),
-                    quotation_reference VARCHAR(255),
-                    notes TEXT,
-                    status VARCHAR(50) NOT NULL DEFAULT 'submitted',
-                    created_at TIMESTAMPTZ NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL
-                )
-                """
+                """ CREATE TABLE IF NOT EXISTS supply_chain_vendor_quotations ( id UUID PRIMARY KEY, tenant_id VARCHAR(255) NOT NULL, rfq_id UUID NOT NULL, vendor_name VARCHAR(255) NOT NULL, vendor_code VARCHAR(100), currency VARCHAR(10) NOT NULL DEFAULT 'USD', quotation_amount NUMERIC(18,2) NOT NULL, delivery_days INTEGER NOT NULL DEFAULT 0, payment_terms VARCHAR(255), quotation_reference VARCHAR(255), notes TEXT, status VARCHAR(50) NOT NULL DEFAULT 'submitted', created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL ) """
             )
         )
 
 
 @router.post("/rfqs", status_code=status.HTTP_201_CREATED)
-def create_rfq(
-    payload: RFQCreate,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def create_rfq( payload: RFQCreate, identity: TokenIdentity = Depends(verify_access_token), ):
     init_rfq_tables()
     engine = get_engine()
 
@@ -623,12 +407,7 @@ def create_rfq(
     with engine.begin() as conn:
         requisition = conn.execute(
             text(
-                """
-                SELECT id, pr_number, status
-                FROM purchase_requisitions
-                WHERE id = :requisition_id
-                  AND tenant_id = :tenant_id
-                """
+                """ SELECT id, pr_number, status FROM purchase_requisitions WHERE id = :requisition_id AND tenant_id = :tenant_id """
             ),
             {
                 "requisition_id": requisition_uuid,
@@ -655,34 +434,7 @@ def create_rfq(
 
         conn.execute(
             text(
-                """
-                INSERT INTO supply_chain_rfqs (
-                    id,
-                    tenant_id,
-                    requisition_id,
-                    rfq_number,
-                    rfq_title,
-                    closing_date,
-                    status,
-                    notes,
-                    created_by,
-                    created_at,
-                    updated_at
-                )
-                VALUES (
-                    :id,
-                    :tenant_id,
-                    :requisition_id,
-                    :rfq_number,
-                    :rfq_title,
-                    :closing_date,
-                    'open',
-                    :notes,
-                    :created_by,
-                    :created_at,
-                    :updated_at
-                )
-                """
+                """ INSERT INTO supply_chain_rfqs ( id, tenant_id, requisition_id, rfq_number, rfq_title, closing_date, status, notes, created_by, created_at, updated_at ) VALUES ( :id, :tenant_id, :requisition_id, :rfq_number, :rfq_title, :closing_date, 'open', :notes, :created_by, :created_at, :updated_at ) """
             ),
             {
                 "id": rfq_id,
@@ -707,35 +459,14 @@ def create_rfq(
 
 
 @router.get("/rfqs")
-def list_rfqs(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def list_rfqs( identity: TokenIdentity = Depends(verify_access_token), ):
     init_rfq_tables()
     engine = get_engine()
 
     with engine.begin() as conn:
         rows = conn.execute(
             text(
-                """
-                SELECT
-                    r.id,
-                    r.rfq_number,
-                    r.requisition_id,
-                    pr.pr_number,
-                    r.rfq_title,
-                    r.closing_date,
-                    r.status,
-                    r.notes,
-                    r.created_by,
-                    r.created_at,
-                    r.updated_at
-                FROM supply_chain_rfqs r
-                JOIN purchase_requisitions pr
-                  ON pr.id = r.requisition_id
-                 AND pr.tenant_id = r.tenant_id
-                WHERE r.tenant_id = :tenant_id
-                ORDER BY r.created_at DESC
-                """
+                """ SELECT r.id, r.rfq_number, r.requisition_id, pr.pr_number, r.rfq_title, r.closing_date, r.status, r.notes, r.created_by, r.created_at, r.updated_at FROM supply_chain_rfqs r JOIN purchase_requisitions pr ON pr.id = r.requisition_id AND pr.tenant_id = r.tenant_id WHERE r.tenant_id = :tenant_id ORDER BY r.created_at DESC """
             ),
             {"tenant_id": identity.tenant_id},
         ).mappings().all()
@@ -743,51 +474,26 @@ def list_rfqs(
     return [dict(row) for row in rows]
 
 
-@router.post(
-    "/rfqs/{rfq_id}/quotations",
-    status_code=status.HTTP_201_CREATED,
-)
-def create_vendor_quotation(
-    rfq_id: UUID,
-    payload: VendorQuotationCreate,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+@router.post( "/rfqs/{rfq_id}/quotations", status_code=status.HTTP_201_CREATED, )
+def create_vendor_quotation( rfq_id: UUID, payload: VendorQuotationCreate, identity: TokenIdentity = Depends(verify_access_token), ):
     init_rfq_tables()
     engine = get_engine()
-
     now = datetime.now(timezone.utc)
     quotation_id = uuid4()
 
     with engine.begin() as conn:
         rfq = conn.execute(
-        text(
-            """
-            SELECT
-                id,
-                rfq_number,
-                status,
-                tenant_id
-            FROM supply_chain_rfqs
-            WHERE CAST(id AS TEXT) = CAST(:rfq_id AS TEXT)
-            LIMIT 1
-            """
-        ),
-        {
-            "rfq_id": str(rfq_id),
-        },
-    ).mappings().first()
+            text(
+                """ SELECT id, rfq_number, status, tenant_id FROM supply_chain_rfqs WHERE CAST(id AS TEXT) = :rfq_id AND tenant_id = :tenant_id LIMIT 1 """
+            ),
+            {"rfq_id": str(rfq_id), "tenant_id": identity.tenant_id},
+        ).mappings().first()
 
-    if rfq is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="RFQ not found.",
-        )
-
-    if str(rfq["tenant_id"]) != str(identity.tenant_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="RFQ does not belong to the authenticated tenant.",
-        )
+        if rfq is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="RFQ not found.",
+            )
 
         if rfq["status"] != "open":
             raise HTTPException(
@@ -797,45 +503,12 @@ def create_vendor_quotation(
 
         conn.execute(
             text(
-                """
-                INSERT INTO supply_chain_vendor_quotations (
-                    id,
-                    tenant_id,
-                    rfq_id,
-                    vendor_name,
-                    vendor_code,
-                    currency,
-                    quotation_amount,
-                    delivery_days,
-                    payment_terms,
-                    quotation_reference,
-                    notes,
-                    status,
-                    created_at,
-                    updated_at
-                )
-                VALUES (
-                    :id,
-                    :tenant_id,
-                    :rfq_id,
-                    :vendor_name,
-                    :vendor_code,
-                    :currency,
-                    :quotation_amount,
-                    :delivery_days,
-                    :payment_terms,
-                    :quotation_reference,
-                    :notes,
-                    'submitted',
-                    :created_at,
-                    :updated_at
-                )
-                """
+                """ INSERT INTO supply_chain_vendor_quotations ( id, tenant_id, rfq_id, vendor_name, vendor_code, currency, quotation_amount, delivery_days, payment_terms, quotation_reference, notes, status, created_at, updated_at ) VALUES ( :id, :tenant_id, :rfq_id, :vendor_name, :vendor_code, :currency, :quotation_amount, :delivery_days, :payment_terms, :quotation_reference, :notes, 'submitted', :created_at, :updated_at ) """
             ),
             {
                 "id": quotation_id,
                 "tenant_id": identity.tenant_id,
-                "rfq_id": rfq_id,
+                "rfq_id": rfq["id"],
                 "vendor_name": payload.vendor_name,
                 "vendor_code": payload.vendor_code,
                 "currency": payload.currency.upper(),
@@ -851,7 +524,7 @@ def create_vendor_quotation(
 
     return {
         "id": str(quotation_id),
-        "rfq_id": str(rfq_id),
+        "rfq_id": str(rfq["id"]),
         "vendor_name": payload.vendor_name,
         "currency": payload.currency.upper(),
         "quotation_amount": payload.quotation_amount,
@@ -860,30 +533,19 @@ def create_vendor_quotation(
 
 
 @router.get("/rfqs/{rfq_id}/quotations")
-def list_vendor_quotations(
-    rfq_id: UUID,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def list_vendor_quotations( rfq_id: UUID, identity: TokenIdentity = Depends(verify_access_token), ):
     init_rfq_tables()
     engine = get_engine()
 
     with engine.begin() as conn:
         rfq = conn.execute(
             text(
-                """
-                SELECT id
-                FROM supply_chain_rfqs
-                WHERE id = :rfq_id
-                  AND tenant_id = :tenant_id
-                """
+                """ SELECT id FROM supply_chain_rfqs WHERE CAST(id AS TEXT) = :rfq_id AND tenant_id = :tenant_id LIMIT 1 """
             ),
-            {
-                "rfq_id": rfq_id,
-                "tenant_id": identity.tenant_id,
-            },
-        ).first()
+            {"rfq_id": str(rfq_id), "tenant_id": identity.tenant_id},
+        ).mappings().first()
 
-        if not rfq:
+        if rfq is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="RFQ not found.",
@@ -891,34 +553,13 @@ def list_vendor_quotations(
 
         rows = conn.execute(
             text(
-                """
-                SELECT
-                    id,
-                    rfq_id,
-                    vendor_name,
-                    vendor_code,
-                    currency,
-                    quotation_amount,
-                    delivery_days,
-                    payment_terms,
-                    quotation_reference,
-                    notes,
-                    status,
-                    created_at,
-                    updated_at
-                FROM supply_chain_vendor_quotations
-                WHERE tenant_id = :tenant_id
-                  AND rfq_id = :rfq_id
-                ORDER BY quotation_amount ASC, delivery_days ASC
-                """
+                """ SELECT id, rfq_id, vendor_name, vendor_code, currency, quotation_amount, delivery_days, payment_terms, quotation_reference, notes, status, created_at, updated_at FROM supply_chain_vendor_quotations WHERE tenant_id = :tenant_id AND CAST(rfq_id AS TEXT) = :rfq_id ORDER BY quotation_amount ASC, delivery_days ASC """
             ),
-            {
-                "tenant_id": identity.tenant_id,
-                "rfq_id": rfq_id,
-            },
+            {"tenant_id": identity.tenant_id, "rfq_id": str(rfq_id)},
         ).mappings().all()
 
-    return [dict(row) for row in rows]
+    return [serialize_row(row) for row in rows]
+
 
 # ============================================================
 # PURCHASE ORDER
@@ -938,37 +579,13 @@ def init_purchase_order_table() -> None:
     with engine.begin() as conn:
         conn.execute(
             text(
-                """
-                CREATE TABLE IF NOT EXISTS supply_chain_purchase_orders (
-                    id UUID PRIMARY KEY,
-                    tenant_id VARCHAR(255) NOT NULL,
-                    po_number VARCHAR(100) NOT NULL,
-                    quotation_id UUID NOT NULL,
-                    rfq_id UUID NOT NULL,
-                    vendor_name VARCHAR(255) NOT NULL,
-                    vendor_code VARCHAR(100),
-                    currency VARCHAR(20) NOT NULL,
-                    total_amount NUMERIC(18,2) NOT NULL,
-                    po_title VARCHAR(255) NOT NULL,
-                    delivery_location VARCHAR(255) NOT NULL,
-                    required_delivery_date DATE,
-                    notes TEXT,
-                    status VARCHAR(50) NOT NULL DEFAULT 'issued',
-                    created_by VARCHAR(255) NOT NULL,
-                    created_at TIMESTAMPTZ NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL,
-                    UNIQUE (tenant_id, po_number)
-                )
-                """
+                """ CREATE TABLE IF NOT EXISTS supply_chain_purchase_orders ( id UUID PRIMARY KEY, tenant_id VARCHAR(255) NOT NULL, po_number VARCHAR(100) NOT NULL, quotation_id UUID NOT NULL, rfq_id UUID NOT NULL, vendor_name VARCHAR(255) NOT NULL, vendor_code VARCHAR(100), currency VARCHAR(20) NOT NULL, total_amount NUMERIC(18,2) NOT NULL, po_title VARCHAR(255) NOT NULL, delivery_location VARCHAR(255) NOT NULL, required_delivery_date DATE, notes TEXT, status VARCHAR(50) NOT NULL DEFAULT 'issued', created_by VARCHAR(255) NOT NULL, created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL, UNIQUE (tenant_id, po_number) ) """
             )
         )
 
 
 @router.post("/purchase-orders", status_code=status.HTTP_201_CREATED)
-def create_purchase_order(
-    payload: PurchaseOrderCreate,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def create_purchase_order( payload: PurchaseOrderCreate, identity: TokenIdentity = Depends(verify_access_token), ):
     init_purchase_order_table()
     init_rfq_tables()
 
@@ -979,20 +596,7 @@ def create_purchase_order(
     with engine.begin() as conn:
         quotation = conn.execute(
             text(
-                """
-                SELECT
-                    id,
-                    rfq_id,
-                    vendor_name,
-                    vendor_code,
-                    currency,
-                    quotation_amount,
-                    status
-                FROM supply_chain_vendor_quotations
-                WHERE CAST(id AS TEXT) = :quotation_id
-                  AND tenant_id = :tenant_id
-                LIMIT 1
-                """
+                """ SELECT id, rfq_id, vendor_name, vendor_code, currency, quotation_amount, status FROM supply_chain_vendor_quotations WHERE CAST(id AS TEXT) = :quotation_id AND tenant_id = :tenant_id LIMIT 1 """
             ),
             {
                 "quotation_id": str(payload.quotation_id),
@@ -1010,53 +614,14 @@ def create_purchase_order(
 
         conn.execute(
             text(
-                """
-                INSERT INTO supply_chain_purchase_orders (
-                    id,
-                    tenant_id,
-                    po_number,
-                    quotation_id,
-                    rfq_id,
-                    vendor_name,
-                    vendor_code,
-                    currency,
-                    total_amount,
-                    po_title,
-                    delivery_location,
-                    required_delivery_date,
-                    notes,
-                    status,
-                    created_by,
-                    created_at,
-                    updated_at
-                )
-                VALUES (
-                    :id,
-                    :tenant_id,
-                    :po_number,
-                    :quotation_id,
-                    :rfq_id,
-                    :vendor_name,
-                    :vendor_code,
-                    :currency,
-                    :total_amount,
-                    :po_title,
-                    :delivery_location,
-                    :required_delivery_date,
-                    :notes,
-                    'issued',
-                    :created_by,
-                    :created_at,
-                    :updated_at
-                )
-                """
+                """ INSERT INTO supply_chain_purchase_orders ( id, tenant_id, po_number, quotation_id, rfq_id, vendor_name, vendor_code, currency, total_amount, po_title, delivery_location, required_delivery_date, notes, status, created_by, created_at, updated_at ) VALUES ( :id, :tenant_id, :po_number, :quotation_id, :rfq_id, :vendor_name, :vendor_code, :currency, :total_amount, :po_title, :delivery_location, :required_delivery_date, :notes, 'issued', :created_by, :created_at, :updated_at ) """
             ),
             {
-                "id": po_id,
+                "id": str(po_id),
                 "tenant_id": identity.tenant_id,
                 "po_number": po_number,
-                "quotation_id": quotation["id"],
-                "rfq_id": quotation["rfq_id"],
+                "quotation_id": str(quotation["id"]),
+                "rfq_id": str(quotation["rfq_id"]),
                 "vendor_name": quotation["vendor_name"],
                 "vendor_code": quotation["vendor_code"],
                 "currency": quotation["currency"],
@@ -1072,10 +637,10 @@ def create_purchase_order(
         )
 
     return {
-        "id": po_id,
+        "id": str(po_id),
         "po_number": po_number,
-        "quotation_id": quotation["id"],
-        "rfq_id": quotation["rfq_id"],
+        "quotation_id": str(quotation["id"]),
+        "rfq_id": str(quotation["rfq_id"]),
         "vendor_name": quotation["vendor_name"],
         "currency": quotation["currency"],
         "total_amount": quotation["quotation_amount"],
@@ -1084,9 +649,7 @@ def create_purchase_order(
 
 
 @router.get("/purchase-orders", summary="List Purchase Orders")
-def list_purchase_orders(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def list_purchase_orders( identity: TokenIdentity = Depends(verify_access_token), ):
     init_purchase_order_table()
 
     engine = get_engine()
@@ -1094,72 +657,11 @@ def list_purchase_orders(
     with engine.begin() as conn:
         rows = conn.execute(
             text(
-                """
-                SELECT
-                    id,
-                    po_number,
-                    quotation_id,
-                    rfq_id,
-                    vendor_name,
-                    vendor_code,
-                    currency,
-                    total_amount,
-                    po_title,
-                    delivery_location,
-                    required_delivery_date,
-                    notes,
-                    status,
-                    created_by,
-                    created_at,
-                    updated_at
-                FROM supply_chain_purchase_orders
-                WHERE tenant_id = :tenant_id
-                ORDER BY created_at DESC
-                """
+                """ SELECT id, po_number, quotation_id, rfq_id, vendor_name, vendor_code, currency, total_amount, po_title, delivery_location, required_delivery_date, notes, status, created_by, created_at, updated_at FROM supply_chain_purchase_orders WHERE tenant_id = :tenant_id ORDER BY created_at DESC """
             ),
             {
                 "tenant_id": identity.tenant_id,
             },
         ).mappings().all()
 
-    return [dict(row) for row in rows]
-
-@router.get("/purchase-orders")
-def list_purchase_orders(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    init_purchase_order_tables()
-    engine = get_engine()
-
-    with engine.begin() as conn:
-        rows = conn.execute(
-            text(
-                """
-                SELECT
-                    id,
-                    po_number,
-                    quotation_id,
-                    rfq_id,
-                    vendor_name,
-                    vendor_code,
-                    currency,
-                    total_amount,
-                    po_title,
-                    delivery_location,
-                    required_delivery_date,
-                    notes,
-                    status,
-                    created_by,
-                    created_at,
-                    updated_at
-                FROM supply_chain_purchase_orders
-                WHERE tenant_id = :tenant_id
-                ORDER BY created_at DESC
-                """
-            ),
-            {
-                "tenant_id": identity.tenant_id,
-            },
-        ).mappings().all()
-
-    return [dict(row) for row in rows]
+    return [serialize_row(row) for row in rows]
