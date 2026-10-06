@@ -52,6 +52,7 @@ app.include_router(executive_router)
 app.include_router(crew_router)
 app.include_router(sms_router)
 app.include_router(pms_router)
+app.include_router(supply_chain_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
@@ -132,4 +133,4 @@ async def current_identity(
         "role": identity.role.value,
         "email": identity.email,
     }
-    app.include_router(supply_chain_router)
+    
