@@ -1044,3 +1044,903 @@ def get_delivery(
         )
 
     return serialize_row(row)
+    # ============================================================
+# GOODS RECEIPT + INVENTORY / VESSEL STORES MANAGEMENT
+# ============================================================
+
+class GoodsReceiptCreate(BaseModel):
+    delivery_id: UUID
+    receipt_reference: str = Field(min_length=1, max_length=100)
+    received_date: str
+    received_location: str = Field(min_length=1, max_length=255)
+    received_by: str = Field(min_length=1, max_length=255)
+    condition: str = Field(default="good", max_length=50)
+    notes: Optional[str] = None
+
+
+class InventoryItemCreate(BaseModel):
+    item_code: str = Field(min_length=1, max_length=100)
+    item_name: str = Field(min_length=1, max_length=255)
+    specification: Optional[str] = None
+    category: str = Field(default="general", max_length=100)
+    unit: str = Field(min_length=1, max_length=50)
+    quantity: float = Field(default=0, ge=0)
+    minimum_stock: float = Field(default=0, ge=0)
+    location: str = Field(min_length=1, max_length=255)
+    vessel_id: Optional[str] = None
+    vessel_name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class StockMovementCreate(BaseModel):
+    inventory_item_id: UUID
+    movement_type: str = Field(min_length=1, max_length=50)
+    quantity: float = Field(gt=0)
+    reference: Optional[str] = None
+    destination: Optional[str] = None
+    department: Optional[str] = None
+    vessel_id: Optional[str] = None
+    vessel_name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+def init_goods_receipt_inventory_tables():
+    engine = get_engine()
+
+    with engine.begin() as conn:
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_goods_receipts (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    gr_number VARCHAR(100) NOT NULL,
+                    delivery_id UUID NOT NULL,
+                    po_id UUID,
+                    receipt_reference VARCHAR(100) NOT NULL,
+                    received_date VARCHAR(50) NOT NULL,
+                    received_location VARCHAR(255) NOT NULL,
+                    received_by VARCHAR(255) NOT NULL,
+                    condition VARCHAR(50) NOT NULL DEFAULT 'good',
+                    notes TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'received',
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMPTZ NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL,
+                    UNIQUE (tenant_id, gr_number)
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_gr_tenant_delivery
+                ON supply_chain_goods_receipts (tenant_id, delivery_id)
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_inventory (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    item_code VARCHAR(100) NOT NULL,
+                    item_name VARCHAR(255) NOT NULL,
+                    specification TEXT,
+                    category VARCHAR(100),
+                    unit VARCHAR(50) NOT NULL,
+                    quantity DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    minimum_stock DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    location VARCHAR(255) NOT NULL,
+                    vessel_id VARCHAR(255),
+                    vessel_name VARCHAR(255),
+                    notes TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'active',
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMPTZ NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL,
+                    UNIQUE (tenant_id, item_code, location)
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_inventory_tenant_location
+                ON supply_chain_inventory (tenant_id, location)
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_inventory_tenant_vessel
+                ON supply_chain_inventory (tenant_id, vessel_id)
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_stock_movements (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    inventory_item_id UUID NOT NULL,
+                    movement_type VARCHAR(50) NOT NULL,
+                    quantity DOUBLE PRECISION NOT NULL,
+                    balance_after DOUBLE PRECISION NOT NULL,
+                    reference VARCHAR(255),
+                    destination VARCHAR(255),
+                    department VARCHAR(100),
+                    vessel_id VARCHAR(255),
+                    vessel_name VARCHAR(255),
+                    notes TEXT,
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMPTZ NOT NULL
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_stock_movement_item
+                ON supply_chain_stock_movements
+                (tenant_id, inventory_item_id, created_at)
+                """
+            )
+        )
+
+
+# ============================================================
+# GOODS RECEIPT
+# ============================================================
+
+@router.get("/goods-receipts", summary="List Goods Receipts")
+def list_goods_receipts(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_goods_receipts
+                WHERE tenant_id = :tenant_id
+                ORDER BY created_at DESC
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+    return [serialize_row(row) for row in rows]
+
+
+@router.post(
+    "/goods-receipts",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Goods Receipt",
+)
+def create_goods_receipt(
+    payload: GoodsReceiptCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    init_delivery_table()
+
+    engine = get_engine()
+    now = datetime.now(timezone.utc)
+
+    with engine.begin() as conn:
+
+        delivery = conn.execute(
+            text(
+                """
+                SELECT id, po_id, delivery_number, status
+                FROM supply_chain_deliveries
+                WHERE id = :delivery_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "delivery_id": payload.delivery_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if delivery is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Delivery not found.",
+            )
+
+        existing = conn.execute(
+            text(
+                """
+                SELECT id
+                FROM supply_chain_goods_receipts
+                WHERE delivery_id = :delivery_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "delivery_id": payload.delivery_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).first()
+
+        if existing is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Goods receipt already exists for this delivery.",
+            )
+
+        receipt_id = uuid4()
+        gr_number = (
+            f"GR-{now.strftime('%Y%m%d')}-"
+            f"{str(receipt_id).split('-')[0].upper()}"
+        )
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_goods_receipts (
+                    id,
+                    tenant_id,
+                    gr_number,
+                    delivery_id,
+                    po_id,
+                    receipt_reference,
+                    received_date,
+                    received_location,
+                    received_by,
+                    condition,
+                    notes,
+                    status,
+                    created_by,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :gr_number,
+                    :delivery_id,
+                    :po_id,
+                    :receipt_reference,
+                    :received_date,
+                    :received_location,
+                    :received_by,
+                    :condition,
+                    :notes,
+                    'received',
+                    :created_by,
+                    :created_at,
+                    :updated_at
+                )
+                """
+            ),
+            {
+                "id": receipt_id,
+                "tenant_id": identity.tenant_id,
+                "gr_number": gr_number,
+                "delivery_id": payload.delivery_id,
+                "po_id": delivery["po_id"],
+                "receipt_reference": payload.receipt_reference,
+                "received_date": payload.received_date,
+                "received_location": payload.received_location,
+                "received_by": payload.received_by,
+                "condition": payload.condition.lower(),
+                "notes": payload.notes,
+                "created_by": identity.user_id,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+
+        conn.execute(
+            text(
+                """
+                UPDATE supply_chain_deliveries
+                SET status = 'received',
+                    updated_at = :updated_at
+                WHERE id = :delivery_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "updated_at": now,
+                "delivery_id": payload.delivery_id,
+                "tenant_id": identity.tenant_id,
+            },
+        )
+
+    return {
+        "id": str(receipt_id),
+        "gr_number": gr_number,
+        "delivery_id": str(payload.delivery_id),
+        "po_id": str(delivery["po_id"]) if delivery["po_id"] else None,
+        "receipt_reference": payload.receipt_reference,
+        "received_date": payload.received_date,
+        "received_location": payload.received_location,
+        "condition": payload.condition.lower(),
+        "status": "received",
+    }
+
+
+@router.get(
+    "/goods-receipts/{receipt_id}",
+    summary="Get Goods Receipt",
+)
+def get_goods_receipt(
+    receipt_id: UUID,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_goods_receipts
+                WHERE id = :receipt_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "receipt_id": receipt_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Goods receipt not found.",
+        )
+
+    return serialize_row(row)
+
+
+# ============================================================
+# INVENTORY / VESSEL STORES
+# ============================================================
+
+@router.get(
+    "/inventory",
+    summary="List Inventory / Vessel Stores",
+)
+def list_inventory(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_inventory
+                WHERE tenant_id = :tenant_id
+                ORDER BY item_name, location
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+    return [serialize_row(row) for row in rows]
+
+
+@router.post(
+    "/inventory",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Inventory Item",
+)
+def create_inventory_item(
+    payload: InventoryItemCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+
+    engine = get_engine()
+    now = datetime.now(timezone.utc)
+    item_id = uuid4()
+
+    with engine.begin() as conn:
+
+        existing = conn.execute(
+            text(
+                """
+                SELECT id
+                FROM supply_chain_inventory
+                WHERE tenant_id = :tenant_id
+                  AND item_code = :item_code
+                  AND location = :location
+                """
+            ),
+            {
+                "tenant_id": identity.tenant_id,
+                "item_code": payload.item_code,
+                "location": payload.location,
+            },
+        ).first()
+
+        if existing is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Inventory item already exists at this location.",
+            )
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_inventory (
+                    id,
+                    tenant_id,
+                    item_code,
+                    item_name,
+                    specification,
+                    category,
+                    unit,
+                    quantity,
+                    minimum_stock,
+                    location,
+                    vessel_id,
+                    vessel_name,
+                    notes,
+                    status,
+                    created_by,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :item_code,
+                    :item_name,
+                    :specification,
+                    :category,
+                    :unit,
+                    :quantity,
+                    :minimum_stock,
+                    :location,
+                    :vessel_id,
+                    :vessel_name,
+                    :notes,
+                    'active',
+                    :created_by,
+                    :created_at,
+                    :updated_at
+                )
+                """
+            ),
+            {
+                "id": item_id,
+                "tenant_id": identity.tenant_id,
+                "item_code": payload.item_code,
+                "item_name": payload.item_name,
+                "specification": payload.specification,
+                "category": payload.category,
+                "unit": payload.unit,
+                "quantity": payload.quantity,
+                "minimum_stock": payload.minimum_stock,
+                "location": payload.location,
+                "vessel_id": payload.vessel_id,
+                "vessel_name": payload.vessel_name,
+                "notes": payload.notes,
+                "created_by": identity.user_id,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+
+        if payload.quantity > 0:
+            movement_id = uuid4()
+
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO supply_chain_stock_movements (
+                        id,
+                        tenant_id,
+                        inventory_item_id,
+                        movement_type,
+                        quantity,
+                        balance_after,
+                        reference,
+                        destination,
+                        department,
+                        vessel_id,
+                        vessel_name,
+                        notes,
+                        created_by,
+                        created_at
+                    )
+                    VALUES (
+                        :id,
+                        :tenant_id,
+                        :inventory_item_id,
+                        'opening_balance',
+                        :quantity,
+                        :balance_after,
+                        'INITIAL-STOCK',
+                        :destination,
+                        NULL,
+                        :vessel_id,
+                        :vessel_name,
+                        'Initial inventory balance',
+                        :created_by,
+                        :created_at
+                    )
+                    """
+                ),
+                {
+                    "id": movement_id,
+                    "tenant_id": identity.tenant_id,
+                    "inventory_item_id": item_id,
+                    "quantity": payload.quantity,
+                    "balance_after": payload.quantity,
+                    "destination": payload.location,
+                    "vessel_id": payload.vessel_id,
+                    "vessel_name": payload.vessel_name,
+                    "created_by": identity.user_id,
+                    "created_at": now,
+                },
+            )
+
+    return {
+        "id": str(item_id),
+        "item_code": payload.item_code,
+        "item_name": payload.item_name,
+        "quantity": payload.quantity,
+        "unit": payload.unit,
+        "location": payload.location,
+        "status": "active",
+    }
+
+
+@router.get(
+    "/inventory/{inventory_item_id}",
+    summary="Get Inventory Item",
+)
+def get_inventory_item(
+    inventory_item_id: UUID,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_inventory
+                WHERE id = :inventory_item_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "inventory_item_id": inventory_item_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Inventory item not found.",
+        )
+
+    return serialize_row(row)
+
+
+# ============================================================
+# STOCK MOVEMENT / ISSUE / RECEIPT
+# ============================================================
+
+@router.post(
+    "/inventory/movements",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Stock Movement",
+)
+def create_stock_movement(
+    payload: StockMovementCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+
+    movement_type = payload.movement_type.strip().lower()
+
+    inbound_types = {
+        "receipt",
+        "in",
+        "return",
+        "adjustment_in",
+    }
+
+    outbound_types = {
+        "issue",
+        "out",
+        "consumption",
+        "transfer_out",
+        "adjustment_out",
+    }
+
+    if movement_type not in inbound_types | outbound_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid stock movement type.",
+        )
+
+    engine = get_engine()
+    now = datetime.now(timezone.utc)
+
+    with engine.begin() as conn:
+
+        item = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_inventory
+                WHERE id = :inventory_item_id
+                  AND tenant_id = :tenant_id
+                FOR UPDATE
+                """
+            ),
+            {
+                "inventory_item_id": payload.inventory_item_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if item is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Inventory item not found.",
+            )
+
+        current_quantity = float(item["quantity"])
+
+        if movement_type in inbound_types:
+            new_quantity = current_quantity + payload.quantity
+        else:
+            if payload.quantity > current_quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Insufficient inventory stock.",
+                )
+
+            new_quantity = current_quantity - payload.quantity
+
+        conn.execute(
+            text(
+                """
+                UPDATE supply_chain_inventory
+                SET quantity = :quantity,
+                    updated_at = :updated_at
+                WHERE id = :inventory_item_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "quantity": new_quantity,
+                "updated_at": now,
+                "inventory_item_id": payload.inventory_item_id,
+                "tenant_id": identity.tenant_id,
+            },
+        )
+
+        movement_id = uuid4()
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_stock_movements (
+                    id,
+                    tenant_id,
+                    inventory_item_id,
+                    movement_type,
+                    quantity,
+                    balance_after,
+                    reference,
+                    destination,
+                    department,
+                    vessel_id,
+                    vessel_name,
+                    notes,
+                    created_by,
+                    created_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :inventory_item_id,
+                    :movement_type,
+                    :quantity,
+                    :balance_after,
+                    :reference,
+                    :destination,
+                    :department,
+                    :vessel_id,
+                    :vessel_name,
+                    :notes,
+                    :created_by,
+                    :created_at
+                )
+                """
+            ),
+            {
+                "id": movement_id,
+                "tenant_id": identity.tenant_id,
+                "inventory_item_id": payload.inventory_item_id,
+                "movement_type": movement_type,
+                "quantity": payload.quantity,
+                "balance_after": new_quantity,
+                "reference": payload.reference,
+                "destination": payload.destination,
+                "department": payload.department,
+                "vessel_id": payload.vessel_id,
+                "vessel_name": payload.vessel_name,
+                "notes": payload.notes,
+                "created_by": identity.user_id,
+                "created_at": now,
+            },
+        )
+
+    return {
+        "id": str(movement_id),
+        "inventory_item_id": str(payload.inventory_item_id),
+        "movement_type": movement_type,
+        "quantity": payload.quantity,
+        "balance_after": new_quantity,
+        "status": "posted",
+    }
+
+
+@router.get(
+    "/inventory/{inventory_item_id}/movements",
+    summary="Inventory Movement History",
+)
+def inventory_movement_history(
+    inventory_item_id: UUID,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_stock_movements
+                WHERE tenant_id = :tenant_id
+                  AND inventory_item_id = :inventory_item_id
+                ORDER BY created_at DESC
+                """
+            ),
+            {
+                "tenant_id": identity.tenant_id,
+                "inventory_item_id": inventory_item_id,
+            },
+        ).mappings().all()
+
+    return [serialize_row(row) for row in rows]
+
+
+# ============================================================
+# INVENTORY INTELLIGENCE DASHBOARD
+# ============================================================
+
+@router.get(
+    "/inventory-dashboard",
+    summary="Inventory & Vessel Stores Dashboard",
+)
+def inventory_dashboard(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_goods_receipt_inventory_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+
+        summary = conn.execute(
+            text(
+                """
+                SELECT
+                    COUNT(*) AS total_items,
+                    COALESCE(SUM(quantity), 0) AS total_quantity,
+                    COUNT(*) FILTER (
+                        WHERE quantity <= minimum_stock
+                    ) AS low_stock_items,
+                    COUNT(*) FILTER (
+                        WHERE quantity = 0
+                    ) AS out_of_stock_items
+                FROM supply_chain_inventory
+                WHERE tenant_id = :tenant_id
+                  AND status = 'active'
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().first()
+
+        low_stock = conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    item_code,
+                    item_name,
+                    quantity,
+                    minimum_stock,
+                    unit,
+                    location,
+                    vessel_name
+                FROM supply_chain_inventory
+                WHERE tenant_id = :tenant_id
+                  AND status = 'active'
+                  AND quantity <= minimum_stock
+                ORDER BY quantity ASC, item_name ASC
+                LIMIT 100
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+        movements = conn.execute(
+            text(
+                """
+                SELECT
+                    m.id,
+                    m.inventory_item_id,
+                    i.item_code,
+                    i.item_name,
+                    m.movement_type,
+                    m.quantity,
+                    m.balance_after,
+                    m.reference,
+                    m.destination,
+                    m.department,
+                    m.vessel_name,
+                    m.created_at
+                FROM supply_chain_stock_movements m
+                JOIN supply_chain_inventory i
+                  ON i.id = m.inventory_item_id
+                 AND i.tenant_id = m.tenant_id
+                WHERE m.tenant_id = :tenant_id
+                ORDER BY m.created_at DESC
+                LIMIT 50
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+    return {
+        "total_items": summary["total_items"],
+        "total_quantity": summary["total_quantity"],
+        "low_stock_items": summary["low_stock_items"],
+        "out_of_stock_items": summary["out_of_stock_items"],
+        "low_stock_alerts": [
+            serialize_row(row) for row in low_stock
+        ],
+        "recent_stock_movements": [
+            serialize_row(row) for row in movements
+        ],
+    }
