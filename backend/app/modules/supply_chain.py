@@ -919,3 +919,207 @@ def list_vendor_quotations(
         ).mappings().all()
 
     return [dict(row) for row in rows]
+
+# ============================================================
+# PURCHASE ORDER
+# ============================================================
+
+class PurchaseOrderCreate(BaseModel):
+    quotation_id: UUID
+    po_title: str
+    delivery_location: str
+    required_delivery_date: date | None = None
+    notes: str | None = None
+
+
+def init_purchase_order_table() -> None:
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_purchase_orders (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    po_number VARCHAR(100) NOT NULL,
+                    quotation_id UUID NOT NULL,
+                    rfq_id UUID NOT NULL,
+                    vendor_name VARCHAR(255) NOT NULL,
+                    vendor_code VARCHAR(100),
+                    currency VARCHAR(20) NOT NULL,
+                    total_amount NUMERIC(18,2) NOT NULL,
+                    po_title VARCHAR(255) NOT NULL,
+                    delivery_location VARCHAR(255) NOT NULL,
+                    required_delivery_date DATE,
+                    notes TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'issued',
+                    created_by VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL,
+                    UNIQUE (tenant_id, po_number)
+                )
+                """
+            )
+        )
+
+
+@router.post("/purchase-orders", status_code=status.HTTP_201_CREATED)
+def create_purchase_order(
+    payload: PurchaseOrderCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_purchase_order_table()
+    init_rfq_tables()
+
+    engine = get_engine()
+    now = datetime.now(timezone.utc)
+    po_id = uuid4()
+
+    with engine.begin() as conn:
+        quotation = conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    rfq_id,
+                    vendor_name,
+                    vendor_code,
+                    currency,
+                    quotation_amount,
+                    status
+                FROM supply_chain_vendor_quotations
+                WHERE CAST(id AS TEXT) = :quotation_id
+                  AND tenant_id = :tenant_id
+                LIMIT 1
+                """
+            ),
+            {
+                "quotation_id": str(payload.quotation_id),
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if quotation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor quotation not found.",
+            )
+
+        po_number = f"PO-{now.strftime('%Y%m%d')}-{str(po_id)[:8].upper()}"
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_purchase_orders (
+                    id,
+                    tenant_id,
+                    po_number,
+                    quotation_id,
+                    rfq_id,
+                    vendor_name,
+                    vendor_code,
+                    currency,
+                    total_amount,
+                    po_title,
+                    delivery_location,
+                    required_delivery_date,
+                    notes,
+                    status,
+                    created_by,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :po_number,
+                    :quotation_id,
+                    :rfq_id,
+                    :vendor_name,
+                    :vendor_code,
+                    :currency,
+                    :total_amount,
+                    :po_title,
+                    :delivery_location,
+                    :required_delivery_date,
+                    :notes,
+                    'issued',
+                    :created_by,
+                    :created_at,
+                    :updated_at
+                )
+                """
+            ),
+            {
+                "id": po_id,
+                "tenant_id": identity.tenant_id,
+                "po_number": po_number,
+                "quotation_id": quotation["id"],
+                "rfq_id": quotation["rfq_id"],
+                "vendor_name": quotation["vendor_name"],
+                "vendor_code": quotation["vendor_code"],
+                "currency": quotation["currency"],
+                "total_amount": quotation["quotation_amount"],
+                "po_title": payload.po_title,
+                "delivery_location": payload.delivery_location,
+                "required_delivery_date": payload.required_delivery_date,
+                "notes": payload.notes,
+                "created_by": identity.user_id,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+
+    return {
+        "id": po_id,
+        "po_number": po_number,
+        "quotation_id": quotation["id"],
+        "rfq_id": quotation["rfq_id"],
+        "vendor_name": quotation["vendor_name"],
+        "currency": quotation["currency"],
+        "total_amount": quotation["quotation_amount"],
+        "status": "issued",
+    }
+
+
+@router.get("/purchase-orders")
+def list_purchase_orders(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_purchase_order_table()
+
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    po_number,
+                    quotation_id,
+                    rfq_id,
+                    vendor_name,
+                    vendor_code,
+                    currency,
+                    total_amount,
+                    po_title,
+                    delivery_location,
+                    required_delivery_date,
+                    notes,
+                    status,
+                    created_by,
+                    created_at,
+                    updated_at
+                FROM supply_chain_purchase_orders
+                WHERE tenant_id = :tenant_id
+                ORDER BY created_at DESC
+                """
+            ),
+            {
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
