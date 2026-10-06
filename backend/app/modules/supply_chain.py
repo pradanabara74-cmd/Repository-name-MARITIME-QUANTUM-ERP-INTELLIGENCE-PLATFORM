@@ -759,7 +759,7 @@ def create_vendor_quotation(
     quotation_id = uuid4()
 
     with engine.begin() as conn:
-    rfq = conn.execute(
+        rfq = conn.execute(
         text(
             """
             SELECT
