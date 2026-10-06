@@ -1083,7 +1083,7 @@ def create_purchase_order(
     }
 
 
-@router.get("/purchase-orders")
+@router.get("/purchase-orders", summary="List Purchase Orders")
 def list_purchase_orders(
     identity: TokenIdentity = Depends(verify_access_token),
 ):
