@@ -759,26 +759,35 @@ def create_vendor_quotation(
     quotation_id = uuid4()
 
     with engine.begin() as conn:
-        rfq = conn.execute(
-            text(
-                """
-                SELECT id, rfq_number, status
-                FROM supply_chain_rfqs
-                WHERE CAST(id AS TEXT) = :rfq_id
-  AND tenant_id = :tenant_id
-                """
-            ),
-            {
-                "rfq_id": str(rfq_id),
-                "tenant_id": identity.tenant_id,
-            },
-        ).mappings().first()
+    rfq = conn.execute(
+        text(
+            """
+            SELECT
+                id,
+                rfq_number,
+                status,
+                tenant_id
+            FROM supply_chain_rfqs
+            WHERE CAST(id AS TEXT) = CAST(:rfq_id AS TEXT)
+            LIMIT 1
+            """
+        ),
+        {
+            "rfq_id": str(rfq_id),
+        },
+    ).mappings().first()
 
-        if not rfq:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="RFQ not found.",
-            )
+    if rfq is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="RFQ not found.",
+        )
+
+    if str(rfq["tenant_id"]) != str(identity.tenant_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="RFQ does not belong to the authenticated tenant.",
+        )
 
         if rfq["status"] != "open":
             raise HTTPException(
