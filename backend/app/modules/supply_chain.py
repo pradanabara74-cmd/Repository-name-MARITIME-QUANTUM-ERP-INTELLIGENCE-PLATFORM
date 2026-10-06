@@ -771,3 +771,276 @@ def get_purchase_order( po_id: UUID, identity: TokenIdentity = Depends(verify_ac
         )
 
     return serialize_row(row)
+    # ============================================================
+# DELIVERY MANAGEMENT
+# Purchase Order -> Delivery
+# ============================================================
+
+
+class DeliveryCreate(BaseModel):
+    po_id: UUID
+    delivery_reference: str = Field(min_length=1, max_length=100)
+    delivery_date: date
+    delivery_location: str = Field(min_length=1, max_length=255)
+    carrier_name: Optional[str] = None
+    tracking_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
+def init_delivery_table():
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_deliveries (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    delivery_number VARCHAR(100) NOT NULL,
+                    po_id UUID NOT NULL,
+                    po_number VARCHAR(100) NOT NULL,
+                    vendor_name VARCHAR(255),
+                    delivery_reference VARCHAR(100) NOT NULL,
+                    delivery_date DATE NOT NULL,
+                    delivery_location VARCHAR(255) NOT NULL,
+                    carrier_name VARCHAR(255),
+                    tracking_number VARCHAR(255),
+                    notes TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'in_transit',
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMPTZ NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL,
+                    UNIQUE (tenant_id, delivery_number)
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_delivery_tenant_po
+                ON supply_chain_deliveries (tenant_id, po_id)
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_delivery_tenant_status
+                ON supply_chain_deliveries (tenant_id, status)
+                """
+            )
+        )
+
+
+@router.post(
+    "/deliveries",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Delivery",
+)
+def create_delivery(
+    payload: DeliveryCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_purchase_order_table()
+    init_delivery_table()
+
+    engine = get_engine()
+    now = datetime.now(timezone.utc)
+    delivery_id = uuid4()
+
+    with engine.begin() as conn:
+        po = conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    po_number,
+                    vendor_name,
+                    status
+                FROM supply_chain_purchase_orders
+                WHERE id = :po_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "po_id": payload.po_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if po is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Purchase Order not found.",
+            )
+
+        existing_delivery = conn.execute(
+            text(
+                """
+                SELECT id
+                FROM supply_chain_deliveries
+                WHERE po_id = :po_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "po_id": payload.po_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if existing_delivery is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A delivery already exists for this Purchase Order.",
+            )
+
+        delivery_number = (
+            f"DLV-{now.strftime('%Y%m%d')}-"
+            f"{str(delivery_id).split('-')[0].upper()}"
+        )
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_deliveries (
+                    id,
+                    tenant_id,
+                    delivery_number,
+                    po_id,
+                    po_number,
+                    vendor_name,
+                    delivery_reference,
+                    delivery_date,
+                    delivery_location,
+                    carrier_name,
+                    tracking_number,
+                    notes,
+                    status,
+                    created_by,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :delivery_number,
+                    :po_id,
+                    :po_number,
+                    :vendor_name,
+                    :delivery_reference,
+                    :delivery_date,
+                    :delivery_location,
+                    :carrier_name,
+                    :tracking_number,
+                    :notes,
+                    :status,
+                    :created_by,
+                    :created_at,
+                    :updated_at
+                )
+                """
+            ),
+            {
+                "id": delivery_id,
+                "tenant_id": identity.tenant_id,
+                "delivery_number": delivery_number,
+                "po_id": payload.po_id,
+                "po_number": po["po_number"],
+                "vendor_name": po["vendor_name"],
+                "delivery_reference": payload.delivery_reference,
+                "delivery_date": payload.delivery_date,
+                "delivery_location": payload.delivery_location,
+                "carrier_name": payload.carrier_name,
+                "tracking_number": payload.tracking_number,
+                "notes": payload.notes,
+                "status": "in_transit",
+                "created_by": identity.user_id,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+
+    return {
+        "id": str(delivery_id),
+        "delivery_number": delivery_number,
+        "po_id": str(payload.po_id),
+        "po_number": po["po_number"],
+        "vendor_name": po["vendor_name"],
+        "delivery_reference": payload.delivery_reference,
+        "delivery_date": payload.delivery_date.isoformat(),
+        "delivery_location": payload.delivery_location,
+        "carrier_name": payload.carrier_name,
+        "tracking_number": payload.tracking_number,
+        "status": "in_transit",
+    }
+
+
+@router.get(
+    "/deliveries",
+    summary="List Deliveries",
+)
+def list_deliveries(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_delivery_table()
+
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_deliveries
+                WHERE tenant_id = :tenant_id
+                ORDER BY created_at DESC
+                """
+            ),
+            {
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().all()
+
+    return [serialize_row(row) for row in rows]
+
+
+@router.get(
+    "/deliveries/{delivery_id}",
+    summary="Get Delivery",
+)
+def get_delivery(
+    delivery_id: UUID,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_delivery_table()
+
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text(
+                """
+                SELECT *
+                FROM supply_chain_deliveries
+                WHERE id = :delivery_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "delivery_id": delivery_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Delivery not found.",
+        )
+
+    return serialize_row(row)
