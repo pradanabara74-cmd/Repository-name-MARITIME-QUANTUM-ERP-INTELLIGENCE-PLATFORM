@@ -764,12 +764,12 @@ def create_vendor_quotation(
                 """
                 SELECT id, rfq_number, status
                 FROM supply_chain_rfqs
-                WHERE id::text = :rfq_id
+                WHERE CAST(id AS TEXT) = :rfq_id
   AND tenant_id = :tenant_id
                 """
             ),
             {
-                "rfq_id": rfq_id,
+                "rfq_id": str(rfq_id),
                 "tenant_id": identity.tenant_id,
             },
         ).mappings().first()
