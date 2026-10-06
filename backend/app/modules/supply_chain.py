@@ -1123,3 +1123,43 @@ def list_purchase_orders(
         ).mappings().all()
 
     return [dict(row) for row in rows]
+
+@router.get("/purchase-orders")
+def list_purchase_orders(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_purchase_order_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    po_number,
+                    quotation_id,
+                    rfq_id,
+                    vendor_name,
+                    vendor_code,
+                    currency,
+                    total_amount,
+                    po_title,
+                    delivery_location,
+                    required_delivery_date,
+                    notes,
+                    status,
+                    created_by,
+                    created_at,
+                    updated_at
+                FROM supply_chain_purchase_orders
+                WHERE tenant_id = :tenant_id
+                ORDER BY created_at DESC
+                """
+            ),
+            {
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
