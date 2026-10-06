@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
-from typing import Optional
 from uuid import UUID, uuid4
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -529,3 +529,384 @@ def supply_chain_dashboard(
         "generated_at": datetime.now(timezone.utc),
         "summary": dict(summary),
     }
+
+# ============================================================
+# RFQ & VENDOR QUOTATION MANAGEMENT
+# ============================================================
+
+class RFQCreate(BaseModel):
+    requisition_id: str
+    rfq_title: str
+    closing_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class VendorQuotationCreate(BaseModel):
+    vendor_name: str
+    vendor_code: Optional[str] = None
+    currency: str = "USD"
+    quotation_amount: float = Field(gt=0)
+    delivery_days: int = Field(ge=0)
+    payment_terms: Optional[str] = None
+    quotation_reference: Optional[str] = None
+    notes: Optional[str] = None
+
+
+def init_rfq_tables():
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_rfqs (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    requisition_id UUID NOT NULL,
+                    rfq_number VARCHAR(100) NOT NULL,
+                    rfq_title VARCHAR(255) NOT NULL,
+                    closing_date DATE,
+                    status VARCHAR(50) NOT NULL DEFAULT 'open',
+                    notes TEXT,
+                    created_by VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL,
+                    UNIQUE (tenant_id, rfq_number)
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS supply_chain_vendor_quotations (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    rfq_id UUID NOT NULL,
+                    vendor_name VARCHAR(255) NOT NULL,
+                    vendor_code VARCHAR(100),
+                    currency VARCHAR(10) NOT NULL DEFAULT 'USD',
+                    quotation_amount NUMERIC(18,2) NOT NULL,
+                    delivery_days INTEGER NOT NULL DEFAULT 0,
+                    payment_terms VARCHAR(255),
+                    quotation_reference VARCHAR(255),
+                    notes TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'submitted',
+                    created_at TIMESTAMPTZ NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL
+                )
+                """
+            )
+        )
+
+
+@router.post("/rfqs", status_code=status.HTTP_201_CREATED)
+def create_rfq(
+    payload: RFQCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_rfq_tables()
+    engine = get_engine()
+
+    try:
+        requisition_uuid = UUID(payload.requisition_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid requisition_id.",
+        )
+
+    now = datetime.now(timezone.utc)
+    rfq_id = uuid4()
+
+    with engine.begin() as conn:
+        requisition = conn.execute(
+            text(
+                """
+                SELECT id, pr_number, status
+                FROM purchase_requisitions
+                WHERE id = :requisition_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "requisition_id": requisition_uuid,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if not requisition:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Purchase requisition not found.",
+            )
+
+        if requisition["status"] != "approved":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Only approved purchase requisitions can proceed to RFQ.",
+            )
+
+        rfq_number = (
+            f"RFQ-{now.strftime('%Y%m%d')}-"
+            f"{str(rfq_id).split('-')[0].upper()}"
+        )
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_rfqs (
+                    id,
+                    tenant_id,
+                    requisition_id,
+                    rfq_number,
+                    rfq_title,
+                    closing_date,
+                    status,
+                    notes,
+                    created_by,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :requisition_id,
+                    :rfq_number,
+                    :rfq_title,
+                    :closing_date,
+                    'open',
+                    :notes,
+                    :created_by,
+                    :created_at,
+                    :updated_at
+                )
+                """
+            ),
+            {
+                "id": rfq_id,
+                "tenant_id": identity.tenant_id,
+                "requisition_id": requisition_uuid,
+                "rfq_number": rfq_number,
+                "rfq_title": payload.rfq_title,
+                "closing_date": payload.closing_date,
+                "notes": payload.notes,
+                "created_by": identity.user_id,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+
+    return {
+        "id": str(rfq_id),
+        "rfq_number": rfq_number,
+        "requisition_id": str(requisition_uuid),
+        "status": "open",
+    }
+
+
+@router.get("/rfqs")
+def list_rfqs(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_rfq_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT
+                    r.id,
+                    r.rfq_number,
+                    r.requisition_id,
+                    pr.pr_number,
+                    r.rfq_title,
+                    r.closing_date,
+                    r.status,
+                    r.notes,
+                    r.created_by,
+                    r.created_at,
+                    r.updated_at
+                FROM supply_chain_rfqs r
+                JOIN purchase_requisitions pr
+                  ON pr.id = r.requisition_id
+                 AND pr.tenant_id = r.tenant_id
+                WHERE r.tenant_id = :tenant_id
+                ORDER BY r.created_at DESC
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
+
+
+@router.post(
+    "/rfqs/{rfq_id}/quotations",
+    status_code=status.HTTP_201_CREATED,
+)
+def create_vendor_quotation(
+    rfq_id: UUID,
+    payload: VendorQuotationCreate,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_rfq_tables()
+    engine = get_engine()
+
+    now = datetime.now(timezone.utc)
+    quotation_id = uuid4()
+
+    with engine.begin() as conn:
+        rfq = conn.execute(
+            text(
+                """
+                SELECT id, rfq_number, status
+                FROM supply_chain_rfqs
+                WHERE id = :rfq_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "rfq_id": rfq_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).mappings().first()
+
+        if not rfq:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="RFQ not found.",
+            )
+
+        if rfq["status"] != "open":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Quotation can only be submitted to an open RFQ.",
+            )
+
+        conn.execute(
+            text(
+                """
+                INSERT INTO supply_chain_vendor_quotations (
+                    id,
+                    tenant_id,
+                    rfq_id,
+                    vendor_name,
+                    vendor_code,
+                    currency,
+                    quotation_amount,
+                    delivery_days,
+                    payment_terms,
+                    quotation_reference,
+                    notes,
+                    status,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :id,
+                    :tenant_id,
+                    :rfq_id,
+                    :vendor_name,
+                    :vendor_code,
+                    :currency,
+                    :quotation_amount,
+                    :delivery_days,
+                    :payment_terms,
+                    :quotation_reference,
+                    :notes,
+                    'submitted',
+                    :created_at,
+                    :updated_at
+                )
+                """
+            ),
+            {
+                "id": quotation_id,
+                "tenant_id": identity.tenant_id,
+                "rfq_id": rfq_id,
+                "vendor_name": payload.vendor_name,
+                "vendor_code": payload.vendor_code,
+                "currency": payload.currency.upper(),
+                "quotation_amount": payload.quotation_amount,
+                "delivery_days": payload.delivery_days,
+                "payment_terms": payload.payment_terms,
+                "quotation_reference": payload.quotation_reference,
+                "notes": payload.notes,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+
+    return {
+        "id": str(quotation_id),
+        "rfq_id": str(rfq_id),
+        "vendor_name": payload.vendor_name,
+        "currency": payload.currency.upper(),
+        "quotation_amount": payload.quotation_amount,
+        "status": "submitted",
+    }
+
+
+@router.get("/rfqs/{rfq_id}/quotations")
+def list_vendor_quotations(
+    rfq_id: UUID,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_rfq_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rfq = conn.execute(
+            text(
+                """
+                SELECT id
+                FROM supply_chain_rfqs
+                WHERE id = :rfq_id
+                  AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "rfq_id": rfq_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).first()
+
+        if not rfq:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="RFQ not found.",
+            )
+
+        rows = conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    rfq_id,
+                    vendor_name,
+                    vendor_code,
+                    currency,
+                    quotation_amount,
+                    delivery_days,
+                    payment_terms,
+                    quotation_reference,
+                    notes,
+                    status,
+                    created_at,
+                    updated_at
+                FROM supply_chain_vendor_quotations
+                WHERE tenant_id = :tenant_id
+                  AND rfq_id = :rfq_id
+                ORDER BY quotation_amount ASC, delivery_days ASC
+                """
+            ),
+            {
+                "tenant_id": identity.tenant_id,
+                "rfq_id": rfq_id,
+            },
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
