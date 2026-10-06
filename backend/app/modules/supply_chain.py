@@ -764,8 +764,8 @@ def create_vendor_quotation(
                 """
                 SELECT id, rfq_number, status
                 FROM supply_chain_rfqs
-                WHERE id = :rfq_id
-                  AND tenant_id = :tenant_id
+                WHERE id::text = :rfq_id
+  AND tenant_id = :tenant_id
                 """
             ),
             {
