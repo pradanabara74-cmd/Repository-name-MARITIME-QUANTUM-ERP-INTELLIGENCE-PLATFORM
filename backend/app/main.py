@@ -17,6 +17,7 @@ from .modules.marine_operations import router as marine_operations_router
 from .modules.commercial import router as commercial_router
 from .modules.inventory import router as inventory_router
 from .modules.finance import router as finance_router
+from .modules.hr import router as hr_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -61,6 +62,7 @@ app.include_router(marine_operations_router)
 app.include_router(commercial_router)
 app.include_router(inventory_router)
 app.include_router(finance_router)
+app.include_router(hr_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
