@@ -13,6 +13,7 @@ from .modules.crew import router as crew_router
 from .modules.sms import router as sms_router
 from .modules.pms import router as pms_router
 from .modules.supply_chain import router as supply_chain_router
+from .modules.marine_operations import router as marine_operations_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -133,4 +134,6 @@ async def current_identity(
         "role": identity.role.value,
         "email": identity.email,
     }
+
+app.include_router(marine_operations_router)
     
