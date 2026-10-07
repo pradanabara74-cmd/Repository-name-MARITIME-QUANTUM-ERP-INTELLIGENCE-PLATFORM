@@ -20,6 +20,7 @@ from .modules.finance import router as finance_router
 from .modules.hr import router as hr_router
 from .modules.hsse import router as hsse_router
 from .modules.technical import router as technical_router
+from .modules.legal import router as legal_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -67,6 +68,7 @@ app.include_router(finance_router)
 app.include_router(hr_router)
 app.include_router(hsse_router)
 app.include_router(technical_router)
+app.include_router(legal_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
