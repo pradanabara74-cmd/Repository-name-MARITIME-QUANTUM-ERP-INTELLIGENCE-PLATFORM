@@ -4,9 +4,9 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 
-from app.core.database import get_engine
+from app.core.database import get_database_url
 from app.core.security import TokenIdentity, verify_access_token
 
 
@@ -14,6 +14,12 @@ router = APIRouter(
     prefix="/api/v1/marine-operations",
     tags=["Marine Operations Intelligence"],
 )
+
+def get_engine():
+    return create_engine(
+        get_database_url(),
+        pool_pre_ping=True,
+    )
 
 
 # ============================================================
