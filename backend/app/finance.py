@@ -1,4 +1,6 @@
+import threading
 from datetime import date, datetime, timezone
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -16,11 +18,52 @@ router = APIRouter(
 )
 
 
+_engine = None
+_engine_url = None
+_engine_lock = threading.Lock()
+
+_tables_ready = False
+_tables_lock = threading.Lock()
+
+
+def _normalize_database_url(url):
+    # Render/Heroku can supply "postgres://", which SQLAlchemy 1.4+
+    # no longer accepts. Normalise it to "postgresql://".
+    url = str(url)
+
+    if url.startswith("postgres://"):
+        return "postgresql://" + url[len("postgres://"):]
+
+    return url
+
+
 def get_engine():
-    return create_engine(
-        get_database_url(),
-        pool_pre_ping=True,
-    )
+    """
+    Return a shared SQLAlchemy engine.
+
+    The original code created a brand-new engine (and a brand-new
+    connection pool) on every call, which leaks database connections
+    under load and eventually exhausts the connection limit.
+    """
+    global _engine, _engine_url
+
+    url = _normalize_database_url(get_database_url())
+
+    with _engine_lock:
+        if _engine is None or _engine_url != url:
+            if _engine is not None:
+                _engine.dispose()
+
+            _engine = create_engine(
+                url,
+                pool_pre_ping=True,
+                pool_size=5,
+                max_overflow=5,
+                pool_recycle=1800,
+            )
+            _engine_url = url
+
+        return _engine
 
 
 def utc_now():
@@ -30,11 +73,13 @@ def utc_now():
 def serialize_row(row):
     data = dict(row)
 
-    for key, value in data.items():
+    for key, value in list(data.items()):
         if isinstance(value, UUID):
             data[key] = str(value)
         elif isinstance(value, (datetime, date)):
             data[key] = value.isoformat()
+        elif isinstance(value, Decimal):
+            data[key] = float(value)
 
     return data
 
@@ -97,7 +142,7 @@ class JournalCreate(BaseModel):
     reference_id: Optional[str] = None
     reference_number: Optional[str] = None
     currency: str = Field(default="USD", max_length=10)
-    lines: list[JournalLineCreate] = Field(min_length=2)
+    lines: list[JournalLineCreate]
 
 
 class VendorInvoiceCreate(BaseModel):
@@ -178,6 +223,20 @@ class ApprovalDecision(BaseModel):
 # ============================================================
 
 def init_finance_tables():
+    global _tables_ready
+
+    if _tables_ready:
+        return
+
+    with _tables_lock:
+        if _tables_ready:
+            return
+
+        _create_finance_tables()
+        _tables_ready = True
+
+
+def _create_finance_tables():
     engine = get_engine()
 
     with engine.begin() as conn:
@@ -953,6 +1012,25 @@ def create_financial_period(
     now = utc_now()
 
     with engine.begin() as conn:
+        existing = conn.execute(
+            text("""
+                SELECT id
+                FROM finance_periods
+                WHERE tenant_id = :tenant_id
+                  AND period_name = :period_name
+            """),
+            {
+                "tenant_id": identity.tenant_id,
+                "period_name": payload.period_name,
+            },
+        ).first()
+
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Financial period already exists.",
+            )
+
         conn.execute(
             text("""
                 INSERT INTO finance_periods (
@@ -1030,6 +1108,31 @@ def create_budget(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Budget account does not exist.",
+            )
+
+        duplicate = conn.execute(
+            text("""
+                SELECT id
+                FROM finance_budgets
+                WHERE tenant_id = :tenant_id
+                  AND fiscal_year = :fiscal_year
+                  AND cost_center_code = :cost_center_code
+                  AND account_code = :account_code
+                  AND budget_type = :budget_type
+            """),
+            {
+                "tenant_id": identity.tenant_id,
+                "fiscal_year": payload.fiscal_year,
+                "cost_center_code": payload.cost_center_code,
+                "account_code": payload.account_code,
+                "budget_type": budget_type,
+            },
+        ).first()
+
+        if duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Budget already exists.",
             )
 
         conn.execute(
@@ -1144,6 +1247,12 @@ def create_journal(
     identity: TokenIdentity = Depends(verify_access_token),
 ):
     init_finance_tables()
+
+    if len(payload.lines) < 2:
+        raise HTTPException(
+            status_code=422,
+            detail="Journal must contain at least two lines.",
+        )
 
     total_debit = round(
         sum(line.debit for line in payload.lines),
@@ -1377,6 +1486,12 @@ def journal_decision(
             )
 
         if decision == "approve":
+            if journal["status"] != "draft":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Only draft journals can be approved.",
+                )
+
             new_status = "approved"
 
             conn.execute(
@@ -1429,6 +1544,15 @@ def journal_decision(
             )
 
         else:
+            if journal["status"] not in {
+                "draft",
+                "approved",
+            }:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Journal cannot be rejected.",
+                )
+
             new_status = "rejected"
 
             conn.execute(
@@ -1895,6 +2019,29 @@ def create_customer_invoice(
                     detail=f"Account {account_code} does not exist.",
                 )
 
+        duplicate = conn.execute(
+            text("""
+                SELECT id
+                FROM finance_customer_invoices
+                WHERE tenant_id = :tenant_id
+                  AND customer_name = :customer_name
+                  AND customer_invoice_number =
+                      :customer_invoice_number
+            """),
+            {
+                "tenant_id": identity.tenant_id,
+                "customer_name": payload.customer_name,
+                "customer_invoice_number":
+                    payload.customer_invoice_number,
+            },
+        ).first()
+
+        if duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Customer invoice already exists.",
+            )
+
         conn.execute(
             text("""
                 INSERT INTO finance_customer_invoices (
@@ -2270,7 +2417,7 @@ def create_payment(
             if payment_type == "payment":
                 invoice = conn.execute(
                     text("""
-                        SELECT amount, paid_amount
+                        SELECT amount, paid_amount, status
                         FROM finance_vendor_invoices
                         WHERE id = :invoice_id
                           AND tenant_id = :tenant_id
@@ -2281,6 +2428,36 @@ def create_payment(
                         "tenant_id": identity.tenant_id,
                     },
                 ).mappings().first()
+
+                if invoice is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Vendor invoice not found.",
+                    )
+
+                if invoice["status"] not in {
+                    "approved",
+                    "partially_paid",
+                }:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=(
+                            "Vendor invoice is not open for payment."
+                        ),
+                    )
+
+                if payload.amount > (
+                    float(invoice["amount"])
+                    - float(invoice["paid_amount"])
+                    + 0.01
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=(
+                            "Payment exceeds the outstanding "
+                            "invoice amount."
+                        ),
+                    )
 
                 if invoice:
                     new_paid = (
@@ -2315,7 +2492,7 @@ def create_payment(
             else:
                 invoice = conn.execute(
                     text("""
-                        SELECT amount, received_amount
+                        SELECT amount, received_amount, status
                         FROM finance_customer_invoices
                         WHERE id = :invoice_id
                           AND tenant_id = :tenant_id
@@ -2326,6 +2503,37 @@ def create_payment(
                         "tenant_id": identity.tenant_id,
                     },
                 ).mappings().first()
+
+                if invoice is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Customer invoice not found.",
+                    )
+
+                if invoice["status"] not in {
+                    "approved",
+                    "partially_paid",
+                }:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=(
+                            "Customer invoice is not open "
+                            "for receipt."
+                        ),
+                    )
+
+                if payload.amount > (
+                    float(invoice["amount"])
+                    - float(invoice["received_amount"])
+                    + 0.01
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=(
+                            "Receipt exceeds the outstanding "
+                            "invoice amount."
+                        ),
+                    )
 
                 if invoice:
                     new_received = (
@@ -2534,22 +2742,29 @@ def trial_balance(
                     a.account_code,
                     a.account_name,
                     a.account_type,
-                    COALESCE(SUM(l.debit), 0) AS debit,
-                    COALESCE(SUM(l.credit), 0) AS credit
+                    COALESCE(t.debit, 0) AS debit,
+                    COALESCE(t.credit, 0) AS credit
                 FROM finance_accounts a
-                LEFT JOIN finance_journal_lines l
-                  ON l.account_code = a.account_code
-                 AND l.tenant_id = a.tenant_id
-                LEFT JOIN finance_journals j
-                  ON j.id = l.journal_id
-                 AND j.tenant_id = l.tenant_id
-                 AND j.status = 'posted'
+                LEFT JOIN (
+                    SELECT
+                        l.tenant_id,
+                        l.account_code,
+                        SUM(l.debit) AS debit,
+                        SUM(l.credit) AS credit
+                    FROM finance_journal_lines l
+                    JOIN finance_journals j
+                      ON j.id = l.journal_id
+                     AND j.tenant_id = l.tenant_id
+                    WHERE l.tenant_id = :tenant_id
+                      AND j.status = 'posted'
+                    GROUP BY
+                        l.tenant_id,
+                        l.account_code
+                ) t
+                  ON t.account_code = a.account_code
+                 AND t.tenant_id = a.tenant_id
                 WHERE a.tenant_id = :tenant_id
                   AND a.status = 'active'
-                GROUP BY
-                    a.account_code,
-                    a.account_name,
-                    a.account_type
                 ORDER BY a.account_code
             """),
             {"tenant_id": identity.tenant_id},
