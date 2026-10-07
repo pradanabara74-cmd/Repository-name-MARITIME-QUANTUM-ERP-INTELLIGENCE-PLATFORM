@@ -14,6 +14,7 @@ from .modules.sms import router as sms_router
 from .modules.pms import router as pms_router
 from .modules.supply_chain import router as supply_chain_router
 from .modules.marine_operations import router as marine_operations_router
+from .modules.commercial import router as commercial_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -54,6 +55,8 @@ app.include_router(crew_router)
 app.include_router(sms_router)
 app.include_router(pms_router)
 app.include_router(supply_chain_router)
+app.include_router(marine_operations_router)
+app.include_router(commercial_router)
 
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
