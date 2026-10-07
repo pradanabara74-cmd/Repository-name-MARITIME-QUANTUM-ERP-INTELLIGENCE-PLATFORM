@@ -1,4 +1,6 @@
 from datetime import date, datetime, timezone
+from decimal import Decimal
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -16,7 +18,10 @@ router = APIRouter(
 )
 
 
+@lru_cache(maxsize=1)
 def get_engine():
+    # Satu engine/connection pool dipakai ulang (sebelumnya membuat engine baru
+    # di setiap request sehingga koneksi database cepat habis).
     return create_engine(
         get_database_url(),
         pool_pre_ping=True,
@@ -30,11 +35,13 @@ def utc_now():
 def serialize_row(row):
     data = dict(row)
 
-    for key, value in data.items():
+    for key, value in list(data.items()):
         if isinstance(value, UUID):
             data[key] = str(value)
         elif isinstance(value, (datetime, date)):
             data[key] = value.isoformat()
+        elif isinstance(value, Decimal):
+            data[key] = float(value)
 
     return data
 
@@ -123,6 +130,38 @@ class LaytimeCreate(BaseModel):
     notes: Optional[str] = None
 
 
+class VoyageCommercialCreate(BaseModel):
+    charter_party_id: UUID
+    voyage_number: str = Field(min_length=1, max_length=100)
+    load_port: str = Field(min_length=1, max_length=255)
+    discharge_port: str = Field(min_length=1, max_length=255)
+    cargo_description: Optional[str] = None
+    cargo_quantity: float = Field(default=0, ge=0)
+    cargo_unit: str = Field(default="MT", max_length=30)
+    departure_date: Optional[str] = None
+    arrival_date: Optional[str] = None
+    estimated_revenue: float = Field(default=0, ge=0)
+    estimated_cost: float = Field(default=0, ge=0)
+    notes: Optional[str] = None
+
+
+class VoyageRevenueCreate(BaseModel):
+    revenue_type: str = Field(default="freight", min_length=1, max_length=50)
+    reference: Optional[str] = None
+    amount: float = Field(ge=0)
+    revenue_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class DemurrageDespatchCreate(BaseModel):
+    allowed_laytime_hours: Optional[float] = Field(default=None, ge=0)
+    used_laytime_hours: float = Field(ge=0)
+    demurrage_rate: Optional[float] = Field(default=None, ge=0)
+    despatch_rate: Optional[float] = Field(default=None, ge=0)
+    calculation_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
 class ContractDecision(BaseModel):
     decision: str = Field(min_length=1, max_length=30)
     remarks: Optional[str] = None
@@ -132,7 +171,15 @@ class ContractDecision(BaseModel):
 # DATABASE INITIALIZATION
 # ============================================================
 
+_TABLES_READY = False
+
+
 def init_commercial_tables():
+    global _TABLES_READY
+
+    if _TABLES_READY:
+        return
+
     engine = get_engine()
 
     with engine.begin() as conn:
@@ -314,6 +361,79 @@ def init_commercial_tables():
                 """
             )
         )
+
+        # Kolom yang dipakai endpoint voyage tetapi belum ada di skema lama.
+        # ADD COLUMN IF NOT EXISTS aman untuk tabel yang sudah ada di database.
+        for ddl in (
+            "ALTER TABLE commercial_voyages ADD COLUMN IF NOT EXISTS charterer_id UUID",
+            "ALTER TABLE commercial_voyages ADD COLUMN IF NOT EXISTS departure_date VARCHAR(50)",
+            "ALTER TABLE commercial_voyages ADD COLUMN IF NOT EXISTS arrival_date VARCHAR(50)",
+            "ALTER TABLE commercial_voyages ADD COLUMN IF NOT EXISTS estimated_revenue DOUBLE PRECISION NOT NULL DEFAULT 0",
+        ):
+            conn.execute(text(ddl))
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS commercial_voyage_revenue (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    voyage_id UUID NOT NULL,
+                    revenue_type VARCHAR(50) NOT NULL,
+                    reference VARCHAR(255),
+                    amount DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    currency VARCHAR(10) NOT NULL DEFAULT 'USD',
+                    revenue_date DATE,
+                    notes TEXT,
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMPTZ NOT NULL
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS commercial_demurrage_despatch (
+                    id UUID PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    voyage_id UUID NOT NULL,
+                    allowed_laytime_hours DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    used_laytime_hours DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    chargeable_hours DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    result_type VARCHAR(30) NOT NULL,
+                    rate DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    amount DOUBLE PRECISION NOT NULL DEFAULT 0,
+                    currency VARCHAR(10) NOT NULL DEFAULT 'USD',
+                    calculation_date DATE,
+                    notes TEXT,
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMPTZ NOT NULL
+                )
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_commercial_revenue_voyage
+                ON commercial_voyage_revenue (tenant_id, voyage_id)
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_commercial_dd_voyage
+                ON commercial_demurrage_despatch (tenant_id, voyage_id)
+                """
+            )
+        )
+
+    _TABLES_READY = True
 
 
 def write_audit(
@@ -1141,8 +1261,8 @@ def list_commercial_voyages(
                   ON cp.id = v.charter_party_id
                  AND cp.tenant_id = v.tenant_id
                 JOIN commercial_charterers c
-                  ON c.id = v.charterer_id
-                 AND c.tenant_id = v.tenant_id
+                  ON c.id = cp.charterer_id
+                 AND c.tenant_id = cp.tenant_id
                 WHERE v.tenant_id = :tenant_id
                 ORDER BY v.created_at DESC
                 """
@@ -1177,8 +1297,8 @@ def get_commercial_voyage(
                   ON cp.id = v.charter_party_id
                  AND cp.tenant_id = v.tenant_id
                 JOIN commercial_charterers c
-                  ON c.id = v.charterer_id
-                 AND c.tenant_id = v.tenant_id
+                  ON c.id = cp.charterer_id
+                 AND c.tenant_id = cp.tenant_id
                 WHERE v.id = :voyage_id
                   AND v.tenant_id = :tenant_id
                 """
@@ -1405,6 +1525,8 @@ def create_demurrage_despatch(
             else (voyage["despatch_rate"] or 0)
         )
 
+        calculation_date = payload.calculation_date or utc_now().date()
+
         time_difference = used_hours - allowed_hours
 
         if time_difference > 0:
@@ -1474,7 +1596,7 @@ def create_demurrage_despatch(
                 ),
                 "amount": amount,
                 "currency": voyage["currency"],
-                "calculation_date": payload.calculation_date,
+                "calculation_date": calculation_date,
                 "notes": payload.notes,
                 "created_by": identity.user_id,
                 "created_at": now,
