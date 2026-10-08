@@ -68,6 +68,17 @@ app = FastAPI(
     description="Enterprise Maritime ERP, Integration and Intelligence API",
     version=__version__,
 )
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://mqeip-premium-frontend.onrender.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(fleet_router)
 app.include_router(executive_router)
 app.include_router(crew_router)
