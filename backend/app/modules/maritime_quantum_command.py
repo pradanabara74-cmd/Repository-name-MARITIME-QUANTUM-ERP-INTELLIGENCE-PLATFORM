@@ -48,6 +48,7 @@ router = APIRouter(
 # ============================================================
 
 COMMAND_ADMIN_ROLES = {
+    "platform_admin",
     "admin",
     "administrator",
     "superadmin",
@@ -55,6 +56,7 @@ COMMAND_ADMIN_ROLES = {
 }
 
 COMMAND_EXECUTIVE_ROLES = {
+    "platform_admin",
     "admin",
     "administrator",
     "superadmin",
