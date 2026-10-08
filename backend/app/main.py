@@ -29,6 +29,7 @@ from .modules.notifications import router as notifications_router
 from .modules.esg import router as esg_router
 from .modules.business_intelligence import router as bi_router
 from .modules.ai_intelligence import router as ai_router
+from .modules.quantum_optimization import router as quantum_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -85,6 +86,7 @@ app.include_router(notifications_router)
 app.include_router(esg_router)
 app.include_router(bi_router)
 app.include_router(ai_router)
+app.include_router(quantum_router)
     
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
