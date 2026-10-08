@@ -33,6 +33,7 @@ from .modules.quantum_optimization import router as quantum_router
 from .modules import digital_twin
 from .modules import mqx_gateway
 from .modules import enterprise_iam
+from .modules import maritime_quantum_command
 
 class LoginRequest(BaseModel):
     username: str
@@ -93,6 +94,7 @@ app.include_router(quantum_router)
 app.include_router(digital_twin.router)
 app.include_router(mqx_gateway.router)
 app.include_router(enterprise_iam.router)
+app.include_router(maritime_quantum_command.router)
     
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
