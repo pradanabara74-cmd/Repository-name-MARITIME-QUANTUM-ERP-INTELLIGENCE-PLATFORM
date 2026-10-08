@@ -23,6 +23,7 @@ from .modules.technical import router as technical_router
 from .modules.legal import router as legal_router
 from .modules.audit import router as audit_router
 from .modules.document_management import router as document_management_router
+from .modules.workflow import router as workflow_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -73,7 +74,8 @@ app.include_router(technical_router)
 app.include_router(legal_router)
 app.include_router(audit_router)
 app.include_router(document_management_router)
-
+app.include_router(workflow_router)
+    
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
     admin_username = os.getenv("MQEIP_ADMIN_USERNAME", "").strip()
