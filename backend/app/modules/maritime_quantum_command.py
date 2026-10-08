@@ -4,7 +4,8 @@
 # ============================================================
 
 import json
-import re
+import logging
+import threading
 from datetime import datetime, timezone
 from typing import Any, Literal, Optional
 from uuid import UUID, uuid4
@@ -37,9 +38,47 @@ from ..core.security import (
 # API ROUTER
 # ============================================================
 
+logger = logging.getLogger("mqeip.quantum_command")
+
+_COMMAND_TABLES_READY = False
+_COMMAND_INIT_LOCK = threading.Lock()
+
+
+def command_ensure_ready():
+    """
+    Memastikan tabel Command Center tersedia (sekali saja).
+    Jika database belum siap, endpoint modul ini menjawab 503,
+    tetapi aplikasi (termasuk login) tetap bisa berjalan.
+    """
+    global _COMMAND_TABLES_READY
+
+    if _COMMAND_TABLES_READY:
+        return
+
+    with _COMMAND_INIT_LOCK:
+
+        if _COMMAND_TABLES_READY:
+            return
+
+        try:
+            init_quantum_command_tables()
+
+        except Exception:
+            logger.exception(
+                "Quantum Command table initialization failed."
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="Command Center database is not ready.",
+            )
+
+        _COMMAND_TABLES_READY = True
+
+
 router = APIRouter(
     prefix="/api/v1/quantum-command",
     tags=["Maritime Quantum Command Center"],
+    dependencies=[Depends(command_ensure_ready)],
 )
 
 
@@ -278,11 +317,28 @@ def command_serialize_row(row):
 # AUTHENTICATION HELPERS
 # ============================================================
 
+def command_identity_value(identity, *names):
+
+    for name in names:
+
+        if isinstance(identity, dict):
+            value = identity.get(name)
+        else:
+            value = getattr(identity, name, None)
+
+        if value is not None and str(value).strip():
+            return str(value).strip()
+
+    return ""
+
+
 def command_get_tenant(identity):
 
-    tenant_id = str(
-        getattr(identity, "tenant_id", "") or ""
-    ).strip()
+    tenant_id = command_identity_value(
+        identity,
+        "tenant_id",
+        "tenant",
+    )
 
     if not tenant_id:
         raise HTTPException(
@@ -295,9 +351,14 @@ def command_get_tenant(identity):
 
 def command_get_actor(identity):
 
-    actor_id = str(
-        getattr(identity, "user_id", "") or ""
-    ).strip()
+    actor_id = command_identity_value(
+        identity,
+        "user_id",
+        "id",
+        "sub",
+        "username",
+        "email",
+    )
 
     if not actor_id:
         raise HTTPException(
@@ -310,9 +371,33 @@ def command_get_actor(identity):
 
 def command_get_role(identity):
 
-    return str(
-        getattr(identity, "role", "") or ""
-    ).strip().lower()
+    role = command_identity_value(identity, "role").lower()
+
+    if role:
+        return role
+
+    roles = (
+        identity.get("roles")
+        if isinstance(identity, dict)
+        else getattr(identity, "roles", None)
+    )
+
+    if isinstance(roles, (list, tuple, set)):
+
+        normalized = [
+            str(item).strip().lower()
+            for item in roles
+            if str(item).strip()
+        ]
+
+        for item in normalized:
+            if item in COMMAND_EXECUTIVE_ROLES:
+                return item
+
+        if normalized:
+            return normalized[0]
+
+    return ""
 
 
 def command_require_executive(identity):
@@ -370,7 +455,7 @@ def command_record_audit(
             )
         """),
         {
-            "id": uuid4(),
+            "id": str(uuid4()),
             "tenant_id": command_get_tenant(identity),
             "entity_type": entity_type,
             "entity_id": str(entity_id),
@@ -525,6 +610,9 @@ def init_quantum_command_tables():
 
     with get_engine().begin() as conn:
 
+        # Mencegah tabrakan DDL jika beberapa worker start bersamaan.
+        conn.execute(text("SELECT pg_advisory_xact_lock(734100231)"))
+
         for statement in statements:
             conn.execute(text(statement))
 
@@ -596,7 +684,7 @@ def command_create_event(
                 )
             """),
             {
-                "id": event_id,
+                "id": str(event_id),
                 "tenant_id": tenant_id,
                 "title": payload.title,
                 "description": payload.description,
@@ -699,19 +787,19 @@ def command_list_events(
                 FROM quantum_command_events
                 WHERE tenant_id = :tenant_id
                   AND (
-                      :domain IS NULL
+                      CAST(:domain AS TEXT) IS NULL
                       OR domain = :domain
                   )
                   AND (
-                      :priority IS NULL
+                      CAST(:priority AS TEXT) IS NULL
                       OR priority = :priority
                   )
                   AND (
-                      :command_status IS NULL
+                      CAST(:command_status AS TEXT) IS NULL
                       OR command_status = :command_status
                   )
                   AND (
-                      :vessel_id IS NULL
+                      CAST(:vessel_id AS TEXT) IS NULL
                       OR vessel_id = :vessel_id
                   )
                 ORDER BY
@@ -773,7 +861,7 @@ def command_get_event(
                   AND tenant_id = :tenant_id
             """),
             {
-                "event_id": event_id,
+                "event_id": str(event_id),
                 "tenant_id": command_get_tenant(identity),
             },
         ).mappings().first()
@@ -822,7 +910,7 @@ def command_update_event_status(
                 FOR UPDATE
             """),
             {
-                "event_id": event_id,
+                "event_id": str(event_id),
                 "tenant_id": tenant_id,
             },
         ).mappings().first()
@@ -897,7 +985,7 @@ def command_update_event_status(
                 "updated_by": actor_id,
                 "updated_at": now,
                 "resolved_at": resolved_at,
-                "event_id": event_id,
+                "event_id": str(event_id),
                 "tenant_id": tenant_id,
             },
         )
@@ -959,7 +1047,7 @@ def command_update_event_priority(
                 FOR UPDATE
             """),
             {
-                "event_id": event_id,
+                "event_id": str(event_id),
                 "tenant_id": tenant_id,
             },
         ).mappings().first()
@@ -998,7 +1086,7 @@ def command_update_event_priority(
                 "priority": payload.priority,
                 "updated_by": command_get_actor(identity),
                 "updated_at": now,
-                "event_id": event_id,
+                "event_id": str(event_id),
                 "tenant_id": tenant_id,
             },
         )
@@ -1246,7 +1334,7 @@ def command_create_executive_note(
                 )
             """),
             {
-                "id": note_id,
+                "id": str(note_id),
                 "tenant_id": tenant_id,
                 "title": payload.title,
                 "content": payload.content,
@@ -1318,7 +1406,7 @@ def command_list_executive_notes(
                 FROM quantum_command_notes
                 WHERE tenant_id = :tenant_id
                   AND (
-                      :category IS NULL
+                      CAST(:category AS TEXT) IS NULL
                       OR category = :category
                   )
                 ORDER BY created_at DESC, id DESC
@@ -1376,7 +1464,7 @@ def command_get_executive_note(
                   AND tenant_id = :tenant_id
             """),
             {
-                "note_id": note_id,
+                "note_id": str(note_id),
                 "tenant_id": command_get_tenant(identity),
             },
         ).mappings().first()
@@ -1465,7 +1553,7 @@ def command_update_executive_note(
                 FOR UPDATE
             """),
             {
-                "note_id": note_id,
+                "note_id": str(note_id),
                 "tenant_id": tenant_id,
             },
         ).mappings().first()
@@ -1500,7 +1588,7 @@ def command_update_executive_note(
                     note["category"],
                 ),
                 "updated_at": now,
-                "note_id": note_id,
+                "note_id": str(note_id),
                 "tenant_id": tenant_id,
             },
         )
@@ -1768,7 +1856,10 @@ def command_executive_performance(
                             'open',
                             'in_progress'
                         )
-                        AND assigned_to IS NULL
+                        AND (
+                            assigned_to IS NULL
+                            OR BTRIM(assigned_to) = ''
+                        )
                     ) AS unassigned_active_events,
                     AVG(
                         EXTRACT(
@@ -1907,1096 +1998,3 @@ def command_create_snapshot(
     command_require_executive(identity)
 
     tenant_id = command_get_tenant(identity)
-    actor_id = command_get_actor(identity)
-
-    snapshot_id = uuid4()
-    now = command_now()
-
-    serialized_data = command_validate_snapshot_data(
-        payload.snapshot_data
-    )
-
-    with get_engine().begin() as conn:
-
-        conn.execute(
-            text("""
-                INSERT INTO quantum_command_snapshots (
-                    id,
-                    tenant_id,
-                    snapshot_type,
-                    snapshot_data,
-                    generated_by,
-                    generated_at
-                )
-                VALUES (
-                    :id,
-                    :tenant_id,
-                    :snapshot_type,
-                    :snapshot_data,
-                    :generated_by,
-                    :generated_at
-                )
-            """),
-            {
-                "id": snapshot_id,
-                "tenant_id": tenant_id,
-                "snapshot_type": payload.snapshot_type,
-                "snapshot_data": serialized_data,
-                "generated_by": actor_id,
-                "generated_at": now,
-            },
-        )
-
-        command_record_audit(
-            conn,
-            identity,
-            "command_snapshot",
-            snapshot_id,
-            "created",
-            {
-                "snapshot_type": payload.snapshot_type,
-                "data_size_bytes": len(
-                    serialized_data.encode("utf-8")
-                ),
-            },
-        )
-
-    return {
-        "snapshot_id": str(snapshot_id),
-        "snapshot_type": payload.snapshot_type,
-        "generated_at": now.isoformat(),
-        "source": "user_submitted",
-        "note": (
-            "Snapshot contains submitted data. "
-            "It is not automatically synchronized "
-            "with operational modules."
-        ),
-    }
-
-
-# ============================================================
-# LIST COMMAND INTELLIGENCE SNAPSHOTS
-# ============================================================
-
-@router.get(
-    "/snapshots",
-    summary="List Enterprise Intelligence Snapshots",
-)
-def command_list_snapshots(
-    snapshot_type: Optional[str] = Query(
-        default=None,
-        max_length=100,
-    ),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        rows = conn.execute(
-            text("""
-                SELECT
-                    id,
-                    snapshot_type,
-                    generated_by,
-                    generated_at,
-                    OCTET_LENGTH(
-                        snapshot_data
-                    ) AS data_size_bytes
-                FROM quantum_command_snapshots
-                WHERE tenant_id = :tenant_id
-                  AND (
-                      :snapshot_type IS NULL
-                      OR snapshot_type = :snapshot_type
-                  )
-                ORDER BY generated_at DESC, id DESC
-                LIMIT :limit
-                OFFSET :offset
-            """),
-            {
-                "tenant_id": tenant_id,
-                "snapshot_type": snapshot_type,
-                "limit": limit,
-                "offset": offset,
-            },
-        ).mappings().all()
-
-    return {
-        "module": "Enterprise Intelligence Snapshots",
-        "count": len(rows),
-        "limit": limit,
-        "offset": offset,
-        "snapshots": [
-            command_serialize_row(row)
-            for row in rows
-        ],
-    }
-
-
-# ============================================================
-# GET COMMAND INTELLIGENCE SNAPSHOT
-# ============================================================
-
-@router.get(
-    "/snapshots/{snapshot_id}",
-    summary="Get Enterprise Intelligence Snapshot",
-)
-def command_get_snapshot(
-    snapshot_id: UUID,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    with get_engine().connect() as conn:
-
-        snapshot = conn.execute(
-            text("""
-                SELECT
-                    id,
-                    snapshot_type,
-                    snapshot_data,
-                    generated_by,
-                    generated_at
-                FROM quantum_command_snapshots
-                WHERE id = :snapshot_id
-                  AND tenant_id = :tenant_id
-            """),
-            {
-                "snapshot_id": snapshot_id,
-                "tenant_id": command_get_tenant(identity),
-            },
-        ).mappings().first()
-
-    if snapshot is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Command snapshot not found.",
-        )
-
-    return {
-        "snapshot_id": str(snapshot["id"]),
-        "snapshot_type": snapshot["snapshot_type"],
-        "snapshot_data": json.loads(
-            snapshot["snapshot_data"]
-        ),
-        "generated_by": snapshot["generated_by"],
-        "generated_at": (
-            snapshot["generated_at"].isoformat()
-        ),
-    }
-
-
-# ============================================================
-# GENERATE SNAPSHOT FROM COMMAND EVENT DATA
-# ============================================================
-
-@router.post(
-    "/snapshots/generate/command-events",
-    status_code=status.HTTP_201_CREATED,
-    summary="Generate Command Events Intelligence Snapshot",
-)
-def command_generate_event_snapshot(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-    actor_id = command_get_actor(identity)
-    now = command_now()
-    snapshot_id = uuid4()
-
-    with get_engine().begin() as conn:
-
-        summary = conn.execute(
-            text("""
-                SELECT
-                    COUNT(*) AS total_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'open'
-                    ) AS open_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'in_progress'
-                    ) AS in_progress_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'resolved'
-                    ) AS resolved_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'cancelled'
-                    ) AS cancelled_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'critical'
-                          AND command_status IN (
-                              'open',
-                              'in_progress'
-                          )
-                    ) AS active_critical_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'high'
-                          AND command_status IN (
-                              'open',
-                              'in_progress'
-                          )
-                    ) AS active_high_events
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-            """),
-            {
-                "tenant_id": tenant_id,
-            },
-        ).mappings().one()
-
-        domains = conn.execute(
-            text("""
-                SELECT
-                    domain,
-                    COUNT(*) AS total_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status IN (
-                            'open',
-                            'in_progress'
-                        )
-                    ) AS active_events
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-                GROUP BY domain
-                ORDER BY domain
-            """),
-            {
-                "tenant_id": tenant_id,
-            },
-        ).mappings().all()
-
-        snapshot_data = {
-            "source": "quantum_command_events",
-            "generated_at": now.isoformat(),
-            "summary": command_serialize_row(summary),
-            "domains": [
-                command_serialize_row(row)
-                for row in domains
-            ],
-        }
-
-        serialized_data = command_validate_snapshot_data(
-            snapshot_data
-        )
-
-        conn.execute(
-            text("""
-                INSERT INTO quantum_command_snapshots (
-                    id,
-                    tenant_id,
-                    snapshot_type,
-                    snapshot_data,
-                    generated_by,
-                    generated_at
-                )
-                VALUES (
-                    :id,
-                    :tenant_id,
-                    'enterprise',
-                    :snapshot_data,
-                    :generated_by,
-                    :generated_at
-                )
-            """),
-            {
-                "id": snapshot_id,
-                "tenant_id": tenant_id,
-                "snapshot_data": serialized_data,
-                "generated_by": actor_id,
-                "generated_at": now,
-            },
-        )
-
-        command_record_audit(
-            conn,
-            identity,
-            "command_snapshot",
-            snapshot_id,
-            "generated",
-            {
-                "source": "quantum_command_events",
-            },
-        )
-
-    return {
-        "snapshot_id": str(snapshot_id),
-        "snapshot_type": "enterprise",
-        "source": "quantum_command_events",
-        "summary": snapshot_data["summary"],
-        "generated_at": now.isoformat(),
-    }
-
-
-# ============================================================
-# ENTERPRISE DOMAIN INTELLIGENCE
-# ============================================================
-
-@router.get(
-    "/intelligence/domains",
-    summary="Enterprise Command Domain Intelligence",
-)
-def command_domain_intelligence(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        rows = conn.execute(
-            text("""
-                SELECT
-                    domain,
-                    COUNT(*) AS total_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'open'
-                    ) AS open_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'in_progress'
-                    ) AS in_progress_events,
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'resolved'
-                    ) AS resolved_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'critical'
-                          AND command_status IN (
-                              'open',
-                              'in_progress'
-                          )
-                    ) AS critical_active_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'high'
-                          AND command_status IN (
-                              'open',
-                              'in_progress'
-                          )
-                    ) AS high_active_events
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-                GROUP BY domain
-                ORDER BY domain
-            """),
-            {
-                "tenant_id": tenant_id,
-            },
-        ).mappings().all()
-
-    domains = [
-        command_serialize_row(row)
-        for row in rows
-    ]
-
-    return {
-        "module": "Enterprise Domain Intelligence",
-        "domain_count": len(domains),
-        "domains": domains,
-        "generated_at": command_now().isoformat(),
-        "data_source": "Command Center event registry",
-        "note": (
-            "Domain labels classify Command Center events. "
-            "This endpoint does not yet query the "
-            "independent ERP module databases."
-        ),
-    }
-
-
-# ============================================================
-# ENTERPRISE VESSEL PRIORITY INTELLIGENCE
-# ============================================================
-
-@router.get(
-    "/intelligence/vessels",
-    summary="Enterprise Vessel Priority Intelligence",
-)
-def command_vessel_intelligence(
-    limit: int = Query(default=100, ge=1, le=200),
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        rows = conn.execute(
-            text("""
-                SELECT
-                    vessel_id,
-                    COUNT(*) AS active_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'critical'
-                    ) AS critical_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'high'
-                    ) AS high_events,
-                    COUNT(*) FILTER (
-                        WHERE assigned_to IS NULL
-                           OR BTRIM(assigned_to) = ''
-                    ) AS unassigned_events
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-                  AND vessel_id IS NOT NULL
-                  AND BTRIM(vessel_id) <> ''
-                  AND command_status IN (
-                      'open',
-                      'in_progress'
-                  )
-                GROUP BY vessel_id
-                ORDER BY
-                    critical_events DESC,
-                    high_events DESC,
-                    active_events DESC,
-                    vessel_id
-                LIMIT :limit
-            """),
-            {
-                "tenant_id": tenant_id,
-                "limit": limit,
-            },
-        ).mappings().all()
-
-    vessels = []
-
-    for row in rows:
-
-        item = command_serialize_row(row)
-
-        if item["critical_events"] > 0:
-            item["priority_level"] = "critical"
-
-        elif item["high_events"] > 0:
-            item["priority_level"] = "high"
-
-        else:
-            item["priority_level"] = "routine"
-
-        vessels.append(item)
-
-    return {
-        "module": "Enterprise Vessel Priority Intelligence",
-        "vessel_count": len(vessels),
-        "vessels": vessels,
-        "generated_at": command_now().isoformat(),
-        "data_source": "Command Center event registry",
-        "note": (
-            "Vessel identifiers are provided in command "
-            "events and are not yet validated against "
-            "the Fleet module."
-        ),
-    }
-
-
-# ============================================================
-# COMPARE TWO ENTERPRISE SNAPSHOTS
-# ============================================================
-
-@router.get(
-    "/intelligence/snapshot-comparison",
-    summary="Compare Enterprise Command Snapshots",
-)
-def command_compare_snapshots(
-    first_snapshot_id: UUID,
-    second_snapshot_id: UUID,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    if first_snapshot_id == second_snapshot_id:
-        raise HTTPException(
-            status_code=422,
-            detail="Two different snapshot IDs are required.",
-        )
-
-    with get_engine().connect() as conn:
-
-        rows = conn.execute(
-            text("""
-                SELECT
-                    id,
-                    snapshot_type,
-                    snapshot_data,
-                    generated_at
-                FROM quantum_command_snapshots
-                WHERE tenant_id = :tenant_id
-                  AND id IN (
-                      :first_id,
-                      :second_id
-                  )
-            """),
-            {
-                "tenant_id": tenant_id,
-                "first_id": first_snapshot_id,
-                "second_id": second_snapshot_id,
-            },
-        ).mappings().all()
-
-    snapshots = {
-        str(row["id"]): row
-        for row in rows
-    }
-
-    first = snapshots.get(str(first_snapshot_id))
-    second = snapshots.get(str(second_snapshot_id))
-
-    if first is None or second is None:
-        raise HTTPException(
-            status_code=404,
-            detail="One or both snapshots were not found.",
-        )
-
-    first_data = json.loads(first["snapshot_data"])
-    second_data = json.loads(second["snapshot_data"])
-
-    first_source = first_data.get("source")
-    second_source = second_data.get("source")
-
-    # Comparisons require the same recognized data source.
-    if (
-        first_source != "quantum_command_events"
-        or second_source != "quantum_command_events"
-    ):
-        raise HTTPException(
-            status_code=422,
-            detail=(
-                "Comparison requires two snapshots generated "
-                "from Command Center events."
-            ),
-        )
-
-    first_summary = first_data.get("summary", {})
-    second_summary = second_data.get("summary", {})
-
-    metrics = [
-        "total_events",
-        "open_events",
-        "in_progress_events",
-        "resolved_events",
-        "cancelled_events",
-        "active_critical_events",
-        "active_high_events",
-    ]
-
-    changes = {}
-
-    for metric in metrics:
-
-        old_value = first_summary.get(metric)
-        new_value = second_summary.get(metric)
-
-        if (
-            type(old_value) is not int
-            or type(new_value) is not int
-            or old_value < 0
-            or new_value < 0
-        ):
-            raise HTTPException(
-                status_code=422,
-                detail=(
-                    "Snapshot contains missing or invalid "
-                    "comparison metrics."
-                ),
-            )
-
-        changes[metric] = {
-            "first": old_value,
-            "second": new_value,
-            "difference": new_value - old_value,
-        }
-
-    return {
-        "module": "Enterprise Snapshot Comparison",
-        "first_snapshot_id": str(first_snapshot_id),
-        "second_snapshot_id": str(second_snapshot_id),
-        "first_generated_at":
-            first["generated_at"].isoformat(),
-        "second_generated_at":
-            second["generated_at"].isoformat(),
-        "metric_changes": changes,
-        "note": (
-            "Differences represent changes in recorded "
-            "Command Center event totals, not necessarily "
-            "changes in underlying ERP operational data."
-        ),
-    }
-
-
-# ============================================================
-# END OF MARITIME QUANTUM COMMAND BLOK 4
-# ============================================================
-
-# ============================================================
-# MQEIP - MARITIME QUANTUM COMMAND CENTER
-# BLOK 5 - EXECUTIVE DASHBOARD, AUDIT & INITIALIZATION
-# ============================================================
-
-
-# ============================================================
-# ENTERPRISE QUANTUM COMMAND DASHBOARD
-# ============================================================
-
-@router.get(
-    "/executive/dashboard",
-    summary="Maritime Quantum Executive Command Dashboard",
-)
-def command_executive_dashboard(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        metrics = conn.execute(
-            text("""
-                SELECT
-                    COUNT(*) AS total_events,
-
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'open'
-                    ) AS open_events,
-
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'in_progress'
-                    ) AS in_progress_events,
-
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'resolved'
-                    ) AS resolved_events,
-
-                    COUNT(*) FILTER (
-                        WHERE command_status = 'cancelled'
-                    ) AS cancelled_events,
-
-                    COUNT(*) FILTER (
-                        WHERE priority = 'critical'
-                          AND command_status IN (
-                              'open', 'in_progress'
-                          )
-                    ) AS active_critical_events,
-
-                    COUNT(*) FILTER (
-                        WHERE priority = 'high'
-                          AND command_status IN (
-                              'open', 'in_progress'
-                          )
-                    ) AS active_high_events,
-
-                    COUNT(*) FILTER (
-                        WHERE command_status IN (
-                            'open', 'in_progress'
-                        )
-                          AND (
-                              assigned_to IS NULL
-                              OR BTRIM(assigned_to) = ''
-                          )
-                    ) AS unassigned_active_events
-
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-            """),
-            {"tenant_id": tenant_id},
-        ).mappings().one()
-
-        domains = conn.execute(
-            text("""
-                SELECT
-                    domain,
-                    COUNT(*) FILTER (
-                        WHERE command_status IN (
-                            'open', 'in_progress'
-                        )
-                    ) AS active_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'critical'
-                          AND command_status IN (
-                            'open', 'in_progress'
-                          )
-                    ) AS critical_events
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-                GROUP BY domain
-                ORDER BY critical_events DESC,
-                         active_events DESC,
-                         domain
-            """),
-            {"tenant_id": tenant_id},
-        ).mappings().all()
-
-        critical_items = conn.execute(
-            text("""
-                SELECT
-                    id,
-                    title,
-                    domain,
-                    priority,
-                    command_status,
-                    vessel_id,
-                    assigned_to,
-                    created_at
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-                  AND priority = 'critical'
-                  AND command_status IN (
-                      'open', 'in_progress'
-                  )
-                ORDER BY created_at ASC, id ASC
-                LIMIT 20
-            """),
-            {"tenant_id": tenant_id},
-        ).mappings().all()
-
-        latest_snapshot = conn.execute(
-            text("""
-                SELECT
-                    id,
-                    snapshot_type,
-                    generated_at
-                FROM quantum_command_snapshots
-                WHERE tenant_id = :tenant_id
-                ORDER BY generated_at DESC, id DESC
-                LIMIT 1
-            """),
-            {"tenant_id": tenant_id},
-        ).mappings().first()
-
-    summary = command_serialize_row(metrics)
-
-    if summary["active_critical_events"] > 0:
-        attention_level = "critical"
-
-    elif summary["active_high_events"] > 0:
-        attention_level = "high"
-
-    elif (
-        summary["open_events"] > 0
-        or summary["in_progress_events"] > 0
-    ):
-        attention_level = "moderate"
-
-    else:
-        attention_level = "routine"
-
-    return {
-        "platform": "MQEIP",
-        "command_center": "Maritime Quantum Command Center",
-        "executive_attention_level": attention_level,
-        "event_summary": summary,
-        "domain_overview": [
-            command_serialize_row(row)
-            for row in domains
-        ],
-        "critical_priority_events": [
-            command_serialize_row(row)
-            for row in critical_items
-        ],
-        "latest_snapshot": (
-            command_serialize_row(latest_snapshot)
-            if latest_snapshot is not None
-            else None
-        ),
-        "generated_at": command_now().isoformat(),
-        "data_source": "Command Center database",
-        "integration_status": (
-            "Direct cross-module ERP aggregation "
-            "not yet implemented."
-        ),
-    }
-
-
-# ============================================================
-# COMMAND ATTENTION INTELLIGENCE
-# ============================================================
-
-@router.get(
-    "/executive/attention",
-    summary="Executive Command Attention Intelligence",
-)
-def command_executive_attention(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        rows = conn.execute(
-            text("""
-                SELECT
-                    domain,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'critical'
-                    ) AS critical_events,
-                    COUNT(*) FILTER (
-                        WHERE priority = 'high'
-                    ) AS high_events,
-                    COUNT(*) FILTER (
-                        WHERE assigned_to IS NULL
-                           OR BTRIM(assigned_to) = ''
-                    ) AS unassigned_events,
-                    COUNT(*) AS active_events
-                FROM quantum_command_events
-                WHERE tenant_id = :tenant_id
-                  AND command_status IN (
-                      'open', 'in_progress'
-                  )
-                GROUP BY domain
-                ORDER BY
-                    critical_events DESC,
-                    high_events DESC,
-                    active_events DESC,
-                    domain
-            """),
-            {"tenant_id": tenant_id},
-        ).mappings().all()
-
-    attention_items = []
-
-    for row in rows:
-
-        item = command_serialize_row(row)
-
-        if item["critical_events"] > 0:
-            item["attention_level"] = "critical"
-            item["recommended_action"] = (
-                "Immediate executive review required."
-            )
-
-        elif item["high_events"] > 0:
-            item["attention_level"] = "high"
-            item["recommended_action"] = (
-                "Management review and mitigation "
-                "follow-up recommended."
-            )
-
-        elif item["unassigned_events"] > 0:
-            item["attention_level"] = "moderate"
-            item["recommended_action"] = (
-                "Assign responsible personnel "
-                "to outstanding events."
-            )
-
-        else:
-            item["attention_level"] = "routine"
-            item["recommended_action"] = (
-                "Continue monitoring active events."
-            )
-
-        attention_items.append(item)
-
-    return {
-        "module": "Executive Attention Intelligence",
-        "domain_count": len(attention_items),
-        "attention_items": attention_items,
-        "generated_at": command_now().isoformat(),
-        "analysis_method": "Deterministic event priority rules",
-    }
-
-
-# ============================================================
-# COMMAND AUDIT TRAIL
-# ============================================================
-
-@router.get(
-    "/audit",
-    summary="Maritime Quantum Command Audit Trail",
-)
-def command_list_audit(
-    entity_type: Optional[str] = Query(
-        default=None,
-        max_length=100,
-    ),
-    entity_id: Optional[str] = Query(
-        default=None,
-        max_length=150,
-    ),
-    action: Optional[str] = Query(
-        default=None,
-        max_length=100,
-    ),
-    limit: int = Query(default=100, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_admin(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        rows = conn.execute(
-            text("""
-                SELECT
-                    id,
-                    entity_type,
-                    entity_id,
-                    action,
-                    details_json,
-                    actor_id,
-                    created_at
-                FROM quantum_command_audit
-                WHERE tenant_id = :tenant_id
-                  AND (
-                      :entity_type IS NULL
-                      OR entity_type = :entity_type
-                  )
-                  AND (
-                      :entity_id IS NULL
-                      OR entity_id = :entity_id
-                  )
-                  AND (
-                      :action IS NULL
-                      OR action = :action
-                  )
-                ORDER BY created_at DESC, id DESC
-                LIMIT :limit
-                OFFSET :offset
-            """),
-            {
-                "tenant_id": tenant_id,
-                "entity_type": entity_type,
-                "entity_id": entity_id,
-                "action": action,
-                "limit": limit,
-                "offset": offset,
-            },
-        ).mappings().all()
-
-    return {
-        "module": "Maritime Quantum Command Audit",
-        "count": len(rows),
-        "limit": limit,
-        "offset": offset,
-        "records": [
-            command_serialize_row(row)
-            for row in rows
-        ],
-    }
-
-
-# ============================================================
-# COMMAND SYSTEM STATUS
-# ============================================================
-
-@router.get(
-    "/system/status",
-    summary="Maritime Quantum Command System Status",
-)
-def command_system_status(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_admin(identity)
-
-    tenant_id = command_get_tenant(identity)
-
-    with get_engine().connect() as conn:
-
-        counts = conn.execute(
-            text("""
-                SELECT
-                    (
-                        SELECT COUNT(*)
-                        FROM quantum_command_events
-                        WHERE tenant_id = :tenant_id
-                    ) AS event_count,
-
-                    (
-                        SELECT COUNT(*)
-                        FROM quantum_command_notes
-                        WHERE tenant_id = :tenant_id
-                    ) AS note_count,
-
-                    (
-                        SELECT COUNT(*)
-                        FROM quantum_command_snapshots
-                        WHERE tenant_id = :tenant_id
-                    ) AS snapshot_count,
-
-                    (
-                        SELECT COUNT(*)
-                        FROM quantum_command_audit
-                        WHERE tenant_id = :tenant_id
-                    ) AS audit_record_count
-            """),
-            {"tenant_id": tenant_id},
-        ).mappings().one()
-
-    return {
-        "platform": "MQEIP",
-        "module": "Maritime Quantum Command Center",
-        "database_status": "connected",
-        "records": command_serialize_row(counts),
-        "capabilities": {
-            "command_event_management": True,
-            "operational_priority_board": True,
-            "executive_strategic_notes": True,
-            "decision_support_rules": True,
-            "domain_event_intelligence": True,
-            "vessel_event_intelligence": True,
-            "command_snapshots": True,
-            "snapshot_comparison": True,
-            "command_audit_trail": True,
-            "direct_erp_module_integration": False,
-            "live_operational_data_streaming": False,
-            "quantum_hardware_processing": False,
-        },
-        "generated_at": command_now().isoformat(),
-    }
-
-
-# ============================================================
-# COMMAND MODULE INFORMATION
-# ============================================================
-
-@router.get(
-    "/system/capabilities",
-    summary="Maritime Quantum Command Capabilities",
-)
-def command_system_capabilities(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    command_require_executive(identity)
-
-    return {
-        "platform": "MQEIP",
-        "module": "Maritime Quantum Command Center",
-        "architecture": "API-first multi-tenant",
-        "supported_domains": sorted(COMMAND_DOMAINS),
-        "supported_priorities": sorted(COMMAND_PRIORITY_LEVELS),
-        "supported_statuses": sorted(COMMAND_STATUSES),
-        "intelligence": {
-            "executive_dashboard": "available",
-            "priority_management": "available",
-            "risk_classification": "rule_based",
-            "decision_support": "rule_based",
-            "snapshots": "available",
-            "cross_module_data_aggregation": "not_integrated",
-            "quantum_optimization_execution": "not_integrated",
-        },
-        "generated_at": command_now().isoformat(),
-    }
-
-
-# ============================================================
-# POSTGRESQL DATABASE INITIALIZATION
-# ============================================================
-
-# Initializes the Command Center tables when imported.
-# A versioned migration system should replace this
-# initialization method before production deployment.
-
-init_quantum_command_tables()
-
-
-# ============================================================
-# END OF MARITIME QUANTUM COMMAND BLOK 5
-# ============================================================
