@@ -25,6 +25,7 @@ from .modules.audit import router as audit_router
 from .modules.document_management import router as document_management_router
 from .modules.workflow import router as workflow_router
 from .modules.notifications import router as notifications_router
+from .modules.notifications import router as notifications_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -76,6 +77,7 @@ app.include_router(legal_router)
 app.include_router(audit_router)
 app.include_router(document_management_router)
 app.include_router(workflow_router)
+app.include_router(notifications_router)
 app.include_router(notifications_router)
     
 @app.post("/api/v1/login", tags=["Security"])
