@@ -27,6 +27,7 @@ from .modules.workflow import router as workflow_router
 from .modules.notifications import router as notifications_router
 from .modules.notifications import router as notifications_router
 from .modules.esg import router as esg_router
+from .modules.business_intelligence import router as bi_router
 
 class LoginRequest(BaseModel):
     username: str
@@ -81,6 +82,7 @@ app.include_router(workflow_router)
 app.include_router(notifications_router)
 app.include_router(notifications_router)
 app.include_router(esg_router)
+app.include_router(bi_router)
     
 @app.post("/api/v1/login", tags=["Security"])
 async def login(request: LoginRequest):
