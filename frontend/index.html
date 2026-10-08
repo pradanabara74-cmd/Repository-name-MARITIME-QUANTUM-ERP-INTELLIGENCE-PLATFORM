@@ -2140,9 +2140,6 @@ async function mqeipLogin(username, password) {
 
         // Ensure this identity can access
         // the executive command dashboard.
-        await mqeipApiRequest(
-            MQEIP_COMMAND_API + "/executive/dashboard"
-        );
 
         mqeipSetConnection(
             "connected",
