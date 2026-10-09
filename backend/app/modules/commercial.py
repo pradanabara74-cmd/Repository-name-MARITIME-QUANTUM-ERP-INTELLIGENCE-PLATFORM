@@ -1817,3 +1817,89 @@ def commercial_audit_trail(
 
     return [serialize_row(row) for row in rows]
 
+# ================================================
+# COMMERCIAL VOYAGE COST RECORD
+# ================================================
+
+class VoyageCostRecord(BaseModel):
+    bunker_cost: float = Field(default=0, ge=0)
+    port_cost: float = Field(default=0, ge=0)
+    agency_cost: float = Field(default=0, ge=0)
+    other_cost: float = Field(default=0, ge=0)
+
+
+@router.post(
+    "/voyages/{voyage_id}/cost",
+    summary="Record Commercial Voyage Cost",
+)
+def record_commercial_voyage_cost(
+    voyage_id: UUID,
+    payload: VoyageCostRecord,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_commercial_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        voyage = conn.execute(
+            text("""
+                SELECT id
+                FROM commercial_voyages
+                WHERE id = :voyage_id
+                  AND tenant_id = :tenant_id
+                FOR UPDATE
+            """),
+            {
+                "voyage_id": voyage_id,
+                "tenant_id": identity.tenant_id,
+            },
+        ).first()
+
+        if voyage is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Commercial voyage not found",
+            )
+
+        total_cost = (
+            payload.bunker_cost
+            + payload.port_cost
+            + payload.agency_cost
+            + payload.other_cost
+        )
+
+        conn.execute(
+            text("""
+                UPDATE commercial_voyages
+                SET bunker_cost = :bunker_cost,
+                    port_cost = :port_cost,
+                    agency_cost = :agency_cost,
+                    other_cost = :other_cost,
+                    actual_cost = :actual_cost,
+                    updated_at = :updated_at
+                WHERE id = :voyage_id
+                  AND tenant_id = :tenant_id
+            """),
+            {
+                "bunker_cost": payload.bunker_cost,
+                "port_cost": payload.port_cost,
+                "agency_cost": payload.agency_cost,
+                "other_cost": payload.other_cost,
+                "actual_cost": total_cost,
+                "updated_at": utc_now(),
+                "voyage_id": voyage_id,
+                "tenant_id": identity.tenant_id,
+            },
+        )
+
+    return {
+        "voyage_id": str(voyage_id),
+        "bunker_cost": payload.bunker_cost,
+        "port_cost": payload.port_cost,
+        "agency_cost": payload.agency_cost,
+        "other_cost": payload.other_cost,
+        "actual_cost": total_cost,
+        "currency": "USD",
+        "status": "recorded",
+    }
+
