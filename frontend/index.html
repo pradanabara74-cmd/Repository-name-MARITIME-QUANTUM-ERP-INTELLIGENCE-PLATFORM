@@ -2073,97 +2073,97 @@ async function mqeipLogin(username, password) {
         button.textContent = "Authenticating...";
     }
 
-    mqeipSetLoginMessage(
-        "Connecting to secure MQEIP backend..."
+    mqeipSetLoginMessage("Connecting to MQEIP backend...");
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+        () => controller.abort(),
+        65000
     );
 
     try {
-        const controller = new AbortController();
-
-        const timeout = setTimeout(
-            () => controller.abort(),
-            65000
+        const response = await fetch(
+            MQEIP_API_BASE + "/api/v1/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({
+                    username: String(username).trim(),
+                    password: String(password)
+                }),
+                signal: controller.signal,
+                cache: "no-store",
+                credentials: "omit"
+            }
         );
-
-        let response;
-
-        try {
-            response = await fetch(
-                MQEIP_API_BASE + "/api/v1/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    }),
-                    signal: controller.signal,
-                    cache: "no-store",
-                    redirect: "error"
-                }
-            );
-        } finally {
-            clearTimeout(timeout);
-        }
-
-        if (!response.ok) {
-            throw new Error(
-                "Login failed. Check credentials "
-                + "and backend availability. HTTP "
-                + response.status
-            );
-        }
 
         const data = await response.json();
 
+        if (!response.ok) {
+            let detail = data.detail || data.message;
+
+            if (Array.isArray(detail)) {
+                detail = detail
+                    .map(item => item.msg || "Validation error")
+                    .join(", ");
+            }
+
+            throw new Error(
+                detail || "Login failed: HTTP " + response.status
+            );
+        }
+
         if (
-            !data ||
-            typeof data.access_token !== "string" ||
-            !data.access_token
+            !data.access_token ||
+            typeof data.access_token !== "string"
         ) {
             throw new Error(
-                "Backend did not return a valid access token."
+                "Backend did not return a valid JWT token."
             );
         }
 
         mqeipAccessToken = data.access_token;
 
-        // Verify identity using the backend.
-        const identity = await mqeipApiRequest(
-            "/api/v1/me"
-        );
+        // Verify JWT against the existing backend.
+        const identity = await mqeipApiRequest("/api/v1/me");
 
         mqeipAuthenticatedUser = identity;
 
-        // Ensure this identity can access
-        // the executive command dashboard.
-
-        mqeipSetConnection(
-            "connected",
-            "API Connected"
+        // Check executive dashboard access.
+        await mqeipApiRequest(
+            MQEIP_COMMAND_API + "/executive/dashboard"
         );
 
-        mqeipSetLoginMessage(
-            "Authentication successful.",
-            "success"
-        );
+        mqeipSetConnection("connected", "Securely Connected");
+        mqeipSetLoginMessage("Login successful.", "success");
 
         mqeipCloseLogin();
 
         await mqeipLoadExecutiveDashboard();
 
+        return true;
+
     } catch (error) {
-        mqeipLogout();
+        mqeipAccessToken = null;
+        mqeipAuthenticatedUser = null;
+
+        mqeipSetConnection("disconnected", "Not Connected");
 
         mqeipSetLoginMessage(
-            error.message || "Authentication failed.",
+            error.name === "AbortError"
+                ? "Backend timeout. Please retry."
+                : error.message,
             "error"
         );
 
+        return false;
+
     } finally {
+        clearTimeout(timeout);
+
         if (button) {
             button.disabled = false;
             button.textContent = "Secure Login";
