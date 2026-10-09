@@ -2067,110 +2067,104 @@ async function mqeipApiRequest(
 
 async function mqeipLogin(username, password) {
     const button = mqeipElement("mqeipLoginSubmit");
+    const message = mqeipElement("mqeipLoginMessage");
+    const cleanUsername = String(username || "").trim();
+    const requestId = ++mqeipRequestVersion;
+
+    if (!cleanUsername || !password) {
+        if (message) {
+            message.textContent =
+                "Username dan password wajib diisi.";
+        }
+        return false;
+    }
 
     if (button) {
         button.disabled = true;
         button.textContent = "Authenticating...";
     }
 
-    mqeipSetLoginMessage("Connecting to MQEIP backend...");
-
-    const controller = new AbortController();
-    const timeout = setTimeout(
-        () => controller.abort(),
-        65000
-    );
-
     try {
-        const response = await fetch(
-            MQEIP_API_BASE + "/api/v1/login",
+        if (message) {
+            message.textContent =
+                "Menghubungkan ke MQEIP Backend...";
+        }
+
+        const loginData = await mqeipApiRequest(
+            "/api/v1/login",
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
                 body: JSON.stringify({
-                    username: String(username).trim(),
-                    password: String(password)
-                }),
-                signal: controller.signal,
-                cache: "no-store",
-                credentials: "omit"
+                    username: cleanUsername,
+                    password: password
+                })
             }
         );
 
-        const data = await response.json();
+        if (requestId !== mqeipRequestVersion) {
+            return false;
+        }
 
-        if (!response.ok) {
-            let detail = data.detail || data.message;
-
-            if (Array.isArray(detail)) {
-                detail = detail
-                    .map(item => item.msg || "Validation error")
-                    .join(", ");
-            }
-
+        if (!loginData || !loginData.access_token) {
             throw new Error(
-                detail || "Login failed: HTTP " + response.status
+                "Backend tidak mengirim access_token."
             );
         }
 
-        if (
-            !data.access_token ||
-            typeof data.access_token !== "string"
-        ) {
+        mqeipAccessToken = loginData.access_token;
+
+        if (message) {
+            message.textContent =
+                "Memverifikasi JWT...";
+        }
+
+        const user = await mqeipApiRequest("/api/v1/me");
+
+        if (requestId !== mqeipRequestVersion) {
+            return false;
+        }
+
+        if (!user || !user.username) {
             throw new Error(
-                "Backend did not return a valid JWT token."
+                "Verifikasi pengguna gagal."
             );
         }
 
-        mqeipAccessToken = data.access_token;
+        mqeipAuthenticatedUser = user;
 
-        // Verify JWT against the existing backend.
-        const identity = await mqeipApiRequest("/api/v1/me");
+        mqeipUpdateSessionControls();
 
-        mqeipAuthenticatedUser = identity;
-
-        // Check executive dashboard access.
-        await mqeipApiRequest(
-            MQEIP_COMMAND_API + "/executive/dashboard"
-        );
-
-        mqeipSetConnection("connected", "Securely Connected");
-        mqeipSetLoginMessage("Login successful.", "success");
-
-        mqeipCloseLogin();
-
-        await mqeipLoadExecutiveDashboard();
+        if (message) {
+            message.textContent = "Login berhasil.";
+        }
 
         return true;
 
     } catch (error) {
+        if (requestId !== mqeipRequestVersion) {
+            return false;
+        }
+
         mqeipAccessToken = null;
         mqeipAuthenticatedUser = null;
 
-        mqeipSetConnection("disconnected", "Not Connected");
+        if (message) {
+            message.textContent =
+                "Login gagal: " + error.message;
+        }
 
-        mqeipSetLoginMessage(
-            error.name === "AbortError"
-                ? "Backend timeout. Please retry."
-                : error.message,
-            "error"
-        );
+        mqeipUpdateSessionControls();
 
         return false;
 
     } finally {
-        clearTimeout(timeout);
-
-        if (button) {
+        if (requestId === mqeipRequestVersion && button) {
             button.disabled = false;
             button.textContent = "Secure Login";
         }
     }
 }
-
+      
 
 /* ==========================================================
    LOGOUT
