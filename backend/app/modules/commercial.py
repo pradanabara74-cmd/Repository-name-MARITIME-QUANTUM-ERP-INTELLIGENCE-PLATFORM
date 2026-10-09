@@ -1764,6 +1764,19 @@ def commercial_dashboard(
             {"tenant_id": identity.tenant_id},
         ).scalar_one()
 
+    with engine.begin() as conn:
+        actual_cost = conn.execute(
+            text("""
+                SELECT COALESCE(SUM(actual_cost), 0)
+                FROM commercial_voyages
+                WHERE tenant_id = :tenant_id
+            """),
+            {"tenant_id": identity.tenant_id},
+        ).scalar_one()
+
+    actual_cost = float(actual_cost or 0)
+    actual_margin = float(revenue or 0) - actual_cost
+
     estimated_revenue = float(voyages["estimated_revenue"] or 0)
     estimated_cost = float(voyages["estimated_cost"] or 0)
 
@@ -1780,6 +1793,8 @@ def commercial_dashboard(
         "estimated_cost": estimated_cost,
         "estimated_margin": estimated_revenue - estimated_cost,
         "recorded_revenue": float(revenue or 0),
+        "actual_cost": actual_cost,
+        "actual_margin": actual_margin,
         "demurrage_amount": float(demurrage or 0),
         "despatch_amount": float(despatch or 0),
         "tenant_isolation": True,
