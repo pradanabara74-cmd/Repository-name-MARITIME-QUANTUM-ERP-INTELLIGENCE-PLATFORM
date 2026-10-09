@@ -488,6 +488,9 @@ def world_fleet_live(
                     *
                 FROM marine_ais_positions
                 WHERE tenant_id = :tenant_id
+  AND source_type = 'AIS'
+  AND UPPER(COALESCE(source, '')) NOT LIKE '%SIMULATION%'
+  AND UPPER(COALESCE(source, '')) NOT LIKE '%TEST%'
                 ORDER BY
                     COALESCE(vessel_id, mmsi, vessel_name),
                     observed_at DESC
