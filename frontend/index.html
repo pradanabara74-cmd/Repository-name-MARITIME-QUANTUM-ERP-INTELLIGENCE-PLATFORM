@@ -2008,6 +2008,7 @@ async function mqeipApiRequest(
                 ...options,
                 signal: controller.signal,
                 headers: {
+                      "Content-Type": "application/json",
     "Accept": "application/json",
     ...(mqeipAccessToken
         ? { "Authorization": "Bearer " + mqeipAccessToken }
