@@ -1984,11 +1984,7 @@ async function mqeipApiRequest(
     endpoint,
     options = {}
 ) {
-    if (!mqeipAccessToken) {
-        throw new Error(
-            "Authentication required. Please log in."
-        );
-    }
+    
 
     if (
         typeof endpoint !== "string" ||
@@ -2012,11 +2008,12 @@ async function mqeipApiRequest(
                 ...options,
                 signal: controller.signal,
                 headers: {
-                    "Accept": "application/json",
-                    "Authorization":
-                        "Bearer " + mqeipAccessToken,
-                    ...(options.headers || {})
-                },
+    "Accept": "application/json",
+    ...(mqeipAccessToken
+        ? { "Authorization": "Bearer " + mqeipAccessToken }
+        : {}),
+    ...(options.headers || {})
+},
                 cache: "no-store",
                 redirect: "error"
             }
