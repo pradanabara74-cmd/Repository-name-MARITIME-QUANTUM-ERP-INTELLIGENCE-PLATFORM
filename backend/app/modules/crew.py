@@ -189,6 +189,54 @@ def create_crew(
         "created_at": created_at,
     }
 
+@router.get("/intelligence/certificates")
+def certificate_intelligence(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    init_crew_tables()
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT
+                    c.crew_name,
+                    c.employee_id,
+                    c.rank,
+                    c.vessel_id,
+                    c.vessel_name,
+                    cc.id AS certificate_id,
+                    cc.certificate_type,
+                    cc.certificate_number,
+                    cc.issuing_authority,
+                    cc.issue_date,
+                    cc.expiry_date
+                FROM crew_certificates cc
+                JOIN crew_members c
+                  ON c.id = cc.crew_id
+                 AND c.tenant_id = cc.tenant_id
+                WHERE cc.tenant_id = :tenant_id
+                ORDER BY c.vessel_name, c.rank, c.crew_name, cc.expiry_date
+                """
+            ),
+            {"tenant_id": identity.tenant_id},
+        ).mappings().all()
+
+    result = []
+
+    for row in rows:
+        item = dict(row)
+        item["certificate_status"] = certificate_status(item["expiry_date"])
+        result.append(item)
+
+    return {
+        "tenant_id": identity.tenant_id,
+        "generated_at": datetime.now(timezone.utc),
+        "total_certificates": len(result),
+        "certificates": result,
+    }
+
 
 @router.get("/{crew_id:uuid}")
 def get_crew(
@@ -359,50 +407,4 @@ def list_crew_certificates(
     return certificates
 
 
-@router.get("/intelligence/certificates")
-def certificate_intelligence(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    init_crew_tables()
-    engine = get_engine()
 
-    with engine.begin() as conn:
-        rows = conn.execute(
-            text(
-                """
-                SELECT
-                    c.crew_name,
-                    c.employee_id,
-                    c.rank,
-                    c.vessel_id,
-                    c.vessel_name,
-                    cc.id AS certificate_id,
-                    cc.certificate_type,
-                    cc.certificate_number,
-                    cc.issuing_authority,
-                    cc.issue_date,
-                    cc.expiry_date
-                FROM crew_certificates cc
-                JOIN crew_members c
-                  ON c.id = cc.crew_id
-                 AND c.tenant_id = cc.tenant_id
-                WHERE cc.tenant_id = :tenant_id
-                ORDER BY c.vessel_name, c.rank, c.crew_name, cc.expiry_date
-                """
-            ),
-            {"tenant_id": identity.tenant_id},
-        ).mappings().all()
-
-    result = []
-
-    for row in rows:
-        item = dict(row)
-        item["certificate_status"] = certificate_status(item["expiry_date"])
-        result.append(item)
-
-    return {
-        "tenant_id": identity.tenant_id,
-        "generated_at": datetime.now(timezone.utc),
-        "total_certificates": len(result),
-        "certificates": result,
-    }
