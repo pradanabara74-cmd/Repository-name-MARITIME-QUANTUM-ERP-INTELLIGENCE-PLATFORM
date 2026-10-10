@@ -2,12 +2,34 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
 from app.core.database import get_database_url
-from app.core.security import TokenIdentity, verify_access_token
+from app.core.security import TokenIdentity, Role, verify_access_token
+import os
+import secrets
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+def verify_ais_token(
+    authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+) -> TokenIdentity:
+    expected = os.getenv("MQEIP_AIS_SERVICE_TOKEN", "")
+    if not expected or not secrets.compare_digest(
+        authorization.credentials, expected
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid AIS service token"
+        )
+
+    return TokenIdentity(
+        user_id="aisstream-service",
+        tenant_id=os.environ["MQEIP_AIS_TENANT_ID"],
+        role=Role.ADMIN,
+        email=None,
+    )
 
 
 router = APIRouter(
@@ -376,7 +398,7 @@ def init_marine_operations_tables():
 )
 def ingest_ais_position(
     payload: AISPositionCreate,
-    identity: TokenIdentity = Depends(verify_access_token),
+    identity: TokenIdentity = Depends(verify_ais_token)
 ):
     init_marine_operations_tables()
 
