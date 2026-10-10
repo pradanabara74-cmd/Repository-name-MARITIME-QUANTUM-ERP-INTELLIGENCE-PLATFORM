@@ -1,4005 +1,1771 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>MQEIP | Maritime Quantum ERP & Intelligence Platform</title>
-
-<style>
-/* ==========================================================
-   MQEIP PREMIUM ENTERPRISE FRONTEND
-   BLOK 1 - DESIGN SYSTEM & APPLICATION SHELL
-   ========================================================== */
-
-:root {
-    --navy-950: #07111f;
-    --navy-900: #0b1729;
-    --navy-850: #101f34;
-    --navy-800: #14263d;
-    --navy-700: #203751;
-
-    --gold: #d8b46a;
-    --gold-light: #f0d69a;
-    --cyan: #48c7df;
-    --green: #4fd1a1;
-    --red: #f47782;
-    --amber: #f3bd65;
-
-    --text: #edf3fa;
-    --muted: #95a7bd;
-    --border: rgba(185, 207, 230, 0.13);
-
-    --sidebar-width: 270px;
-    --topbar-height: 76px;
-
-    --radius: 16px;
-    --shadow: 0 18px 45px rgba(0,0,0,.2);
+50%, #02040a 100%);
 }
 
-* {
-    box-sizing: border-box;
+.quantum-grid {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
 }
 
-html {
-    scroll-behavior: smooth;
+@keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
 }
 
-body {
-    margin: 0;
-    background: var(--navy-950);
-    color: var(--text);
-    font-family:
-        Inter,
-        "Segoe UI",
-        Arial,
-        sans-serif;
-    font-size: 14px;
+.quantum-particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
-button,
-input,
-select {
-    font: inherit;
+.particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: var(--quantum-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--quantum-primary);
+    animation: float 15s infinite linear;
+    opacity: 0.6;
 }
 
-button {
-    cursor: pointer;
+@keyframes float {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-    outline: 2px solid var(--cyan);
-    outline-offset: 3px;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* ==========================================================
-   APPLICATION LAYOUT
-   ========================================================== */
-
-.app-shell {
+/* ============================================
+   LOGIN PORTAL
+   ============================================ */
+.login-portal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(2, 4, 10, 0.95);
+    backdrop-filter: blur(20px);
     display: flex;
-    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.5s ease;
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.login-container {
+    width: 450px;
+    max-width: 90%;
+    background: linear-gradient(135deg, rgba(10, 20, 40, 0.9), rgba(20, 10, 40, 0.9));
+    border: 1px solid var(--quantum-border);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 
+        0 0 60px rgba(0, 240, 255, 0.2),
+        inset 0 0 60px rgba(181, 55, 242, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px;
+    right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, var(--quantum-primary), var(--quantum-secondary), var(--quantum-accent), var(--quantum-primary));
+    background-size: 400% 400%;
+    border-radius: 20px;
+    z-index: -1;
+    animation: borderGlow 8s ease infinite;
+    opacity: 0.5;
+}
+
+@keyframes borderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-logo-icon {
+    width: 80px; height: 80px;
+    margin: 0 auto 15px;
+    background: linear-gradient(135deg, var(--quantum-primary), var(--quantum-secondary));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: white;
+    box-shadow: var(--quantum-glow-strong);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: var(--quantum-glow-strong); }
+    50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(0, 240, 255, 0.8); }
+}
+
+.login-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--quantum-primary), var(--quantum-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+}
+
+.login-subtitle {
+    color: var(--quantum-text-dim);
+    font-size: 13px;
+    margin-top: 8px;
+    letter-spacing: 1px;
+}
+
+.login-form {
+    margin-top: 30px;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--quantum-primary);
+    font-size: 16px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 14px 15px 14px 45px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--quantum-border);
+    border-radius: 10px;
+    color: var(--quantum-text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--quantum-primary);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    background: rgba(0, 20, 40, 0.6);
+}
+
+.input-group input::placeholder {
+    color: var(--quantum-text-dim);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--quantum-primary), var(--quantum-secondary));
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+.login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.login-btn:hover::before {
+    left: 100%;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.4);
+}
+
+.login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-footer {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--quantum-border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--quantum-text-dim);
+    letter-spacing: 1px;
+}
+
+.login-footer i {
+    color: var(--quantum-accent);
+    margin-right: 5px;
+}
+
+.login-error {
+    background: rgba(255, 56, 96, 0.1);
+    border: 1px solid var(--quantum-danger);
+    color: var(--quantum-danger);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    display: none;
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* ============================================
+   MAIN LAYOUT
+   ============================================ */
+.app-container {
+    display: flex;
+    height: 100vh;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.app-container.active {
+    opacity: 1;
+}
+
+/* Sidebar */
 .sidebar {
-    width: var(--sidebar-width);
-    flex-shrink: 0;
-    background: linear-gradient(
-        180deg,
-        #0c1b30,
-        #081322
-    );
-    border-right: 1px solid var(--border);
+    width: 280px;
+    background: rgba(5, 10, 25, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--quantum-border);
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    z-index: 30;
+    overflow: hidden;
+    transition: width 0.3s ease;
 }
 
-.brand {
-    min-height: 110px;
-    padding: 25px 20px 18px;
-    border-bottom: 1px solid var(--border);
-}
-
-.brand-mark {
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--quantum-border);
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.brand-symbol {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--gold);
+.sidebar-logo {
+    width: 45px; height: 45px;
+    background: linear-gradient(135deg, var(--quantum-primary), var(--quantum-secondary));
     border-radius: 12px;
-    color: var(--gold);
-    font-weight: 800;
-    font-size: 20px;
-    background: rgba(216,180,106,.08);
-}
-
-.brand-name {
-    font-size: 23px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: var(--gold-light);
-}
-
-.brand-subtitle {
-    font-size: 9px;
-    letter-spacing: 1.3px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-top: 3px;
-}
-
-.navigation {
-    padding: 17px 12px;
-    overflow-y: auto;
-    flex: 1;
-    scrollbar-width: thin;
-}
-
-.nav-group {
-    margin-bottom: 18px;
-}
-
-.nav-heading {
-    padding: 12px 13px 8px;
-    color: var(--gold);
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.6px;
-    text-transform: uppercase;
-}
-
-.nav-link {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
     display: flex;
     align-items: center;
-    gap: 11px;
-    padding: 11px 13px;
-    margin: 3px 0;
-    border-radius: 10px;
-    text-align: left;
-    transition: .2s ease;
-}
-
-.nav-link:hover {
-    background: rgba(255,255,255,.055);
-    color: var(--text);
-}
-
-.nav-link.active {
-    background: rgba(216,180,106,.12);
-    color: var(--gold-light);
-    box-shadow: inset 3px 0 var(--gold);
-}
-
-.nav-icon {
-    width: 21px;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    box-shadow: var(--quantum-glow);
     flex-shrink: 0;
-    text-align: center;
-    font-size: 17px;
 }
 
-.sidebar-footer {
-    padding: 17px 20px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.7;
-}
-
-/* ==========================================================
-   MAIN CONTENT
-   ========================================================== */
-
-.main-area {
-    flex: 1;
-    min-width: 0;
-}
-
-.topbar {
-    min-height: var(--topbar-height);
-    background: rgba(11,23,41,.96);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 14px 28px;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    backdrop-filter: blur(12px);
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-width: 0;
-}
-
-.menu-toggle {
-    display: none;
-    background: var(--navy-800);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 9px 12px;
-}
-
-.topbar-title {
-    font-size: 15px;
-    font-weight: 750;
-    letter-spacing: .3px;
-}
-
-.topbar-subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 4px;
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-}
-
-.environment-label {
-    font-size: 10px;
-    color: var(--muted);
+.sidebar-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--quantum-primary), var(--quantum-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: 1px;
 }
 
-.connection-status {
+.sidebar-version {
+    font-size: 10px;
+    color: var(--quantum-text-dim);
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 0;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: var(--quantum-border);
+    border-radius: 2px;
+}
+
+.nav-category {
+    padding: 10px 20px 5px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--quantum-text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.nav-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--amber);
-    font-size: 11px;
-    font-weight: 700;
+    gap: 12px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    position: relative;
+    font-size: 14px;
+    font-weight: 500;
 }
 
-.status-dot {
-    width: 8px;
-    height: 8px;
+.nav-item:hover {
+    background: rgba(0, 240, 255, 0.05);
+    border-left-color: var(--quantum-primary);
+    color: var(--quantum-primary);
+}
+
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.15), transparent);
+    border-left-color: var(--quantum-primary);
+    color: var(--quantum-primary);
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    right: 15px;
+    width: 6px; height: 6px;
+    background: var(--quantum-primary);
     border-radius: 50%;
-    background: var(--amber);
+    box-shadow: 0 0 10px var(--quantum-primary);
 }
 
-.status-dot.connected {
-    background: var(--green);
+.nav-item i {
+    width: 20px;
+    text-align: center;
+    font-size: 15px;
 }
 
-.status-dot.disconnected {
-    background: var(--red);
+.sidebar-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--quantum-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--quantum-text-dim);
 }
 
 .user-avatar {
-    width: 36px;
-    height: 36px;
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--quantum-secondary), var(--quantum-primary));
     border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: rgba(216,180,106,.12);
-    color: var(--gold);
-    border: 1px solid rgba(216,180,106,.3);
-    font-weight: 800;
-}
-
-.page-content {
-    padding: 28px;
-    max-width: 1800px;
-    margin: auto;
-}
-
-.page-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 25px;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
 }
 
-.eyebrow {
-    color: var(--gold);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+.user-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.user-name {
+    color: var(--quantum-text);
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 10px;
+    color: var(--quantum-accent);
+    letter-spacing: 1px;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Top Bar */
+.top-bar {
+    height: 65px;
+    background: rgba(5, 10, 25, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--quantum-border);
+    display: flex;
+    align-items: center;
+    padding: 0 25px;
+    gap: 20px;
 }
 
 .page-title {
-    font-size: clamp(23px, 3vw, 33px);
-    margin: 9px 0;
-    font-weight: 800;
-    letter-spacing: -.5px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--quantum-text), var(--quantum-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.page-description {
-    color: var(--muted);
-    line-height: 1.6;
-    max-width: 740px;
+.top-bar-spacer {
+    flex: 1;
 }
 
-.page-actions {
+.status-indicator {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(0, 255, 157, 0.1);
+    border: 1px solid var(--quantum-accent);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--quantum-accent);
+    letter-spacing: 1px;
 }
 
-/* ==========================================================
-   PREMIUM COMPONENTS
-   ========================================================== */
+.status-dot {
+    width: 8px; height: 8px;
+    background: var(--quantum-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--quantum-accent);
+    animation: blink 1.5s ease-in-out infinite;
+}
 
-.btn {
-    border: 1px solid var(--border);
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.live-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--quantum-primary);
+    letter-spacing: 1px;
+}
+
+.top-btn {
+    width: 40px; height: 40px;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid var(--quantum-border);
     border-radius: 10px;
-    padding: 11px 16px;
-    background: var(--navy-800);
-    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--quantum-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.top-btn:hover {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: var(--quantum-primary);
+    color: var(--quantum-primary);
+    box-shadow: var(--quantum-glow);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -3px; right: -3px;
+    background: var(--quantum-danger);
+    color: white;
+    font-size: 9px;
     font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
 }
 
-.btn:hover {
-    filter: brightness(1.14);
+/* Dashboard Content */
+.dashboard-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 25px;
 }
 
-.btn-gold {
-    background: linear-gradient(
-        135deg,
-        #d6af62,
-        #f0d99c
-    );
-    border-color: transparent;
-    color: #152033;
+.dashboard-content::-webkit-scrollbar {
+    width: 8px;
 }
 
-.btn-outline {
-    border-color: rgba(216,180,106,.4);
+.dashboard-content::-webkit-scrollbar-track {
     background: transparent;
-    color: var(--gold-light);
 }
 
-.dashboard-grid {
+.dashboard-content::-webkit-scrollbar-thumb {
+    background: var(--quantum-border);
+    border-radius: 4px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb:hover {
+    background: var(--quantum-primary);
+}
+
+/* Stats Grid */
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
 }
 
-.panel {
-    background: linear-gradient(
-        160deg,
-        rgba(22,40,62,.98),
-        rgba(12,26,44,.98)
-    );
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 21px;
-    box-shadow: var(--shadow);
-    min-width: 0;
+.stat-card {
+    background: var(--quantum-panel);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--quantum-border);
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-.panel-title {
-    font-size: 14px;
-    font-weight: 750;
-    margin: 0 0 15px;
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--quantum-primary), var(--quantum-secondary));
 }
 
-.metric-label {
-    color: var(--muted);
-    font-size: 12px;
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--quantum-primary);
+    box-shadow: var(--quantum-glow);
+}
+
+.stat-card.danger::before { background: linear-gradient(90deg, var(--quantum-danger), #ff6b6b); }
+.stat-card.warning::before { background: linear-gradient(90deg, var(--quantum-warning), #ffd700); }
+.stat-card.success::before { background: linear-gradient(90deg, var(--quantum-success), #00d9a3); }
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 12px;
 }
 
-.metric-value {
-    font-size: 31px;
-    font-weight: 850;
-    letter-spacing: -.7px;
-}
-
-.metric-footer {
-    margin-top: 13px;
+.stat-label {
     font-size: 11px;
-    color: var(--muted);
+    color: var(--quantum-text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
 }
 
-.text-gold {
-    color: var(--gold-light);
+.stat-icon {
+    width: 36px; height: 36px;
+    background: rgba(0, 240, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--quantum-primary);
+    font-size: 16px;
 }
 
-.text-green {
-    color: var(--green);
+.stat-card.danger .stat-icon { background: rgba(255, 56, 96, 0.1); color: var(--quantum-danger); }
+.stat-card.warning .stat-icon { background: rgba(255, 184, 0, 0.1); color: var(--quantum-warning); }
+.stat-card.success .stat-icon { background: rgba(0, 255, 157, 0.1); color: var(--quantum-success); }
+
+.stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--quantum-text);
+    margin-bottom: 5px;
 }
 
-.text-red {
-    color: var(--red);
+.stat-change {
+    font-size: 12px;
+    color: var(--quantum-text-dim);
 }
 
-.text-cyan {
-    color: var(--cyan);
+.stat-change.positive { color: var(--quantum-success); }
+.stat-change.negative { color: var(--quantum-danger); }
+
+/* Panel Grid */
+.panel-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
 }
 
-.section-heading {
-    font-size: 17px;
-    font-weight: 800;
-    margin: 30px 0 17px;
+.panel {
+    background: var(--quantum-panel);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--quantum-border);
+    border-radius: 15px;
+    overflow: hidden;
 }
 
-.data-table {
+.panel-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--quantum-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--quantum-text);
+}
+
+.panel-subtitle {
+    font-size: 11px;
+    color: var(--quantum-text-dim);
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.panel-action-btn {
+    width: 32px; height: 32px;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid var(--quantum-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--quantum-text-dim);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.panel-action-btn:hover {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--quantum-primary);
+    border-color: var(--quantum-primary);
+}
+
+.panel-body {
+    padding: 20px;
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 280px;
+}
+
+/* Priority Table */
+.priority-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.data-table th {
-    color: var(--muted);
-    font-size: 10px;
-    letter-spacing: 1px;
+.priority-table th {
     text-align: left;
+    padding: 10px 12px;
+    font-size: 10px;
+    color: var(--quantum-text-dim);
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    padding: 13px 10px;
-    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    border-bottom: 1px solid var(--quantum-border);
 }
 
-.data-table td {
-    padding: 15px 10px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
+.priority-table td {
+    padding: 12px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.05);
 }
 
-.table-wrap {
-    width: 100%;
-    overflow-x: auto;
+.priority-table tr {
+    transition: background 0.2s ease;
 }
 
-.empty-state {
-    padding: 35px 15px;
-    text-align: center;
-    color: var(--muted);
-    line-height: 1.7;
+.priority-table tr:hover {
+    background: rgba(0, 240, 255, 0.03);
 }
 
-.badge {
+.priority-badge {
     display: inline-block;
-    padding: 5px 10px;
-    border-radius: 30px;
-    font-size: 10px;
-    font-weight: 800;
-}
-
-.badge-critical {
-    background: rgba(244,119,130,.12);
-    color: var(--red);
-}
-
-.badge-high {
-    background: rgba(243,189,101,.12);
-    color: var(--amber);
-}
-
-.badge-normal {
-    background: rgba(79,209,161,.12);
-    color: var(--green);
-}
-
-/* ==========================================================
-   RESPONSIVE TABLET & MOBILE
-   ========================================================== */
-
-@media (max-width: 1200px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(2, minmax(0,1fr));
-    }
-}
-
-@media (max-width: 900px) {
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        transform: translateX(-100%);
-        transition: transform .25s ease;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    .menu-toggle {
-        display: inline-flex;
-    }
-
-    .page-content {
-        padding: 20px;
-    }
-
-    .topbar {
-        padding: 12px 18px;
-    }
-}
-
-@media (max-width: 550px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .topbar-subtitle,
-    .environment-label {
-        display: none;
-    }
-
-    .page-content {
-        padding: 15px;
-    }
-
-    .panel {
-        padding: 17px;
-    }
-}
-</style>
-</head>
-
-<body>
-
-<div class="app-shell">
-
-    <!-- ================================================
-         ENTERPRISE SIDEBAR
-         ================================================ -->
-
-    <aside class="sidebar" id="sidebar">
-
-        <div class="brand">
-            <div class="brand-mark">
-                <div class="brand-symbol">Q</div>
-
-                <div>
-                    <div class="brand-name">MQEIP</div>
-                    <div class="brand-subtitle">
-                        MARITIME QUANTUM ERP<br>
-                        & INTELLIGENCE PLATFORM
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <nav class="navigation" aria-label="Main navigation">
-
-            <div class="nav-group">
-                <div class="nav-heading">Command Centers</div>
-
-                <button class="nav-link active"
-                        data-page="executive">
-                    <span class="nav-icon">◈</span>
-                    Executive Command
-                </button>
-
-                <button class="nav-link"
-                        data-page="quantum">
-                    <span class="nav-icon">✦</span>
-                    Quantum Command
-                </button>
-
-                <button class="nav-link"
-                        data-page="analytics">
-                    <span class="nav-icon">▥</span>
-                    Business Intelligence
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Maritime Operations</div>
-
-                <button class="nav-link" data-page="fleet">
-                    <span class="nav-icon">⚓</span>
-                    Fleet Management
-                </button>
-
-                <button class="nav-link" data-page="marine">
-                    <span class="nav-icon">◉</span>
-                    Marine Operations
-                </button>
-
-                <button class="nav-link" data-page="crew">
-                    <span class="nav-icon">♙</span>
-                    Crew & Certificates
-                </button>
-
-                <button class="nav-link" data-page="technical">
-                    <span class="nav-icon">⚙</span>
-                    Technical & PMS
-                </button>
-
-                <button class="nav-link" data-page="hsse">
-                    <span class="nav-icon">⬡</span>
-                    HSSE & Compliance
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Enterprise ERP</div>
-
-                <button class="nav-link" data-page="finance">
-                    <span class="nav-icon">▤</span>
-                    Finance & Accounting
-                </button>
-
-                <button class="nav-link" data-page="supply">
-                    <span class="nav-icon">▣</span>
-                    Supply Chain
-                </button>
-
-                <button class="nav-link" data-page="inventory">
-                    <span class="nav-icon">▦</span>
-                    Inventory & Stores
-                </button>
-
-                <button class="nav-link" data-page="commercial">
-                    <span class="nav-icon">◇</span>
-                    Commercial & Chartering
-                </button>
-
-                <button class="nav-link" data-page="hr">
-                    <span class="nav-icon">♧</span>
-                    Human Resources
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Advanced Intelligence</div>
-
-                <button class="nav-link" data-page="ai">
-                    <span class="nav-icon">✧</span>
-                    AI Intelligence Center
-                </button>
-
-                <button class="nav-link" data-page="optimization">
-                    <span class="nav-icon">⌘</span>
-                    Quantum Optimization
-                </button>
-
-                <button class="nav-link" data-page="twin">
-                    <span class="nav-icon">◎</span>
-                    Maritime Digital Twin
-                </button>
-
-                <button class="nav-link" data-page="esg">
-                    <span class="nav-icon">❖</span>
-                    ESG & Sustainability
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Enterprise Control</div>
-
-                <button class="nav-link" data-page="documents">
-                    <span class="nav-icon">▧</span>
-                    Document Management
-                </button>
-
-                <button class="nav-link" data-page="workflow">
-                    <span class="nav-icon">⇄</span>
-                    Workflow & Approvals
-                </button>
-
-                <button class="nav-link" data-page="audit">
-                    <span class="nav-icon">✓</span>
-                    Audit & Internal Control
-                </button>
-
-                <button class="nav-link" data-page="administration">
-                    <span class="nav-icon">⚿</span>
-                    Administration & IAM
-                </button>
-            </div>
-
-        </nav>
-
-        <div class="sidebar-footer">
-            MQEIP ENTERPRISE EDITION<br>
-            Secure Multi-Tenant Architecture<br>
-            <span class="text-gold">Version 1.0 — Frontend Foundation</span>
-        </div>
-
-    </aside>
-
-    <!-- ================================================
-         MAIN APPLICATION
-         ================================================ -->
-
-    <main class="main-area">
-
-        <header class="topbar">
-
-            <div class="topbar-left">
-
-                <button class="menu-toggle"
-                        id="menuToggle"
-                        type="button"
-                        aria-label="Open navigation"
-                        aria-expanded="false">
-                    ☰
-                </button>
-
-                <div>
-                    <div class="topbar-title" id="topbarTitle">
-                        Executive Command Center
-                    </div>
-
-                    <div class="topbar-subtitle">
-                        Enterprise Maritime Intelligence Platform
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="topbar-right">
-
-                <span class="environment-label">
-                    ENTERPRISE ENVIRONMENT
-                </span>
-
-                <div class="connection-status"
-                     id="connectionStatus">
-                    <span class="status-dot"
-                          id="connectionDot"></span>
-                    <span id="connectionText">Not connected</span>
-                </div>
-
-                <div class="user-avatar"
-                     aria-label="User profile">
-                    U
-                </div>
-
-            </div>
-
-        </header>
-
-        <div class="page-content">
-
-            <section class="page-header">
-
-                <div>
-                    <div class="eyebrow">
-                        MARITIME QUANTUM INTELLIGENCE
-                    </div>
-
-                    <h1 class="page-title" id="pageTitle">
-                        Executive Command Center
-                    </h1>
-
-                    <p class="page-description"
-                       id="pageDescription">
-                        Enterprise-wide maritime operational
-                        intelligence, strategic monitoring,
-                        and executive decision support.
-                    </p>
-                </div>
-
-                <div class="page-actions">
-                    <button class="btn btn-outline"
-                            id="refreshButton"
-                            type="button">
-                        ↻ Refresh
-                    </button>
-
-                    <button class="btn btn-gold"
-                            id="connectButton"
-                            type="button">
-                        Connect Secure API
-                    </button>
-                </div>
-
-            </section>
-
-            <!-- Dashboard sections will be inserted
-                 in FRONTEND BLOK 2 -->
-
-<!-- END OF FRONTEND BLOK 1 -->
-
- <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 2 - EXECUTIVE DASHBOARD & INTELLIGENCE PANELS
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   EXECUTIVE DASHBOARD EXTENSIONS
-   ========================================================== */
-
-.executive-dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-}
-
-.executive-kpis {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-}
-
-.kpi-card {
-    position: relative;
-    overflow: hidden;
-    min-height: 150px;
-    background: linear-gradient(
-        145deg,
-        #192e48,
-        #101e31
-    );
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 21px;
-}
-
-.kpi-card::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--gold);
-}
-
-.kpi-card.critical::before {
-    background: var(--red);
-}
-
-.kpi-card.warning::before {
-    background: var(--amber);
-}
-
-.kpi-card.success::before {
-    background: var(--green);
-}
-
-.kpi-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.kpi-icon {
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border-radius: 11px;
-    background: rgba(216,180,106,.1);
-    color: var(--gold);
-    font-size: 20px;
-}
-
-.kpi-number {
-    font-size: clamp(26px, 3vw, 36px);
-    font-weight: 850;
-    margin-top: 17px;
-    letter-spacing: -.8px;
-}
-
-.kpi-caption {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-}
-
-.kpi-footnote {
-    margin-top: 12px;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.intelligence-grid {
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 18px;
-}
-
-.intelligence-grid.equal {
-    grid-template-columns: 1fr 1fr;
-}
-
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 19px;
-}
-
-.panel-header h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 800;
-}
-
-.panel-subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 6px;
-    line-height: 1.5;
-}
-
-.panel-tag {
-    color: var(--gold-light);
-    border: 1px solid rgba(216,180,106,.25);
-    border-radius: 20px;
-    padding: 6px 10px;
-    font-size: 10px;
-    white-space: nowrap;
-}
-
-.command-overview {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 12px;
-}
-
-.overview-item {
-    background: rgba(255,255,255,.025);
-    border: 1px solid var(--border);
-    border-radius: 11px;
-    padding: 17px;
-}
-
-.overview-value {
-    font-size: 25px;
-    font-weight: 800;
-    margin-bottom: 7px;
-}
-
-.overview-label {
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.attention-indicator {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px;
-    background: rgba(216,180,106,.05);
-    border: 1px solid var(--border);
+    padding: 3px 10px;
     border-radius: 12px;
-    margin-bottom: 17px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
-.attention-symbol {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    background: rgba(243,189,101,.1);
-    color: var(--amber);
-    font-size: 22px;
+.priority-critical {
+    background: rgba(255, 56, 96, 0.15);
+    color: var(--quantum-danger);
+    border: 1px solid var(--quantum-danger);
 }
 
-.attention-title {
-    font-weight: 800;
-    margin-bottom: 4px;
+.priority-high {
+    background: rgba(255, 184, 0, 0.15);
+    color: var(--quantum-warning);
+    border: 1px solid var(--quantum-warning);
 }
 
-.attention-description {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.5;
+.priority-medium {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--quantum-primary);
+    border: 1px solid var(--quantum-primary);
 }
 
-.domain-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+.priority-low {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--quantum-success);
+    border: 1px solid var(--quantum-success);
 }
 
-.domain-row {
-    display: grid;
-    grid-template-columns: 135px 1fr 40px;
-    gap: 12px;
+.status-badge {
+    display: inline-flex;
     align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
-.domain-name {
-    color: var(--text);
-    font-size: 11px;
-    overflow-wrap: anywhere;
+.status-open {
+    background: rgba(255, 184, 0, 0.15);
+    color: var(--quantum-warning);
 }
 
-.domain-track {
-    height: 8px;
-    background: rgba(255,255,255,.07);
-    border-radius: 20px;
-    overflow: hidden;
+.status-progress {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--quantum-primary);
 }
 
-.domain-fill {
-    height: 100%;
-    width: 0;
-    border-radius: 20px;
-    background: linear-gradient(
-        90deg,
-        #ae8c4e,
-        #f0d69a
-    );
-    transition: width .35s ease;
+.status-resolved {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--quantum-success);
 }
 
-.domain-count {
-    font-size: 12px;
-    font-weight: 750;
-    text-align: right;
-}
-
-.command-alert {
+/* Alerts List */
+.alert-item {
     display: flex;
-    gap: 13px;
-    align-items: flex-start;
-    border-bottom: 1px solid var(--border);
-    padding: 14px 0;
-}
-
-.command-alert:last-child {
-    border-bottom: 0;
-}
-
-.alert-symbol {
-    width: 35px;
-    height: 35px;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 56, 96, 0.05);
+    border: 1px solid rgba(255, 56, 96, 0.2);
     border-radius: 10px;
-    background: rgba(244,119,130,.09);
-    color: var(--red);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    font-size: 18px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
 }
 
-.alert-body {
-    min-width: 0;
+.alert-item:hover {
+    background: rgba(255, 56, 96, 0.1);
+    border-color: var(--quantum-danger);
+}
+
+.alert-icon {
+    width: 36px; height: 36px;
+    background: rgba(255, 56, 96, 0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--quantum-danger);
+    flex-shrink: 0;
+}
+
+.alert-content {
     flex: 1;
 }
 
 .alert-title {
-    font-weight: 750;
-    font-size: 12px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--quantum-text);
+    margin-bottom: 3px;
 }
 
-.alert-meta {
-    color: var(--muted);
-    font-size: 10px;
-    margin-top: 6px;
-    line-height: 1.6;
-}
-
-.intelligence-footer {
-    color: var(--muted);
-    font-size: 10px;
-    padding-top: 13px;
-    border-top: 1px solid var(--border);
-    line-height: 1.6;
-}
-
-.dashboard-placeholder {
-    text-align: center;
-    padding: 35px 15px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-.dashboard-placeholder strong {
-    display: block;
-    color: var(--gold-light);
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
-.data-source-label {
-    color: var(--muted);
+.alert-desc {
     font-size: 11px;
-    line-height: 1.5;
+    color: var(--quantum-text-dim);
 }
 
-@media (max-width: 1200px) {
-    .executive-kpis {
-        grid-template-columns: repeat(2, minmax(0,1fr));
-    }
+.alert-time {
+    font-size: 10px;
+    color: var(--quantum-text-dim);
+    font-family: 'JetBrains Mono', monospace;
 }
 
-@media (max-width: 1050px) {
-    .intelligence-grid,
-    .intelligence-grid.equal {
-        grid-template-columns: 1fr;
-    }
+/* Domain Grid */
+.domain-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
-@media (max-width: 550px) {
-    .executive-kpis {
-        grid-template-columns: 1fr;
-    }
-
-    .domain-row {
-        grid-template-columns: 100px 1fr 30px;
-        gap: 8px;
-    }
-
-    .command-overview {
-        grid-template-columns: 1fr 1fr;
-    }
+.domain-card {
+    background: rgba(0, 240, 255, 0.03);
+    border: 1px solid var(--quantum-border);
+    border-radius: 10px;
+    padding: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
-</style>
 
-
-<!-- ==========================================================
-     EXECUTIVE COMMAND CENTER
-     ========================================================== -->
-
-<section
-    id="executiveDashboard"
-    class="executive-dashboard"
-    aria-label="Executive Command Center"
->
-
-    <!-- ======================================================
-         EXECUTIVE KPI CARDS
-         ====================================================== -->
-
-    <div class="executive-kpis">
-
-        <article class="kpi-card">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    TOTAL COMMAND EVENTS
-                </div>
-                <div class="kpi-icon">▦</div>
-            </div>
-
-            <div class="kpi-number text-gold"
-                 id="kpiTotalEvents">
-                —
-            </div>
-
-            <div class="kpi-caption">
-                Enterprise Operational Events
-            </div>
-
-            <div class="kpi-footnote">
-                Command Center Database
-            </div>
-        </article>
-
-        <article class="kpi-card critical">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    CRITICAL EVENTS
-                </div>
-                <div class="kpi-icon">!</div>
-            </div>
-
-            <div class="kpi-number text-red"
-                 id="kpiCriticalEvents">
-                —
-            </div>
-
-            <div class="kpi-caption">
-                Active Critical Priorities
-            </div>
-
-            <div class="kpi-footnote">
-                Open & In Progress
-            </div>
-        </article>
-
-        <article class="kpi-card warning">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    ACTIVE EVENTS
-                </div>
-                <div class="kpi-icon">◷</div>
-            </div>
-
-            <div class="kpi-number"
-                 id="kpiActiveEvents">
-                —
-            </div>
-
-            <div class="kpi-caption">
-                Outstanding Operational Actions
-            </div>
-
-            <div class="kpi-footnote">
-                Open & In Progress
-            </div>
-        </article>
-
-        <article class="kpi-card success">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    RESOLVED EVENTS
-                </div>
-                <div class="kpi-icon">✓</div>
-            </div>
-
-            <div class="kpi-number text-green"
-                 id="kpiResolvedEvents">
-                —
-            </div>
-
-            <div class="kpi-caption">
-                Completed Operational Resolutions
-            </div>
-
-            <div class="kpi-footnote">
-                Recorded Command Resolutions
-            </div>
-        </article>
-
-    </div>
-
-
-    <!-- ======================================================
-         COMMAND INTELLIGENCE OVERVIEW
-         ====================================================== -->
-
-    <div class="intelligence-grid">
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Enterprise Command Intelligence</h3>
-                    <div class="panel-subtitle">
-                        Executive operational overview
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    COMMAND CENTER
-                </span>
-            </div>
-
-            <div class="attention-indicator">
-
-                <div class="attention-symbol">
-                    ◈
-                </div>
-
-                <div>
-                    <div class="attention-title"
-                         id="executiveAttentionLevel">
-                        Awaiting Secure Connection
-                    </div>
-
-                    <div class="attention-description"
-                         id="executiveAttentionDescription">
-                        Connect to the authenticated
-                        MQEIP API to retrieve
-                        operational intelligence.
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="command-overview">
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="overviewOpen">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        Open Events
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="overviewInProgress">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        In Progress
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value text-red"
-                         id="overviewHigh">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        High Priority
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value text-gold"
-                         id="overviewUnassigned">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        Unassigned Events
-                    </div>
-                </div>
-
-            </div>
-
-        </article>
-
-
-        <!-- ==================================================
-             DOMAIN INTELLIGENCE
-             ================================================== -->
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Enterprise Domain Intelligence</h3>
-                    <div class="panel-subtitle">
-                        Active command events by division
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    OPERATIONS
-                </span>
-            </div>
-
-            <div id="domainIntelligenceList"
-                 class="domain-list">
-
-                <div class="dashboard-placeholder">
-                    <strong>No Data Loaded</strong>
-                    Domain intelligence will appear
-                    after secure API connection.
-                </div>
-
-            </div>
-
-        </article>
-
-    </div>
-
-
-    <!-- ======================================================
-         CRITICAL ALERTS & PRIORITY BOARD
-         ====================================================== -->
-
-    <div class="intelligence-grid equal">
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Critical Operational Alerts</h3>
-                    <div class="panel-subtitle">
-                        Events requiring executive attention
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    CRITICAL
-                </span>
-            </div>
-
-            <div id="criticalAlertsList">
-
-                <div class="dashboard-placeholder">
-                    <strong>No Alerts Loaded</strong>
-                    Critical alerts will be retrieved
-                    from the Command Center API.
-                </div>
-
-            </div>
-
-        </article>
-
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Operational Priority Board</h3>
-                    <div class="panel-subtitle">
-                        Enterprise action priorities
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    PRIORITY CONTROL
-                </span>
-            </div>
-
-            <div class="table-wrap">
-
-                <table class="data-table">
-
-                    <thead>
-                        <tr>
-                            <th>Priority</th>
-                            <th>Domain</th>
-                            <th>Event</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="priorityBoardBody">
-
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">
-                                    Connect to the secure API
-                                    to load operational priorities.
-                                </div>
-                            </td>
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </article>
-
-    </div>
-
-
-    <!-- ======================================================
-         STRATEGIC PERFORMANCE
-         ====================================================== -->
-
-    <div class="intelligence-grid equal">
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Executive Performance Intelligence</h3>
-                    <div class="panel-subtitle">
-                        Command event resolution metrics
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    PERFORMANCE
-                </span>
-            </div>
-
-            <div class="command-overview">
-
-                <div class="overview-item">
-                    <div class="overview-value text-green"
-                         id="performanceResolutionRate">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        Resolution Rate
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="performanceResolutionHours">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        Average Resolution Hours
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="intelligence-footer">
-                Calculated from recorded Command Center
-                events. This is not a fleet-wide performance
-                assessment until cross-module integration
-                is completed.
-            </div>
-
-        </article>
-
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Enterprise Data Status</h3>
-                    <div class="panel-subtitle">
-                        Backend integration visibility
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    SYSTEM
-                </span>
-            </div>
-
-            <div class="command-overview">
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="dataConnectionState">
-                        —
-                    </div>
-                    <div class="overview-label">
-                        API Connection
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="dataIntegrationState">
-                        Pending
-                    </div>
-                    <div class="overview-label">
-                        ERP Module Integration
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="intelligence-footer"
-                 id="dashboardLastUpdated">
-                Last updated: Not yet connected
-            </div>
-
-        </article>
-
-    </div>
-
-
-    <!-- ======================================================
-         DASHBOARD DATA SOURCE NOTICE
-         ====================================================== -->
-
-    <div class="data-source-label">
-        MQEIP Enterprise Command Dashboard —
-        Live values will be displayed only after
-        successful authentication and API retrieval.
-        No simulated operational figures are used.
-    </div>
-
-</section>
-
-
-<!-- ==========================================================
-     DYNAMIC MODULE CONTENT AREA
-     ========================================================== -->
-
-<section
-    id="moduleContent"
-    class="hidden"
-    aria-label="Enterprise Module Workspace"
->
-
-    <div class="panel">
-
-        <div class="panel-header">
-            <div>
-                <h3 id="modulePanelTitle">
-                    Enterprise Module
-                </h3>
-
-                <div class="panel-subtitle"
-                     id="modulePanelDescription">
-                    Select a module to view its workspace.
-                </div>
-            </div>
-
-            <span class="panel-tag">
-                MQEIP
-            </span>
-        </div>
-
-        <div id="modulePanelBody"
-             class="dashboard-placeholder">
-
-            <strong>Module Workspace</strong>
-
-            Secure module-specific API integration
-            will be configured in the next stages.
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 2
-     ========================================================== -->
-
-  <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 3 - SECURE API & LIVE DASHBOARD
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   SECURE CONNECTION DIALOG
-   ========================================================== */
-
-.mqeip-modal {
+.domain-card:hover {
+    background: rgba(0, 240, 255, 0.08);
+    border-color: var(--quantum-primary);
+}
+
+.domain-name {
+    font-size: 11px;
+    color: var(--quantum-text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.domain-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--quantum-primary);
+}
+
+/* Toast Notifications */
+.toast-container {
     position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(3, 9, 18, .88);
+    top: 20px; right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: var(--quantum-panel);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--quantum-border);
+    border-radius: 10px;
+    padding: 15px 20px;
+    min-width: 300px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.toast.success { border-left: 4px solid var(--quantum-success); }
+.toast.error { border-left: 4px solid var(--quantum-danger); }
+.toast.info { border-left: 4px solid var(--quantum-primary); }
+.toast.warning { border-left: 4px solid var(--quantum-warning); }
+
+.toast-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 18px;
+    flex-shrink: 0;
 }
 
-.mqeip-modal.hidden {
-    display: none;
-}
+.toast.success .toast-icon { background: rgba(0, 255, 157, 0.15); color: var(--quantum-success); }
+.toast.error .toast-icon { background: rgba(255, 56, 96, 0.15); color: var(--quantum-danger); }
+.toast.info .toast-icon { background: rgba(0, 240, 255, 0.15); color: var(--quantum-primary); }
+.toast.warning .toast-icon { background: rgba(255, 184, 0, 0.15); color: var(--quantum-warning); }
 
-.mqeip-login-card {
-    width: 100%;
-    max-width: 450px;
-    background: #101f34;
-    border: 1px solid rgba(216,180,106,.3);
-    border-radius: 18px;
-    padding: 28px;
-    box-shadow: 0 25px 80px rgba(0,0,0,.45);
-}
-
-.mqeip-login-title {
-    color: var(--gold-light);
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 8px;
-}
-
-.mqeip-login-description {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-    margin-bottom: 23px;
-}
-
-.mqeip-form-group {
-    margin-bottom: 17px;
-}
-
-.mqeip-form-label {
-    display: block;
-    color: var(--muted);
-    margin-bottom: 8px;
-    font-size: 12px;
-}
-
-.mqeip-form-input {
-    width: 100%;
-    padding: 12px 13px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: #091626;
-    color: var(--text);
-    outline: none;
-}
-
-.mqeip-form-input:focus {
-    border-color: var(--gold);
-}
-
-.mqeip-login-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.mqeip-login-actions .btn {
+.toast-content {
     flex: 1;
 }
 
-.mqeip-message {
-    font-size: 12px;
+.toast-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--quantum-text);
+    margin-bottom: 2px;
+}
+
+.toast-message {
+    font-size: 11px;
+    color: var(--quantum-text-dim);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0, 240, 255, 0.2);
+    border-top-color: var(--quantum-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* License Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+}
+
+.modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal {
+    background: linear-gradient(135deg, rgba(10, 20, 40, 0.95), rgba(20, 10, 40, 0.95));
+    border: 1px solid var(--quantum-border);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(0, 240, 255, 0.3);
+}
+
+.modal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--quantum-primary);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.modal-text {
+    color: var(--quantum-text-dim);
+    font-size: 13px;
     line-height: 1.6;
-    margin-top: 15px;
-    color: var(--muted);
-    overflow-wrap: anywhere;
+    margin-bottom: 20px;
 }
 
-.mqeip-message.error {
-    color: var(--red);
-}
-
-.mqeip-message.success {
-    color: var(--green);
-}
-
-.mqeip-security-note {
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
     margin-top: 20px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-    font-size: 10px;
-    color: var(--muted);
-    line-height: 1.7;
 }
 
-.mqeip-loading {
-    opacity: .65;
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--quantum-primary), var(--quantum-secondary));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 240, 255, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--quantum-text);
+    border: 1px solid var(--quantum-border);
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 240, 255, 0.2);
+    border-color: var(--quantum-primary);
+}
+
+/* Watermark (Proprietary Notice) */
+.watermark {
+    position: fixed;
+    bottom: 10px; right: 10px;
+    font-size: 9px;
+    color: rgba(0, 240, 255, 0.2);
+    letter-spacing: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    z-index: 1;
     pointer-events: none;
 }
-</style>
 
-
-<!-- ==========================================================
-     SECURE LOGIN DIALOG
-     ========================================================== -->
-
-<div
-    id="mqeipLoginModal"
-    class="mqeip-modal hidden"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="mqeipLoginTitle"
->
-
-    <div class="mqeip-login-card">
-
-        <div class="mqeip-login-title"
-             id="mqeipLoginTitle">
-            MQEIP Secure Operations Portal
-        </div>
-
-        <div class="mqeip-login-description">
-            Authenticate to access the enterprise
-            maritime intelligence environment.
-        </div>
-
-        <form id="mqeipLoginForm">
-
-            <div class="mqeip-form-group">
-
-                <label class="mqeip-form-label"
-                       for="mqeipUsername">
-                    Username
-                </label>
-
-                <input
-                    class="mqeip-form-input"
-                    id="mqeipUsername"
-                    type="text"
-                    autocomplete="username"
-                    required
-                >
-
-            </div>
-
-            <div class="mqeip-form-group">
-
-                <label class="mqeip-form-label"
-                       for="mqeipPassword">
-                    Password
-                </label>
-
-                <input
-                    class="mqeip-form-input"
-                    id="mqeipPassword"
-                    type="password"
-                    autocomplete="current-password"
-                    required
-                >
-
-            </div>
-
-            <div class="mqeip-login-actions">
-
-                <button
-                    type="submit"
-                    class="btn btn-gold"
-                    id="mqeipLoginSubmit"
-                >
-                    Secure Login
-                </button>
-
-                <button
-                    type="button"
-                    class="btn"
-                    id="mqeipLoginCancel"
-                >
-                    Cancel
-                </button>
-
-            </div>
-
-        </form>
-
-        <div
-            id="mqeipLoginMessage"
-            class="mqeip-message"
-            role="status"
-            aria-live="polite"
-        ></div>
-
-        <div class="mqeip-security-note">
-            Credentials are sent to the configured
-            HTTPS backend. Access tokens are retained
-            only in browser memory for this session.
-            Enterprise access is enforced by the backend.
-        </div>
-
-    </div>
-
-</div>
-
-
-<script>
-/* ==========================================================
-   MQEIP FRONTEND BLOK 3
-   SECURE API CONNECTION & DASHBOARD
-   ========================================================== */
-
-"use strict";
-
-/* ==========================================================
-   BACKEND CONFIGURATION
-   ========================================================== */
-
-const MQEIP_API_BASE =
-    "https://repository-name-maritime-quantum-erp-w15p.onrender.com";
-
-const MQEIP_COMMAND_API =
-    "/api/v1/quantum-command";
-
-const MQEIP_REQUEST_TIMEOUT = 25000;
-
-let mqeipAccessToken = null;
-let mqeipAuthenticatedUser = null;
-let mqeipRequestVersion = 0;
-
-
-/* ==========================================================
-   DOM UTILITIES
-   ========================================================== */
-
-function mqeipElement(id) {
-    return document.getElementById(id);
-}
-
-function mqeipSetText(id, value) {
-    const element = mqeipElement(id);
-
-    if (element) {
-        element.textContent =
-            value === null || value === undefined
-                ? "—"
-                : String(value);
-    }
-}
-
-function mqeipSetConnection(state, message) {
-    const dot = mqeipElement("connectionDot");
-
-    if (dot) {
-        dot.classList.remove(
-            "connected",
-            "disconnected"
-        );
-
-        if (state === "connected") {
-            dot.classList.add("connected");
-        }
-
-        if (state === "disconnected") {
-            dot.classList.add("disconnected");
-        }
-    }
-
-    mqeipSetText("connectionText", message);
-
-    mqeipSetText(
-        "dataConnectionState",
-        state === "connected"
-            ? "Online"
-            : "Offline"
-    );
-}
-
-function mqeipSetLoginMessage(message, type = "") {
-    const element = mqeipElement("mqeipLoginMessage");
-
-    if (!element) return;
-
-    element.textContent = message;
-    element.className = "mqeip-message";
-
-    if (type) {
-        element.classList.add(type);
-    }
-}
-
-
-/* ==========================================================
-   LOGIN MODAL CONTROLS
-   ========================================================== */
-
-function mqeipOpenLogin() {
-    const modal = mqeipElement("mqeipLoginModal");
-
-    if (!modal) return;
-
-    mqeipSetLoginMessage("");
-
-    modal.classList.remove("hidden");
-
-    mqeipElement("mqeipUsername")?.focus();
-}
-
-function mqeipCloseLogin() {
-    const modal = mqeipElement("mqeipLoginModal");
-
-    if (modal) {
-        modal.classList.add("hidden");
-    }
-
-    const password = mqeipElement("mqeipPassword");
-
-    if (password) {
-        password.value = "";
-    }
-}
-
-
-/* ==========================================================
-   SECURE API REQUEST
-   ========================================================== */
-
-async function mqeipApiRequest(
-    endpoint,
-    options = {}
-) {
-    
-
-    if (
-        typeof endpoint !== "string" ||
-        !endpoint.startsWith("/") ||
-        endpoint.startsWith("//")
-    ) {
-        throw new Error("Invalid API endpoint.");
-    }
-
-    const controller = new AbortController();
-
-    const timeout = setTimeout(
-        () => controller.abort(),
-        MQEIP_REQUEST_TIMEOUT
-    );
-
-    try {
-        const response = await fetch(
-            MQEIP_API_BASE + endpoint,
-            {
-                ...options,
-                signal: controller.signal,
-                headers: {
-                      "Content-Type": "application/json",
-    "Accept": "application/json",
-    ...(mqeipAccessToken
-        ? { "Authorization": "Bearer " + mqeipAccessToken }
-        : {}),
-    ...(options.headers || {})
-},
-                cache: "no-store",
-                redirect: "error"
-            }
-        );
-
-        if (response.status === 401) {
-            mqeipLogout();
-
-            throw new Error(
-                "Session expired or authentication rejected."
-            );
-        }
-
-        if (response.status === 403) {
-            throw new Error(
-                "Access denied. Your account does not "
-                + "have permission for this operation."
-            );
-        }
-
-        if (!response.ok) {
-            throw new Error(
-                "API request failed: HTTP "
-                + response.status
-            );
-        }
-
-        return await response.json();
-
-    } catch (error) {
-        if (error.name === "AbortError") {
-            throw new Error(
-                "Request timed out. Render may be waking up."
-            );
-        }
-
-        throw error;
-
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-
-/* ==========================================================
-   LOGIN WITH JWT
-   ========================================================== */
-
-async function mqeipLogin(username, password) {
-    const button = mqeipElement("mqeipLoginSubmit");
-    const message = mqeipElement("mqeipLoginMessage");
-    const cleanUsername = String(username || "").trim();
-    const requestId = ++mqeipRequestVersion;
-
-    if (!cleanUsername || !password) {
-        if (message) {
-            message.textContent =
-                "Username dan password wajib diisi.";
-        }
-        return false;
-    }
-
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Authenticating...";
-    }
-
-    try {
-        if (message) {
-            message.textContent =
-                "Menghubungkan ke MQEIP Backend...";
-        }
-
-        const loginData = await mqeipApiRequest(
-            "/api/v1/login",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    username: cleanUsername,
-                    password: password
-                })
-            }
-        );
-
-        if (requestId !== mqeipRequestVersion) {
-            return false;
-        }
-
-        if (!loginData || !loginData.access_token) {
-            throw new Error(
-                "Backend tidak mengirim access_token."
-            );
-        }
-
-        mqeipAccessToken = loginData.access_token;
-
-        if (message) {
-            message.textContent =
-                "Memverifikasi JWT...";
-        }
-
-        const user = await mqeipApiRequest("/api/v1/me");
-
-        if (requestId !== mqeipRequestVersion) {
-            return false;
-        }
-
-        if (!user || !user.username) {
-            throw new Error(
-                "Verifikasi pengguna gagal."
-            );
-        }
-
-        mqeipAuthenticatedUser = user;
-
-        mqeipUpdateSessionControls();
-
-        if (message) {
-            message.textContent = "Login berhasil.";
-        }
-
-        return true;
-
-    } catch (error) {
-        if (requestId !== mqeipRequestVersion) {
-            return false;
-        }
-
-        mqeipAccessToken = null;
-        mqeipAuthenticatedUser = null;
-
-        if (message) {
-            message.textContent =
-                "Login gagal: " + error.message;
-        }
-
-        mqeipUpdateSessionControls();
-
-        return false;
-
-    } finally {
-        if (requestId === mqeipRequestVersion && button) {
-            button.disabled = false;
-            button.textContent = "Secure Login";
-        }
-    }
-}
-      
-
-/* ==========================================================
-   LOGOUT
-   ========================================================== */
-
-function mqeipLogout() {
-    mqeipAccessToken = null;
-    mqeipAuthenticatedUser = null;
-    mqeipRequestVersion += 1;
-
-    mqeipSetConnection(
-        "disconnected",
-        "Not Connected"
-    );
-
-    mqeipResetDashboard();
-}
-
-
-/* ==========================================================
-   DASHBOARD RESET
-   ========================================================== */
-
-function mqeipResetDashboard() {
-    const fields = [
-        "kpiTotalEvents",
-        "kpiCriticalEvents",
-        "kpiActiveEvents",
-        "kpiResolvedEvents",
-        "overviewOpen",
-        "overviewInProgress",
-        "overviewHigh",
-        "overviewUnassigned",
-        "performanceResolutionRate",
-        "performanceResolutionHours"
-    ];
-
-    for (const id of fields) {
-        mqeipSetText(id, "—");
-    }
-
-    mqeipSetText(
-        "executiveAttentionLevel",
-        "Awaiting Secure Connection"
-    );
-
-    mqeipSetText(
-        "executiveAttentionDescription",
-        "Authenticate to load operational intelligence."
-    );
-
-    mqeipSetText(
-        "dashboardLastUpdated",
-        "Last updated: Not connected"
-    );
-
-    const placeholders = {
-        "domainIntelligenceList":
-            "Connect to load domain intelligence.",
-        "criticalAlertsList":
-            "Connect to load critical events.",
-        "priorityBoardBody":
-            "Connect to load operational priorities."
-    };
-
-    for (const [id, message] of Object.entries(
-        placeholders
-    )) {
-        const element = mqeipElement(id);
-
-        if (!element) continue;
-
-        if (id === "priorityBoardBody") {
-            element.replaceChildren();
-
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-
-            cell.colSpan = 4;
-            cell.textContent = message;
-
-            row.appendChild(cell);
-            element.appendChild(row);
-        } else {
-            element.textContent = message;
-        }
-    }
-}
-
-
-/* ==========================================================
-   RENDER DOMAIN INTELLIGENCE
-   ========================================================== */
-
-function mqeipRenderDomains(domains) {
-    const container = mqeipElement(
-        "domainIntelligenceList"
-    );
-
-    if (!container) return;
-
-    container.replaceChildren();
-
-    if (!Array.isArray(domains) || !domains.length) {
-        container.textContent =
-            "No command events recorded by domain.";
-        return;
-    }
-
-    const maxCount = Math.max(
-        1,
-        ...domains.map(
-            item => Number(item.active_events) || 0
-        )
-    );
-
-    for (const domain of domains) {
-        const row = document.createElement("div");
-        row.className = "domain-row";
-
-        const name = document.createElement("div");
-        name.className = "domain-name";
-        name.textContent = String(
-            domain.domain || "Unknown"
-        ).replaceAll("_", " ");
-
-        const track = document.createElement("div");
-        track.className = "domain-track";
-
-        const fill = document.createElement("div");
-        fill.className = "domain-fill";
-
-        const count = Number(
-            domain.active_events
-        ) || 0;
-
-        fill.style.width =
-            Math.min(
-                100,
-                Math.max(0, count / maxCount * 100)
-            ) + "%";
-
-        track.appendChild(fill);
-
-        const value = document.createElement("div");
-        value.className = "domain-count";
-        value.textContent = String(count);
-
-        row.append(name, track, value);
-        container.appendChild(row);
-    }
-}
-
-
-/* ==========================================================
-   RENDER CRITICAL ALERTS
-   ========================================================== */
-
-function mqeipRenderCriticalAlerts(events) {
-    const container = mqeipElement(
-        "criticalAlertsList"
-    );
-
-    if (!container) return;
-
-    container.replaceChildren();
-
-    if (!Array.isArray(events) || !events.length) {
-        container.textContent =
-            "No active critical command events recorded.";
-        return;
-    }
-
-    for (const event of events) {
-        const item = document.createElement("div");
-        item.className = "command-alert";
-
-        const symbol = document.createElement("div");
-        symbol.className = "alert-symbol";
-        symbol.textContent = "!";
-
-        const body = document.createElement("div");
-        body.className = "alert-body";
-
-        const title = document.createElement("div");
-        title.className = "alert-title";
-        title.textContent = event.title || "Untitled event";
-
-        const meta = document.createElement("div");
-        meta.className = "alert-meta";
-        meta.textContent = [
-            event.domain,
-            event.vessel_id,
-            event.command_status
-        ].filter(Boolean).join(" • ");
-
-        body.append(title, meta);
-        item.append(symbol, body);
-        container.appendChild(item);
-    }
-}
-
-
-/* ==========================================================
-   RENDER OPERATIONAL PRIORITY BOARD
-   ========================================================== */
-
-function mqeipRenderPriorityBoard(events) {
-    const body = mqeipElement(
-        "priorityBoardBody"
-    );
-
-    if (!body) return;
-
-    body.replaceChildren();
-
-    if (!Array.isArray(events) || !events.length) {
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-
-        cell.colSpan = 4;
-        cell.textContent =
-            "No active command priorities recorded.";
-
-        row.appendChild(cell);
-        body.appendChild(row);
-        return;
-    }
-
-    for (const event of events) {
-        const row = document.createElement("tr");
-
-        const values = [
-            event.priority,
-            event.domain,
-            event.title,
-            event.command_status
-        ];
-
-        for (const value of values) {
-            const cell = document.createElement("td");
-
-            cell.textContent = String(
-                value ?? "—"
-            ).replaceAll("_", " ");
-
-            row.appendChild(cell);
-        }
-
-        body.appendChild(row);
-    }
-}
-
-
-/* ==========================================================
-   LOAD EXECUTIVE DASHBOARD
-   ========================================================== */
-
-async function mqeipLoadExecutiveDashboard() {
-    if (!mqeipAccessToken) {
-        mqeipOpenLogin();
-        return;
-    }
-
-    const requestVersion = ++mqeipRequestVersion;
-
-    mqeipSetText(
-        "dashboardLastUpdated",
-        "Loading live Command Center data..."
-    );
-
-    try {
-        const [
-            dashboard,
-            priorityBoard,
-            performance
-        ] = await Promise.all([
-            mqeipApiRequest(
-                MQEIP_COMMAND_API
-                + "/executive/dashboard"
-            ),
-            mqeipApiRequest(
-                MQEIP_COMMAND_API
-                + "/operations/priority-board?limit=50"
-            ),
-            mqeipApiRequest(
-                MQEIP_COMMAND_API
-                + "/executive/performance"
-            )
-        ]);
-
-        if (
-            requestVersion !== mqeipRequestVersion ||
-            !mqeipAccessToken
-        ) {
-            return;
-        }
-
-        const summary = dashboard.event_summary || {};
-
-        const total = Number(summary.total_events) || 0;
-        const open = Number(summary.open_events) || 0;
-        const inProgress =
-            Number(summary.in_progress_events) || 0;
-
-        mqeipSetText("kpiTotalEvents", total);
-
-        mqeipSetText(
-            "kpiCriticalEvents",
-            Number(summary.active_critical_events) || 0
-        );
-
-        mqeipSetText(
-            "kpiActiveEvents",
-            open + inProgress
-        );
-
-        mqeipSetText(
-            "kpiResolvedEvents",
-            Number(summary.resolved_events) || 0
-        );
-
-        mqeipSetText("overviewOpen", open);
-
-        mqeipSetText(
-            "overviewInProgress",
-            inProgress
-        );
-
-        mqeipSetText(
-            "overviewHigh",
-            Number(summary.active_high_events) || 0
-        );
-
-        mqeipSetText(
-            "overviewUnassigned",
-            Number(summary.unassigned_active_events) || 0
-        );
-
-        const attention = String(
-            dashboard.executive_attention_level
-            || "unknown"
-        ).toUpperCase();
-
-        mqeipSetText(
-            "executiveAttentionLevel",
-            attention + " ATTENTION"
-        );
-
-        mqeipSetText(
-            "executiveAttentionDescription",
-            "Based on recorded Command Center events."
-        );
-
-        mqeipRenderDomains(
-            dashboard.domain_overview || []
-        );
-
-        mqeipRenderCriticalAlerts(
-            dashboard.critical_priority_events || []
-        );
-
-        mqeipRenderPriorityBoard(
-            priorityBoard.events || []
-        );
-
-        const resolutionRate =
-            performance.resolution_rate_percent;
-
-        mqeipSetText(
-            "performanceResolutionRate",
-            resolutionRate === null
-            || resolutionRate === undefined
-                ? "—"
-                : String(resolutionRate) + "%"
-        );
-
-        mqeipSetText(
-            "performanceResolutionHours",
-            performance.average_resolution_hours
-            ?? "—"
-        );
-
-        mqeipSetText(
-            "dataIntegrationState",
-            "Pending"
-        );
-
-        mqeipSetText(
-            "dashboardLastUpdated",
-            "Last updated: "
-            + new Date().toLocaleString()
-        );
-
-        mqeipSetConnection(
-            "connected",
-            "API Connected"
-        );
-
-    } catch (error) {
-        if (requestVersion !== mqeipRequestVersion) {
-            return;
-        }
-
-        mqeipResetDashboard();
-
-        mqeipSetText(
-            "dashboardLastUpdated",
-            "Data loading failed: "
-            + (error.message || "Unknown error")
-        );
-    }
-}
-
-
-/* ==========================================================
-   EVENT LISTENERS
-   ========================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-        mqeipSetConnection(
-            "disconnected",
-            "Not Connected"
-        );
-
-        mqeipElement("connectButton")
-            ?.addEventListener(
-                "click",
-                mqeipOpenLogin
-            );
-
-        mqeipElement("mqeipLoginCancel")
-            ?.addEventListener(
-                "click",
-                mqeipCloseLogin
-            );
-
-        mqeipElement("refreshButton")
-            ?.addEventListener(
-                "click",
-                mqeipLoadExecutiveDashboard
-            );
-
-        mqeipElement("mqeipLoginForm")
-            ?.addEventListener(
-                "submit",
-                async event => {
-                    event.preventDefault();
-
-                    const username =
-                        mqeipElement("mqeipUsername")
-                        ?.value.trim();
-
-                    const password =
-                        mqeipElement("mqeipPassword")
-                        ?.value;
-
-                    if (!username || !password) {
-                        mqeipSetLoginMessage(
-                            "Username and password required.",
-                            "error"
-                        );
-                        return;
-                    }
-
-                    await mqeipLogin(
-                        username,
-                        password
-                    );
-                }
-            );
-    }
-);
-
-</script>
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 3
-     ========================================================== -->
-
- <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 4 - ENTERPRISE MODULE NAVIGATION
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   ENTERPRISE MODULE WORKSPACE
-   ========================================================== */
-
-.mqeip-workspace {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    text-align: left;
-}
-
-.mqeip-workspace-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 18px;
-    background: rgba(216,180,106,.045);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-}
-
-.mqeip-workspace-icon {
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    font-size: 25px;
-    color: var(--gold);
-    border-radius: 13px;
-    background: rgba(216,180,106,.1);
-}
-
-.mqeip-workspace-name {
-    font-size: 19px;
-    font-weight: 800;
-    color: var(--gold-light);
-    margin-bottom: 8px;
-}
-
-.mqeip-workspace-description {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-.mqeip-workspace-grid {
-    display: grid;
-    grid-template-columns: repeat(
-        3,
-        minmax(0,1fr)
-    );
-    gap: 15px;
-}
-
-.mqeip-workspace-card {
-    padding: 20px;
-    background: rgba(255,255,255,.025);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    min-width: 0;
-}
-
-.mqeip-workspace-card-title {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 10px;
-}
-
-.mqeip-workspace-card-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--gold-light);
-    overflow-wrap: anywhere;
-}
-
-.mqeip-workspace-card-note {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.6;
-    margin-top: 10px;
-}
-
-.mqeip-workspace-status {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 11px;
-    background: rgba(72,199,223,.055);
-    border: 1px solid rgba(72,199,223,.18);
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-.mqeip-workspace-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.mqeip-workspace-actions .btn {
-    min-width: 150px;
-}
-
-.mqeip-workspace-data {
-    background: rgba(255,255,255,.02);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-}
-
-.mqeip-workspace-data h4 {
-    color: var(--text);
-    margin: 0 0 12px;
-    font-size: 13px;
-}
-
-.mqeip-workspace-data ul {
-    padding-left: 20px;
-    margin: 0;
-}
-
-.mqeip-workspace-data li {
-    margin-bottom: 8px;
-}
-
-@media (max-width: 1100px) {
-    .mqeip-workspace-grid {
-        grid-template-columns: repeat(
-            2,
-            minmax(0,1fr)
-        );
-    }
-}
-
-@media (max-width: 650px) {
-    .mqeip-workspace-grid {
+/* Responsive */
+@media (max-width: 1024px) {
+    .panel-grid {
         grid-template-columns: 1fr;
     }
+}
 
-    .mqeip-workspace-header {
-        flex-direction: column;
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        height: 100%;
+        z-index: 100;
+        transition: left 0.3s ease;
+    }
+    .sidebar.active {
+        left: 0;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>
-
-
-<script>
-/* ==========================================================
-   MQEIP MODULE REGISTRY
-   ========================================================== */
-
-const MQEIP_MODULE_REGISTRY = {
-
-    executive: {
-        title: "Executive Command Center",
-        icon: "◈",
-        description:
-            "Enterprise maritime operational intelligence, " +
-            "strategic monitoring and executive decision support.",
-        capabilities: [
-            "Enterprise KPI Monitoring",
-            "Critical Operational Alerts",
-            "Executive Decision Support"
-        ]
-    },
-
-    quantum: {
-        title: "Maritime Quantum Command Center",
-        icon: "✦",
-        description:
-            "Enterprise command events, operational priorities, " +
-            "risk intelligence and command snapshots.",
-        capabilities: [
-            "Command Event Management",
-            "Operational Priority Board",
-            "Executive Risk Intelligence"
-        ]
-    },
-
-    analytics: {
-        title: "Business Intelligence",
-        icon: "▥",
-        description:
-            "Enterprise analytics and management intelligence.",
-        capabilities: [
-            "Management Reporting",
-            "Enterprise Analytics",
-            "Performance Intelligence"
-        ]
-    },
-
-    fleet: {
-        title: "Fleet Management",
-        icon: "⚓",
-        description:
-            "Vessel registry and fleet operational administration.",
-        capabilities: [
-            "Vessel Registry",
-            "Fleet Monitoring",
-            "Fleet Operational Records"
-        ]
-    },
-
-    marine: {
-        title: "Marine Operations",
-        icon: "◉",
-        description:
-            "Marine operational control and voyage management.",
-        capabilities: [
-            "Voyage Operations",
-            "Marine Performance",
-            "Operational Reporting"
-        ]
-    },
-
-    crew: {
-        title: "Crew & Certificates",
-        icon: "♙",
-        description:
-            "Seafarer management and certificate intelligence.",
-        capabilities: [
-            "Crew Records",
-            "Certificate Tracking",
-            "Crew Compliance"
-        ]
-    },
-
-    technical: {
-        title: "Technical & PMS",
-        icon: "⚙",
-        description:
-            "Technical engineering and planned maintenance control.",
-        capabilities: [
-            "Technical Records",
-            "Maintenance Planning",
-            "Engineering Intelligence"
-        ]
-    },
-
-    hsse: {
-        title: "HSSE & Compliance",
-        icon: "⬡",
-        description:
-            "Health, safety, security, environment and compliance.",
-        capabilities: [
-            "Safety Monitoring",
-            "Incident Management",
-            "Compliance Intelligence"
-        ]
-    },
-
-    finance: {
-        title: "Finance & Accounting",
-        icon: "▤",
-        description:
-            "Enterprise maritime financial administration.",
-        capabilities: [
-            "Financial Records",
-            "Cost Management",
-            "Financial Intelligence"
-        ]
-    },
-
-    supply: {
-        title: "Supply Chain & Procurement",
-        icon: "▣",
-        description:
-            "Procurement, vendor coordination and purchasing.",
-        capabilities: [
-            "RFQ Management",
-            "Purchase Orders",
-            "Procurement Monitoring"
-        ]
-    },
-
-    inventory: {
-        title: "Inventory & Vessel Stores",
-        icon: "▦",
-        description:
-            "Vessel inventory and enterprise stores management.",
-        capabilities: [
-            "Inventory Records",
-            "Stock Monitoring",
-            "Vessel Stores"
-        ]
-    },
-
-    commercial: {
-        title: "Commercial & Chartering",
-        icon: "◇",
-        description:
-            "Commercial maritime contracts and chartering.",
-        capabilities: [
-            "Chartering Records",
-            "Commercial Performance",
-            "Contract Monitoring"
-        ]
-    },
-
-    hr: {
-        title: "Human Resources",
-        icon: "♧",
-        description:
-            "Shore workforce and enterprise HR administration.",
-        capabilities: [
-            "Employee Records",
-            "Workforce Management",
-            "HR Intelligence"
-        ]
-    },
-
-    ai: {
-        title: "AI Intelligence Center",
-        icon: "✧",
-        description:
-            "Enterprise AI agents and intelligent analysis.",
-        capabilities: [
-            "AI Intelligence",
-            "AI Agent Operations",
-            "Automated Analysis"
-        ]
-    },
-
-    optimization: {
-        title: "Quantum Optimization",
-        icon: "⌘",
-        description:
-            "Quantum-inspired enterprise optimization.",
-        capabilities: [
-            "Optimization Models",
-            "Scenario Analysis",
-            "Decision Optimization"
-        ]
-    },
-
-    twin: {
-        title: "Maritime Digital Twin",
-        icon: "◎",
-        description:
-            "Digital representation and analysis of vessel operations.",
-        capabilities: [
-            "Digital Twin Models",
-            "Operational Scenarios",
-            "Performance Analysis"
-        ]
-    },
-
-    esg: {
-        title: "ESG & Sustainability",
-        icon: "❖",
-        description:
-            "Environmental, social and governance intelligence.",
-        capabilities: [
-            "Sustainability Records",
-            "ESG Monitoring",
-            "Environmental Reporting"
-        ]
-    },
-
-    documents: {
-        title: "Document Management",
-        icon: "▧",
-        description:
-            "Enterprise document administration and control.",
-        capabilities: [
-            "Document Registry",
-            "Document Governance",
-            "Document Tracking"
-        ]
-    },
-
-    workflow: {
-        title: "Workflow & Approvals",
-        icon: "⇄",
-        description:
-            "Enterprise business processes and approval workflows.",
-        capabilities: [
-            "Workflow Records",
-            "Approval Tracking",
-            "Process Monitoring"
-        ]
-    },
-
-    audit: {
-        title: "Audit & Internal Control",
-        icon: "✓",
-        description:
-            "Internal audit, governance and control monitoring.",
-        capabilities: [
-            "Audit Records",
-            "Internal Controls",
-            "Governance Monitoring"
-        ]
-    },
-
-    administration: {
-        title: "Administration & IAM",
-        icon: "⚿",
-        description:
-            "Enterprise administration, identities and access management.",
-        capabilities: [
-            "Identity Management",
-            "Role Administration",
-            "Enterprise Security"
-        ]
-    }
-
-};
-
-
-/* ==========================================================
-   MODULE STATE
-   ========================================================== */
-
-let mqeipCurrentPage = "executive";
-
-
-/* ==========================================================
-   SAFE DOM BUILDING
-   ========================================================== */
-
-function mqeipCreateElement(
-    tag,
-    className,
-    textValue
-) {
-    const element = document.createElement(tag);
-
-    if (className) {
-        element.className = className;
-    }
-
-    if (textValue !== undefined) {
-        element.textContent = String(textValue);
-    }
-
-    return element;
-}
-
-
-/* ==========================================================
-   RENDER ENTERPRISE MODULE WORKSPACE
-   ========================================================== */
-
-function mqeipRenderModuleWorkspace(pageKey) {
-
-    const module = MQEIP_MODULE_REGISTRY[pageKey];
-
-    const container = mqeipElement(
-        "modulePanelBody"
-    );
-
-    if (!module || !container) {
-        return;
-    }
-
-    container.replaceChildren();
-    container.className = "mqeip-workspace";
-
-    const header = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-header"
-    );
-
-    const icon = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-icon",
-        module.icon
-    );
-
-    const information = document.createElement("div");
-
-    information.appendChild(
-        mqeipCreateElement(
-            "div",
-            "mqeip-workspace-name",
-            module.title
-        )
-    );
-
-    information.appendChild(
-        mqeipCreateElement(
-            "div",
-            "mqeip-workspace-description",
-            module.description
-        )
-    );
-
-    header.append(icon, information);
-    container.appendChild(header);
-
-
-    /* ======================================================
-       WORKSPACE CAPABILITY CARDS
-       ====================================================== */
-
-    const grid = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-grid"
-    );
-
-    for (const capability of module.capabilities) {
-
-        const card = mqeipCreateElement(
-            "div",
-            "mqeip-workspace-card"
-        );
-
-        card.appendChild(
-            mqeipCreateElement(
-                "div",
-                "mqeip-workspace-card-title",
-                capability
-            )
-        );
-
-        card.appendChild(
-            mqeipCreateElement(
-                "div",
-                "mqeip-workspace-card-value",
-                "—"
-            )
-        );
-
-        card.appendChild(
-            mqeipCreateElement(
-                "div",
-                "mqeip-workspace-card-note",
-                "Live module data not connected."
-            )
-        );
-
-        grid.appendChild(card);
-    }
-
-    container.appendChild(grid);
-
-
-    /* ======================================================
-       MODULE INTEGRATION STATUS
-       ====================================================== */
-
-    const statusBox = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-status"
-    );
-
-    statusBox.appendChild(
-        mqeipCreateElement(
-            "span",
-            "",
-            "ⓘ"
-        )
-    );
-
-    statusBox.appendChild(
-        mqeipCreateElement(
-            "span",
-            "",
-            "This module workspace is available for navigation. " +
-            "Its dedicated ERP API integration is not yet " +
-            "configured in this frontend. No operational " +
-            "figures are simulated."
-        )
-    );
-
-    container.appendChild(statusBox);
-
-
-    /* ======================================================
-       WORKSPACE ACTIONS
-       ====================================================== */
-
-    const actions = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-actions"
-    );
-
-    const returnButton = mqeipCreateElement(
-        "button",
-        "btn btn-outline",
-        "Return to Executive Command"
-    );
-
-    returnButton.type = "button";
-
-    returnButton.addEventListener(
-        "click",
-        () => mqeipNavigate("executive")
-    );
-
-    actions.appendChild(returnButton);
-
-    if (pageKey === "quantum") {
-
-        const loadButton = mqeipCreateElement(
-            "button",
-            "btn btn-gold",
-            "Load Command Intelligence"
-        );
-
-        loadButton.type = "button";
-
-        loadButton.addEventListener(
-            "click",
-            mqeipLoadQuantumWorkspace
-        );
-
-        actions.appendChild(loadButton);
-    }
-
-    container.appendChild(actions);
-
-
-    /* ======================================================
-       MODULE DATA PANEL
-       ====================================================== */
-
-    const dataPanel = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-data"
-    );
-
-    dataPanel.id = "mqeipWorkspaceData";
-
-    dataPanel.textContent =
-        "Dedicated module intelligence will appear here " +
-        "when the corresponding authenticated API " +
-        "connection is implemented.";
-
-    container.appendChild(dataPanel);
-}
-
-
-/* ==========================================================
-   QUANTUM COMMAND WORKSPACE DATA
-   ========================================================== */
-
-async function mqeipLoadQuantumWorkspace() {
-
-    if (mqeipCurrentPage !== "quantum") {
-        return;
-    }
-
-    if (!mqeipAccessToken) {
-        mqeipOpenLogin();
-        return;
-    }
-
-    const target = mqeipElement(
-        "mqeipWorkspaceData"
-    );
-
-    if (!target) {
-        return;
-    }
-
-    target.textContent =
-        "Loading authenticated Command Center data...";
-
-    try {
-        const data = await mqeipApiRequest(
-            MQEIP_COMMAND_API +
-            "/intelligence/events"
-        );
-
-        if (
-            mqeipCurrentPage !== "quantum" ||
-            target !== mqeipElement("mqeipWorkspaceData") ||
-            !mqeipAccessToken
-        ) {
-            return;
-        }
-
-        target.replaceChildren();
-
-        target.appendChild(
-            mqeipCreateElement(
-                "h4",
-                "",
-                "Live Command Event Intelligence"
-            )
-        );
-
-        const summary = data.summary || {};
-
-        const fields = [
-            ["Total Events", "total_events"],
-            ["Open Events", "open_events"],
-            ["In Progress", "in_progress_events"],
-            ["Resolved Events", "resolved_events"],
-            ["Active Critical", "active_critical_events"],
-            ["Active High", "active_high_events"]
-        ];
-
-        const list = document.createElement("ul");
-
-        for (const [label, key] of fields) {
-
-            const item = document.createElement("li");
-
-            const value = summary[key];
-
-            item.textContent =
-                label + ": " +
-                (
-                    value === null ||
-                    value === undefined
-                        ? "Unavailable"
-                        : String(value)
-                );
-
-            list.appendChild(item);
-        }
-
-        target.appendChild(list);
-
-    } catch (error) {
-
-        if (target === mqeipElement("mqeipWorkspaceData")) {
-            target.textContent =
-                "Unable to load Command Center data: " +
-                (error.message || "Unknown error");
-        }
-    }
-}
-
-
-/* ==========================================================
-   PAGE NAVIGATION
-   ========================================================== */
-
-function mqeipNavigate(pageKey) {
-
-    const module = MQEIP_MODULE_REGISTRY[pageKey];
-
-    if (!module) {
-        return;
-    }
-
-    mqeipCurrentPage = pageKey;
-
-    document.querySelectorAll(
-        ".nav-link[data-page]"
-    ).forEach(button => {
-
-        const isActive =
-            button.dataset.page === pageKey;
-
-        button.classList.toggle(
-            "active",
-            isActive
-        );
-
-        if (isActive) {
-            button.setAttribute(
-                "aria-current",
-                "page"
-            );
-        } else {
-            button.removeAttribute(
-                "aria-current"
-            );
-        }
-    });
-
-    mqeipSetText(
-        "topbarTitle",
-        module.title
-    );
-
-    mqeipSetText(
-        "pageTitle",
-        module.title
-    );
-
-    mqeipSetText(
-        "pageDescription",
-        module.description
-    );
-
-    const dashboard = mqeipElement(
-        "executiveDashboard"
-    );
-
-    const workspace = mqeipElement(
-        "moduleContent"
-    );
-
-    if (pageKey === "executive") {
-
-        dashboard?.classList.remove("hidden");
-        workspace?.classList.add("hidden");
-
-    } else {
-
-        dashboard?.classList.add("hidden");
-        workspace?.classList.remove("hidden");
-
-        mqeipSetText(
-            "modulePanelTitle",
-            module.title
-        );
-
-        mqeipSetText(
-            "modulePanelDescription",
-            module.description
-        );
-
-        mqeipRenderModuleWorkspace(pageKey);
-    }
-
-    const sidebar = mqeipElement("sidebar");
-
-    sidebar?.classList.remove("open");
-
-    const toggle = mqeipElement("menuToggle");
-
-    toggle?.setAttribute(
-        "aria-expanded",
-        "false"
-    );
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
-
-
-/* ==========================================================
-   RESPONSIVE SIDEBAR CONTROLS
-   ========================================================== */
-
-function mqeipToggleSidebar() {
-
-    const sidebar = mqeipElement("sidebar");
-    const toggle = mqeipElement("menuToggle");
-
-    if (!sidebar) {
-        return;
-    }
-
-    const isOpen = sidebar.classList.toggle("open");
-
-    toggle?.setAttribute(
-        "aria-expanded",
-        String(isOpen)
-    );
-}
-
-
-/* ==========================================================
-   REGISTER NAVIGATION EVENTS
-   ========================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        document.querySelectorAll(
-            ".nav-link[data-page]"
-        ).forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-                    mqeipNavigate(
-                        button.dataset.page
-                    );
-                }
-            );
-        });
-
-        mqeipElement("menuToggle")
-            ?.addEventListener(
-                "click",
-                mqeipToggleSidebar
-            );
-
-        mqeipNavigate("executive");
-    }
-);
-
-</script>
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 4
-     ========================================================== -->
-
- <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 5 - FINAL CONTROLS & HTML CLOSING
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   FINAL ENTERPRISE CONTROLS
-   ========================================================== */
-
-.mqeip-session-controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.mqeip-session-button {
-    padding: 9px 13px;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    background: var(--navy-800);
-    color: var(--text);
-    font-size: 11px;
-    font-weight: 750;
-}
-
-.mqeip-session-button:hover {
-    border-color: var(--gold);
-}
-
-.mqeip-session-button.logout {
-    border-color: rgba(244,119,130,.35);
-    color: var(--red);
-}
-
-.mqeip-session-button:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
-.mqeip-security-banner {
-    margin-top: 24px;
-    padding: 15px 18px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: rgba(216,180,106,.035);
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.8;
-}
-
-.mqeip-security-banner strong {
-    color: var(--gold-light);
-}
-
-.mqeip-toast {
-    position: fixed;
-    right: 22px;
-    bottom: 22px;
-    z-index: 1100;
-    max-width: 380px;
-    padding: 15px 18px;
-    background: #14263d;
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    font-size: 12px;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-
-.mqeip-toast.error {
-    border-color: rgba(244,119,130,.5);
-}
-
-.mqeip-toast.success {
-    border-color: rgba(79,209,161,.5);
-}
-
-@media (max-width: 650px) {
-    .mqeip-toast {
-        left: 15px;
-        right: 15px;
-        bottom: 15px;
-        max-width: none;
-    }
-
-    .mqeip-session-controls {
-        width: 100%;
-    }
-}
-</style>
-
-
-<!-- ==========================================================
-     ENTERPRISE SECURITY NOTICE
-     ========================================================== -->
-
-<div class="mqeip-security-banner">
-    <strong>MQEIP Enterprise Security</strong>
-
-    <div>
-        Authenticated API access •
-        Multi-tenant backend authorization •
-        Session-based access token •
-        Enterprise operational intelligence
-    </div>
-
-    <div>
-        Operational data is displayed only after
-        successful API retrieval. Frontend navigation
-        does not replace backend role-based access control.
+</head>
+<body>
+
+<!-- Animated Background -->
+<div class="quantum-bg"></div>
+<div class="quantum-grid"></div>
+<div class="quantum-particles" id="particles"></div>
+
+<!-- ============================================
+     LOGIN PORTAL
+     ============================================ -->
+<div class="login-portal" id="loginPortal">
+    <div class="login-container">
+        <div class="login-logo">
+            <div class="login-logo-icon">
+                <i class="fas fa-anchor"></i>
+            </div>
+            <div class="login-title">MQEIP ENTERPRISE</div>
+            <div class="login-subtitle">MARITIME QUANTUM INTELLIGENCE PLATFORM</div>
+        </div>
+
+        <div class="login-error" id="loginError">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="loginErrorMsg">Authentication failed</span>
+        </div>
+
+        <form class="login-form" id="loginForm">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="username-input" placeholder="Username" autocomplete="username" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password-input" placeholder="Password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="login-btn" id="login-btn">
+                <i class="fas fa-shield-alt"></i> SECURE LOGIN
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <i class="fas fa-lock"></i>
+            Encrypted HTTPS Connection • Multi-Tenant Architecture
+        </div>
     </div>
 </div>
 
+<!-- ============================================
+     MAIN APPLICATION
+     ============================================ -->
+<div class="app-container" id="appContainer">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="fas fa-anchor"></i>
+            </div>
+            <div>
+                <div class="sidebar-title">MQEIP</div>
+                <div class="sidebar-version">ENTERPRISE EDITION v1.0</div>
+            </div>
+        </div>
 
-<!-- ==========================================================
-     CLOSE APPLICATION CONTAINERS
-     ========================================================== -->
+        <nav class="sidebar-nav">
+            <div class="nav-category">Command Centers</div>
+            <div class="nav-item active" data-module="executive">
+                <i class="fas fa-chess-king"></i>
+                <span>Executive Command</span>
+            </div>
+            <div class="nav-item" data-module="quantum">
+                <i class="fas fa-atom"></i>
+                <span>Quantum Command</span>
+            </div>
+            <div class="nav-item" data-module="bi">
+                <i class="fas fa-chart-line"></i>
+                <span>Business Intelligence</span>
+            </div>
+
+            <div class="nav-category">Maritime Operations</div>
+            <div class="nav-item" data-module="fleet">
+                <i class="fas fa-ship"></i>
+                <span>Fleet Management</span>
+            </div>
+            <div class="nav-item" data-module="marine">
+                <i class="fas fa-water"></i>
+                <span>Marine Operations</span>
+            </div>
+            <div class="nav-item" data-module="crew">
+                <i class="fas fa-users"></i>
+                <span>Crew & Certificates</span>
+            </div>
+            <div class="nav-item" data-module="technical">
+                <i class="fas fa-cogs"></i>
+                <span>Technical & PMS</span>
+            </div>
+            <div class="nav-item" data-module="hsse">
+                <i class="fas fa-hard-hat"></i>
+                <span>HSSE & Compliance</span>
+            </div>
+
+            <div class="nav-category">Enterprise ERP</div>
+            <div class="nav-item" data-module="finance">
+                <i class="fas fa-coins"></i>
+                <span>Finance & Accounting</span>
+            </div>
+            <div class="nav-item" data-module="supply">
+                <i class="fas fa-truck"></i>
+                <span>Supply Chain</span>
+            </div>
+            <div class="nav-item" data-module="inventory">
+                <i class="fas fa-boxes"></i>
+                <span>Inventory & Stores</span>
+            </div>
+            <div class="nav-item" data-module="commercial">
+                <i class="fas fa-handshake"></i>
+                <span>Commercial & Chartering</span>
+            </div>
+            <div class="nav-item" data-module="hr">
+                <i class="fas fa-user-tie"></i>
+                <span>Human Resources</span>
+            </div>
+
+            <div class="nav-category">Advanced Intelligence</div>
+            <div class="nav-item" data-module="ai">
+                <i class="fas fa-brain"></i>
+                <span>AI Intelligence Center</span>
+            </div>
+            <div class="nav-item" data-module="optimization">
+                <i class="fas fa-project-diagram"></i>
+                <span>Quantum Optimization</span>
+            </div>
+            <div class="nav-item" data-module="digital-twin">
+                <i class="fas fa-cube"></i>
+                <span>Maritime Digital Twin</span>
+            </div>
+            <div class="nav-item" data-module="esg">
+                <i class="fas fa-leaf"></i>
+                <span>ESG & Sustainability</span>
+            </div>
+
+            <div class="nav-category">Enterprise Control</div>
+            <div class="nav-item" data-module="document">
+                <i class="fas fa-file-alt"></i>
+                <span>Document Management</span>
+            </div>
+            <div class="nav-item" data-module="workflow">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Workflow & Approvals</span>
+            </div>
+            <div class="nav-item" data-module="audit">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Audit & Internal Control</span>
+            </div>
+            <div class="nav-item" data-module="admin">
+                <i class="fas fa-user-shield"></i>
+                <span>Administration & IAM</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-info">
+                <div class="user-name" id="userName">User</div>
+                <div class="user-role">ENTERPRISE ADMIN</div>
+            </div>
+            <div class="top-btn" id="logoutBtn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="page-title" id="pageTitle">Executive Command Center</div>
+            <div class="top-bar-spacer"></div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="connectionStatus">CONNECTED</span>
+            </div>
+            <div class="live-clock" id="liveClock">--:--:--</div>
+            <div class="top-btn" title="Refresh Data" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <div class="top-btn" title="Notifications">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="notifBadge">3</span>
+            </div>
+            <div class="top-btn" title="Settings">
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Total Command Events</div>
+                        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                    </div>
+                    <div class="stat-value" id="statTotal">—</div>
+                    <div class="stat-change">Enterprise Operational Events</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-header">
+                        <div class="stat-label">Critical Events</div>
+                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    </div>
+                    <div class="stat-value" id="statCritical">—</div>
+                    <div class="stat-change">Active Critical Priorities</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-header">
+                        <div class="stat-label">Active Events</div>
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    </div>
+                    <div class="stat-value" id="statActive">—</div>
+                    <div class="stat-change">Outstanding Operational Actions</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-header">
+                        <div class="stat-label">Resolved Events</div>
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                    <div class="stat-value" id="statResolved">—</div>
+                    <div class="stat-change">Completed Operational Resolutions</div>
+                </div>
+            </div>
+
+            <!-- Main Panels -->
+            <div class="panel-grid">
+                
+                <!-- Performance Chart -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Enterprise Command Intelligence</div>
+                            <div class="panel-subtitle">Executive operational overview</div>
+                        </div>
+                        <div class="panel-actions">
+                            <div class="panel-action-btn" onclick="refreshDashboard()" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="panel-action-btn" title="Export">
+                                <i class="fas fa-download"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Critical Alerts -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Critical Operational Alerts</div>
+                            <div class="panel-subtitle">Events requiring executive attention</div>
+                        </div>
+                    </div>
+                    <div class="panel-body" id="alertsContainer">
+                        <div style="text-align: center; padding: 40px 20px; color: var(--quantum-text-dim);">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--quantum-primary);"></i>
+                            <div style="margin-top: 10px; font-size: 12px;">Loading alerts...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Board & Domain Intelligence -->
+            <div class="panel-grid">
+                
+                <!-- Priority Board -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Operational Priority Board</div>
+                            <div class="panel-subtitle">Enterprise action priorities</div>
+                        </div>
+                    </div>
+                    <div class="panel-body" style="padding: 0;">
+                        <table class="priority-table">
+                            <thead>
+                                <tr>
+                                    <th>Priority</th>
+                                    <th>Domain</th>
+                                    <th>Event</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="priorityTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 30px; color: var(--quantum-text-dim);">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading priorities...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Domain Intelligence -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Enterprise Domain Intelligence</div>
+                            <div class="panel-subtitle">Active command events by division</div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="domain-grid" id="domainGrid">
+                            <div class="domain-card">
+                                <div class="domain-name">Operations</div>
+                                <div class="domain-value">—</div>
+                            </div>
+                            <div class="domain-card">
+                                <div class="domain-name">Fleet</div>
+                                <div class="domain-value">—</div>
+                            </div>
+                            <div class="domain-card">
+                                <div class="domain-name">Technical</div>
+                                <div class="domain-value">—</div>
+                            </div>
+                            <div class="domain-card">
+                                <div class="domain-name">HSSE</div>
+                                <div class="domain-value">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Executive Performance Intelligence</div>
+                        <div class="panel-subtitle">Command event resolution metrics</div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="stats-grid" style="margin-bottom: 0;">
+                        <div class="stat-card success">
+                            <div class="stat-header">
+                                <div class="stat-label">Resolution Rate</div>
+                                <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                            </div>
+                            <div class="stat-value" id="metricResolution">—</div>
+                            <div class="stat-change">Calculated from recorded events</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-label">Avg Resolution Time</div>
+                                <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                            </div>
+                            <div class="stat-value" id="metricAvgTime">—</div>
+                            <div class="stat-change">Hours average resolution</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-header">
+                                <div class="stat-label">API Connection</div>
+                                <div class="stat-icon"><i class="fas fa-plug"></i></div>
+                            </div>
+                            <div class="stat-value" id="metricApi">ACTIVE</div>
+                            <div class="stat-change">Backend integration status</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-label">Last Updated</div>
+                                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                            </div>
+                            <div class="stat-value" id="metricLastUpdate" style="font-size: 18px;">—</div>
+                            <div class="stat-change">Real-time data sync</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
-        <!-- END page-content -->
-
     </main>
-    <!-- END main-area -->
-
 </div>
-<!-- END app-shell -->
 
+<!-- License Modal -->
+<div class="modal-overlay" id="licenseModal">
+    <div class="modal">
+        <div class="modal-title"><i class="fas fa-key"></i> License Activation Required</div>
+        <div class="modal-text">
+            This MQEIP Enterprise installation requires a valid license key to activate all features. 
+            Please contact your administrator or the software vendor to obtain your license key.
+        </div>
+        <div class="input-group">
+            <i class="fas fa-key"></i>
+            <input type="text" id="licenseKeyInput" placeholder="Enter License Key (XXXX-XXXX-XXXX-XXXX)">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeLicenseModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="activateLicense()">Activate</button>
+        </div>
+    </div>
+</div>
 
-<!-- ==========================================================
-     TOAST NOTIFICATIONS
-     ========================================================== -->
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
-<div
-    id="mqeipToast"
-    class="mqeip-toast hidden"
-    role="status"
-    aria-live="polite"
-></div>
-
+<!-- Watermark -->
+<div class="watermark">MQEIP™ PROPRIETARY SOFTWARE</div>
 
 <script>
-/* ==========================================================
-   MQEIP FRONTEND BLOK 5
-   FINAL APPLICATION CONTROLS
-   ========================================================== */
+/* ============================================
+   MQEIP ENTERPRISE CONFIGURATION
+   ============================================ */
 
-"use strict";
+// ⚠️ KONFIGURASI BACKEND - GANTI DENGAN URL BACKEND ANDA
+const MQEIP_CONFIG = {
+    // URL Backend Render/Swagger Anda
+    API_BASE_URL: 'https://YOUR-APP.onrender.com',  // <-- GANTI INI
+    
+    // Endpoint Login (sesuaikan dengan Swagger Anda)
+    LOGIN_ENDPOINT: '/api/auth/login',              // <-- GANTI INI
+    DASHBOARD_ENDPOINT: '/api/dashboard/stats',     // <-- GANTI INI
+    EVENTS_ENDPOINT: '/api/events',                 // <-- GANTI INI
+    ALERTS_ENDPOINT: '/api/alerts',                 // <-- GANTI INI
+    
+    // Field names dari response API (sesuaikan dengan Swagger)
+    TOKEN_FIELD: 'token',                           // atau 'access_token'
+    USER_FIELD: 'user',                             // atau 'username'
+    
+    // Demo Mode (true = gunakan data dummy jika backend tidak tersedia)
+    DEMO_MODE: false,
+    
+    // License Key (untuk distribusi ke client)
+    LICENSE_KEY: 'MQEIP-DEMO-2026-XXXX',
+    
+    // Domain Lock (kosongkan jika tidak ingin mengunci domain)
+    ALLOWED_DOMAINS: []  // contoh: ['client-domain.com', 'localhost']
+};
 
-let mqeipToastTimeout = null;
-
-
-/* ==========================================================
-   TOAST NOTIFICATIONS
-   ========================================================== */
-
-function mqeipShowToast(
-    message,
-    type = ""
-) {
-    const toast = mqeipElement("mqeipToast");
-
-    if (!toast) return;
-
-    if (mqeipToastTimeout !== null) {
-        clearTimeout(mqeipToastTimeout);
-    }
-
-    toast.textContent = String(message);
-
-    toast.className = "mqeip-toast";
-
-    if (type === "error" || type === "success") {
-        toast.classList.add(type);
-    }
-
-    mqeipToastTimeout = setTimeout(() => {
-        toast.classList.add("hidden");
-        mqeipToastTimeout = null;
-    }, 5000);
-}
-
-
-/* ==========================================================
-   CREATE SESSION BUTTONS
-   ========================================================== */
-
-function mqeipCreateSessionControls() {
-
-    const topbar = document.querySelector(
-        ".topbar-right"
-    );
-
-    if (!topbar) return;
-
-    if (mqeipElement("mqeipSessionControls")) {
-        return;
-    }
-
-    const controls = document.createElement("div");
-
-    controls.id = "mqeipSessionControls";
-    controls.className = "mqeip-session-controls";
-
-    const loginButton = document.createElement("button");
-
-    loginButton.id = "mqeipTopbarLogin";
-    loginButton.type = "button";
-    loginButton.className = "mqeip-session-button";
-    loginButton.textContent = "Login";
-
-    loginButton.addEventListener(
-        "click",
-        mqeipOpenLogin
-    );
-
-    const logoutButton = document.createElement("button");
-
-    logoutButton.id = "mqeipTopbarLogout";
-    logoutButton.type = "button";
-    logoutButton.className =
-        "mqeip-session-button logout";
-    logoutButton.textContent = "Logout";
-
-    logoutButton.addEventListener(
-        "click",
-        () => {
-            if (!mqeipAccessToken) {
-                return;
-            }
-
-            mqeipLogout();
-
-            mqeipUpdateSessionControls();
-
-            mqeipNavigate("executive");
-
-            mqeipShowToast(
-                "Local session cleared successfully.",
-                "success"
-            );
+/* ============================================
+   SECURITY & LICENSE SYSTEM
+   ============================================ */
+const MQEIP_SECURITY = {
+    // Valid license keys (master control)
+    validLicenses: [
+        'MQEIP-DEMO-2026-XXXX',
+        'MQEIP-ENT-2026-0001',
+        'MQEIP-ENT-2026-0002'
+    ],
+    
+    // Check domain lock
+    checkDomain: function() {
+        if (MQEIP_CONFIG.ALLOWED_DOMAINS.length === 0) return true;
+        const currentDomain = window.location.hostname;
+        return MQEIP_CONFIG.ALLOWED_DOMAINS.includes(currentDomain) || 
+               currentDomain === 'localhost' || 
+               currentDomain === '127.0.0.1';
+    },
+    
+    // Validate license
+    validateLicense: function(key) {
+        return this.validLicenses.includes(key.toUpperCase());
+    },
+    
+    // Check if license is stored
+    hasLicense: function() {
+        return sessionStorage.getItem('mqeip_license') !== null;
+    },
+    
+    // Activate license
+    activate: function(key) {
+        if (this.validateLicense(key)) {
+            sessionStorage.setItem('mqeip_license', key);
+            return true;
         }
-    );
-
-    controls.append(
-        loginButton,
-        logoutButton
-    );
-
-    topbar.appendChild(controls);
-
-    mqeipUpdateSessionControls();
-}
-
-
-/* ==========================================================
-   UPDATE SESSION CONTROLS
-   ========================================================== */
-
-function mqeipUpdateSessionControls() {
-
-    const authenticated = Boolean(
-        mqeipAccessToken
-    );
-
-    const loginButton = mqeipElement(
-        "mqeipTopbarLogin"
-    );
-
-    const logoutButton = mqeipElement(
-        "mqeipTopbarLogout"
-    );
-
-    if (loginButton) {
-        loginButton.classList.toggle(
-            "hidden",
-            authenticated
-        );
-    }
-
-    if (logoutButton) {
-        logoutButton.classList.toggle(
-            "hidden",
-            !authenticated
-        );
-    }
-
-    const avatar = document.querySelector(
-        ".user-avatar"
-    );
-
-    if (avatar) {
-        avatar.textContent =
-            authenticated ? "✓" : "U";
-
-        avatar.setAttribute(
-            "aria-label",
-            authenticated
-                ? "Authenticated user"
-                : "Unauthenticated user"
-        );
-    }
-
-    const connectButton = mqeipElement(
-        "connectButton"
-    );
-
-    if (connectButton) {
-        connectButton.textContent =
-            authenticated
-                ? "API Connected"
-                : "Connect Secure API";
-
-        connectButton.disabled = authenticated;
-    }
-}
-
-
-/* ==========================================================
-   SESSION STATE OBSERVATION
-   ========================================================== */
-
-function mqeipStartSessionObserver() {
-
-    let previousAuthenticated = Boolean(
-        mqeipAccessToken
-    );
-
-    window.setInterval(() => {
-
-        const currentAuthenticated = Boolean(
-            mqeipAccessToken
-        );
-
-        if (
-            currentAuthenticated !==
-            previousAuthenticated
-        ) {
-            previousAuthenticated =
-                currentAuthenticated;
-
-            mqeipUpdateSessionControls();
-        }
-
-    }, 1000);
-}
-
-
-/* ==========================================================
-   INITIAL APPLICATION VALIDATION
-   ========================================================== */
-
-function mqeipValidateApplication() {
-
-    const requiredElements = [
-        "sidebar",
-        "topbarTitle",
-        "pageTitle",
-        "executiveDashboard",
-        "moduleContent",
-        "connectButton",
-        "refreshButton",
-        "mqeipLoginModal",
-        "mqeipLoginForm",
-        "connectionStatus"
-    ];
-
-    const missing = requiredElements.filter(
-        id => !mqeipElement(id)
-    );
-
-    if (missing.length > 0) {
-        console.error(
-            "MQEIP frontend elements missing:",
-            missing
-        );
-
-        mqeipShowToast(
-            "Application initialization incomplete.",
-            "error"
-        );
-
         return false;
     }
+};
 
-    return true;
+/* ============================================
+   GLOBAL STATE
+   ============================================ */
+let MQEIP_STATE = {
+    isAuthenticated: false,
+    token: null,
+    user: null,
+    chart: null,
+    refreshInterval: null
+};
+
+/* ============================================
+   INITIALIZATION
+   ============================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('%c⚓ MQEIP Enterprise Edition v1.0', 'color: #00f0ff; font-size: 20px; font-weight: bold;');
+    console.log('%cMaritime Quantum ERP & Intelligence Platform', 'color: #b537f2; font-size: 12px;');
+    console.log('%c© 2026 Proprietary Software - All Rights Reserved', 'color: #7a8ca8; font-size: 10px;');
+    console.log('%c⚠️ WARNING: This is proprietary software. Unauthorized use is prohibited.', 'color: #ff3860; font-size: 11px;');
+    
+    // Generate particles
+    generateParticles();
+    
+    // Start live clock
+    startLiveClock();
+    
+    // Check license
+    if (!MQEIP_SECURITY.hasLicense()) {
+        // Auto-activate demo license for first time
+        MQEIP_SECURITY.activate(MQEIP_CONFIG.LICENSE_KEY);
+    }
+    
+    // Check domain lock
+    if (!MQEIP_SECURITY.checkDomain()) {
+        showToast('error', 'License Error', 'This software is not authorized for this domain.');
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#ff3860;font-family:Orbitron;">LICENSE INVALID</div>';
+        return;
+    }
+    
+    // Check if already authenticated (session)
+    const savedToken = sessionStorage.getItem('mqeip_token');
+    const savedUser = sessionStorage.getItem('mqeip_user');
+    
+    if (savedToken && savedUser) {
+        MQEIP_STATE.token = savedToken;
+        MQEIP_STATE.user = JSON.parse(savedUser);
+        MQEIP_STATE.isAuthenticated = true;
+        showDashboard();
+    }
+    
+    // Setup login form
+    setupLoginForm();
+    
+    // Setup navigation
+    setupNavigation();
+    
+    // Setup logout
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+});
+
+/* ============================================
+   PARTICLES ANIMATION
+   ============================================ */
+function generateParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 15 + 's';
+        particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+        container.appendChild(particle);
+    }
 }
 
-
-/* ==========================================================
-   GLOBAL ERROR HANDLING
-   ========================================================== */
-
-window.addEventListener(
-    "unhandledrejection",
-    event => {
-        console.error(
-            "MQEIP asynchronous operation failed:",
-            event.reason
-        );
-
-        mqeipShowToast(
-            "An application operation failed. " +
-            "Please review the connection or retry.",
-            "error"
-        );
+/* ============================================
+   LIVE CLOCK
+   ============================================ */
+function startLiveClock() {
+    function updateClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString('id-ID', { hour12: false });
+        const clockEl = document.getElementById('liveClock');
+        if (clockEl) clockEl.textContent = time;
     }
-);
+    updateClock();
+    setInterval(updateClock, 1000);
+}
 
-
-/* ==========================================================
-   FINAL APPLICATION INITIALIZATION
-   ========================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        mqeipCreateSessionControls();
-
-        mqeipStartSessionObserver();
-
-        const valid = mqeipValidateApplication();
-
-        if (!valid) {
+/* ============================================
+   LOGIN SYSTEM
+   ============================================ */
+function setupLoginForm() {
+    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('login-btn');
+    const errorBox = document.getElementById('loginError');
+    const errorMsg = document.getElementById('loginErrorMsg');
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username-input').value.trim();
+        const password = document.getElementById('password-input').value;
+        
+        if (!username || !password) {
+            showLoginError('Username dan Password tidak boleh kosong');
             return;
         }
+        
+        // Show loading
+        loginBtn.innerHTML = '<span class="loading-spinner"></span> AUTHENTICATING...';
+        loginBtn.disabled = true;
+        errorBox.style.display = 'none';
+        
+        try {
+            if (MQEIP_CONFIG.DEMO_MODE) {
+                // Demo mode - simulate login
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                if (username === 'admin' && password === 'admin123') {
+                    MQEIP_STATE.token = 'demo-token-' + Date.now();
+                    MQEIP_STATE.user = { username: username, role: 'ADMIN', name: 'Administrator' };
+                    MQEIP_STATE.isAuthenticated = true;
+                    
+                    sessionStorage.setItem('mqeip_token', MQEIP_STATE.token);
+                    sessionStorage.setItem('mqeip_user', JSON.stringify(MQEIP_STATE.user));
+                    
+                    showToast('success', 'Login Successful', 'Welcome to MQEIP Enterprise');
+                    showDashboard();
+                    loadDashboardData();
+                } else {
+                    showLoginError('Demo credentials: admin / admin123');
+                }
+            } else {
+                // Real API login
+                const response = await fetch(`${MQEIP_CONFIG.API_BASE_URL}${MQEIP_CONFIG.LOGIN_ENDPOINT}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Extract token (sesuaikan dengan response API Anda)
+                    MQEIP_STATE.token = data[MQEIP_CONFIG.TOKEN_FIELD] || data.token || data.access_token;
+                    MQEIP_STATE.user = data[MQEIP_CONFIG.USER_FIELD] || data.user || { username, role: 'USER' };
+                    MQEIP_STATE.isAuthenticated = true;
+                    
+                    // Save to session
+                    sessionStorage.setItem('mqeip_token', MQEIP_STATE.token);
+                    sessionStorage.setItem('mqeip_user', JSON.stringify(MQEIP_STATE.user));
+                    
+                    showToast('success', 'Login Successful', `Welcome, ${MQEIP_STATE.user.name || MQEIP_STATE.user.username || username}`);
+                    showDashboard();
+                    loadDashboardData();
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showLoginError(errorData.message || `Authentication failed (${response.status})`);
+                }
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showLoginError('Cannot connect to server. Check your backend URL and CORS settings.');
+        } finally {
+            loginBtn.innerHTML = '<i class="fas fa-shield-alt"></i> SECURE LOGIN';
+            loginBtn.disabled = false;
+        }
+    });
+}
 
-        mqeipUpdateSessionControls();
+function showLoginError(message) {
+    const errorBox = document.getElementById('loginError');
+    const errorMsg = document.getElementById('loginErrorMsg');
+    errorMsg.textContent = message;
+    errorBox.style.display = 'block';
+}
 
-        console.info(
-            "MQEIP Premium Enterprise Frontend initialized."
-        );
-
-    }
-);
-
-</script>
-
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 5
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     ========================================================== -->
-
-</body>
-</html>         
-
-          
-
-          
+function showDashboard() {
+    document.getElementById('loginPortal').style.display = 'none';
+    document.getElementById('appContainer').classList.add('active');
+    
+    // Update user info
+    const user = MQEIP_STATE.user;
+    const userName = user.name || user.username || 'User';
+    document.getElementById('userName').textContent = userName;
+    document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+    
+    // Start auto-refresh
+    MQEIP_STATE.refreshInterval = setInterval(loadDashboardData, 60
