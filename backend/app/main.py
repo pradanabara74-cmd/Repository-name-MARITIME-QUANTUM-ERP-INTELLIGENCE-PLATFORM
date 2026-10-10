@@ -68,6 +68,27 @@ app = FastAPI(
     description="Enterprise Maritime ERP, Integration and Intelligence API",
     version=__version__,
 )
+
+import asyncio
+from contextlib import asynccontextmanager
+from .modules.aisstream_connector import stream_ais
+
+@asynccontextmanager
+async def ais_lifespan(app):
+    task = None
+    if os.getenv("AISSTREAM_API_KEY"):
+        task = asyncio.create_task(stream_ais())
+    try:
+        yield
+    finally:
+        if task:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+app.router.lifespan_context = ais_lifespan
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
