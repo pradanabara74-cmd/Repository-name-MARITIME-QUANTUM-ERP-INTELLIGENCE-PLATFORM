@@ -27,7 +27,7 @@ def verify_ais_token(
     return TokenIdentity(
         user_id="aisstream-service",
         tenant_id=os.environ["MQEIP_AIS_TENANT_ID"],
-        role=Role.ADMIN,
+        role=Role.COMPANY_ADMIN,
         email=None,
     )
 
