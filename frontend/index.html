@@ -2435,7 +2435,7 @@ async function mqeipLoadExecutiveDashboard() {
         const [dashboardResult, boardResult, performanceResult] =
             await Promise.allSettled([
                 mqeipApiRequest(
-                    MQEIP_COMMAND_API + "/executive/dashboard"
+                    "/api/v1/executive/dashboard"
                 ),
                 mqeipApiRequest(
                     MQEIP_COMMAND_API +
