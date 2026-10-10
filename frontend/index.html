@@ -2435,7 +2435,7 @@ async function mqeipLoadExecutiveDashboard() {
         const [dashboardResult, boardResult, performanceResult] =
             await Promise.allSettled([
                 mqeipApiRequest(
-                    "/api/v1/executive/dashboard"
+                    MQEIP_COMMAND_API + "/executive/dashboard"
                 ),
                 mqeipApiRequest(
                     MQEIP_COMMAND_API +
@@ -2574,7 +2574,13 @@ document.addEventListener("DOMContentLoaded", () => {
         ?.addEventListener("click", mqeipCloseLogin);
 
     mqeipElement("refreshButton")
-        ?.addEventListener("click", mqeipLoadExecutiveDashboard);
+        ?.addEventListener("click", () => {
+            if (typeof mqeipCurrentPage !== "undefined" && mqeipCurrentPage === "fleet") {
+                void mqeipLoadFleet();
+            } else {
+                void mqeipLoadExecutiveDashboard();
+            }
+        });
 
     mqeipElement("mqeipLoginForm")
         ?.addEventListener("submit", async event => {
@@ -3258,8 +3264,177 @@ function mqeipRenderModuleWorkspace(pageKey) {
         "connection is implemented.";
 
     container.appendChild(dataPanel);
+
+    // Fleet uses its own live, authenticated workspace.
+    if (pageKey === "fleet") {
+        mqeipRenderFleetWorkspace(container);
+    }
 }
 
+
+/* ==========================================================
+   FLEET MANAGEMENT 鈥� ISOLATED LIVE API WORKSPACE
+   Only runs when Fleet is selected; other modules untouched.
+   ========================================================== */
+
+const MQEIP_FLEET_ENDPOINT = "/api/v1/fleet";
+let mqeipFleetLoadId = 0;
+
+function mqeipFleetNode(tag, text, className = "") {
+    return mqeipCreateElement(tag, className, text);
+}
+
+function mqeipFleetMessage(text, isError = false) {
+    const el = mqeipElement("mqeipFleetMessage");
+    if (el) {
+        el.textContent = text;
+        el.style.color = isError ? "var(--red)" : "var(--muted)";
+    }
+}
+
+function mqeipRenderFleetWorkspace(container) {
+    // Remove only the Fleet placeholder contents, never other modules.
+    container.replaceChildren();
+    const heading = mqeipFleetNode("h3", "鈿� Fleet Management 鈥� Live Vessel Registry");
+    const note = mqeipFleetNode("p", "Authenticated fleet records from MQEIP Backend.");
+    note.style.color = "var(--muted)";
+    const actions = mqeipFleetNode("div", "", "mqeip-workspace-actions");
+    const reload = mqeipFleetNode("button", "鈫� Refresh Fleet", "btn btn-outline");
+    reload.type = "button";
+    reload.addEventListener("click", mqeipLoadFleet);
+    const add = mqeipFleetNode("button", "+ Add Vessel", "btn btn-gold");
+    add.type = "button";
+    add.addEventListener("click", () => {
+        const form = mqeipElement("mqeipFleetForm");
+        if (form) form.classList.toggle("hidden");
+    });
+    actions.append(reload, add);
+
+    const form = document.createElement("form");
+    form.id = "mqeipFleetForm";
+    form.className = "panel hidden";
+    form.style.margin = "16px 0";
+    const formTitle = mqeipFleetNode("h3", "Register Vessel");
+    const nameLabel = mqeipFleetNode("label", "Vessel Name (required)", "mqeip-form-label");
+    const name = document.createElement("input");
+    name.name = "vessel_name";
+    name.required = true;
+    name.maxLength = 160;
+    name.className = "mqeip-form-input";
+    const typeLabel = mqeipFleetNode("label", "Vessel Type (optional)", "mqeip-form-label");
+    typeLabel.style.marginTop = "12px";
+    const type = document.createElement("input");
+    type.name = "vessel_type";
+    type.maxLength = 100;
+    type.className = "mqeip-form-input";
+    const submit = mqeipFleetNode("button", "Save Vessel", "btn btn-gold");
+    submit.type = "submit";
+    submit.style.marginTop = "14px";
+    form.append(formTitle, nameLabel, name, typeLabel, type, submit);
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!mqeipAccessToken) { mqeipOpenLogin(); return; }
+        submit.disabled = true;
+        try {
+            const payload = { vessel_name: name.value.trim() };
+            if (type.value.trim()) payload.vessel_type = type.value.trim();
+            await mqeipApiRequest(MQEIP_FLEET_ENDPOINT, {
+                method: "POST", body: JSON.stringify(payload)
+            });
+            form.reset();
+            form.classList.add("hidden");
+            await mqeipLoadFleet();
+            mqeipFleetMessage("Vessel saved successfully.");
+        } catch (error) {
+            mqeipFleetMessage("Save failed: " + error.message, true);
+        } finally { submit.disabled = false; }
+    });
+
+    const message = mqeipFleetNode("p", "", "mqeip-message");
+    message.id = "mqeipFleetMessage";
+    message.setAttribute("role", "status");
+    const tableWrap = mqeipFleetNode("div", "", "table-wrap");
+    const table = mqeipFleetNode("table", "", "data-table");
+    const head = document.createElement("thead");
+    const tr = document.createElement("tr");
+    ["Vessel", "Type", "IMO / ID", "Actions"].forEach(t => tr.appendChild(mqeipFleetNode("th", t)));
+    head.appendChild(tr);
+    const body = document.createElement("tbody");
+    body.id = "mqeipFleetTableBody";
+    table.append(head, body);
+    tableWrap.appendChild(table);
+    container.append(heading, note, actions, form, message, tableWrap);
+    void mqeipLoadFleet();
+}
+
+function mqeipFleetRecords(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && typeof payload === "object") {
+        for (const key of ["vessels", "fleet", "items", "results", "data"]) {
+            if (Array.isArray(payload[key])) return payload[key];
+        }
+    }
+    throw new Error("Fleet API returned an unexpected response format.");
+}
+
+async function mqeipLoadFleet() {
+    const loadId = ++mqeipFleetLoadId;
+    const body = mqeipElement("mqeipFleetTableBody");
+    if (!body || mqeipCurrentPage !== "fleet") return;
+    body.replaceChildren();
+    mqeipFleetMessage("Loading vessel registry...");
+    if (!mqeipAccessToken) {
+        mqeipFleetMessage("Secure login is required to view Fleet.");
+        mqeipOpenLogin();
+        return;
+    }
+    try {
+        const records = mqeipFleetRecords(await mqeipApiRequest(MQEIP_FLEET_ENDPOINT));
+        if (loadId !== mqeipFleetLoadId || mqeipCurrentPage !== "fleet" || body !== mqeipElement("mqeipFleetTableBody")) return;
+        if (!records.length) {
+            const row = document.createElement("tr");
+            const cell = mqeipFleetNode("td", "No vessels registered for this account.");
+            cell.colSpan = 4;
+            row.appendChild(cell);
+            body.appendChild(row);
+        }
+        for (const vessel of records) {
+            const row = document.createElement("tr");
+            const name = vessel.vessel_name ?? vessel.name ?? "鈥�";
+            const type = vessel.vessel_type ?? vessel.type ?? "鈥�";
+            const id = vessel.id ?? vessel.vessel_id ?? null;
+            const imo = vessel.imo_number ?? vessel.imo ?? id ?? "鈥�";
+            for (const val of [name, type, imo]) row.appendChild(mqeipFleetNode("td", String(val)));
+            const actionCell = document.createElement("td");
+            if (id !== null && id !== undefined) {
+                const remove = mqeipFleetNode("button", "Delete", "btn btn-outline");
+                remove.type = "button";
+                remove.addEventListener("click", async () => {
+                    if (!window.confirm("Delete vessel " + String(name) + "? This cannot be undone.")) return;
+                    remove.disabled = true;
+                    try {
+                        await mqeipApiRequest(MQEIP_FLEET_ENDPOINT + "/" + encodeURIComponent(String(id)), {method: "DELETE"});
+                        await mqeipLoadFleet();
+                        mqeipFleetMessage("Vessel deleted.");
+                    } catch (error) {
+                        mqeipFleetMessage("Delete failed: " + error.message, true);
+                        remove.disabled = false;
+                    }
+                });
+                actionCell.appendChild(remove);
+            } else {
+                actionCell.textContent = "No record ID";
+            }
+            row.appendChild(actionCell);
+            body.appendChild(row);
+        }
+        mqeipFleetMessage(records.length + " vessel(s) loaded from backend.");
+    } catch (error) {
+        if (loadId === mqeipFleetLoadId && mqeipCurrentPage === "fleet") {
+            mqeipFleetMessage("Unable to load Fleet: " + error.message, true);
+        }
+    }
+}
 
 /* ==========================================================
    QUANTUM COMMAND WORKSPACE DATA
