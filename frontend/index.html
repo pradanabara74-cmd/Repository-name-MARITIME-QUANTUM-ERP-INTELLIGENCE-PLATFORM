@@ -2,4147 +2,493 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07111f">
 <title>MQEIP | Maritime Quantum ERP & Intelligence Platform</title>
-
 <style>
-/* ==========================================================
-   MQEIP PREMIUM ENTERPRISE FRONTEND
-   BLOK 1 - DESIGN SYSTEM & APPLICATION SHELL
-   ========================================================== */
-
 :root {
-    --navy-950: #07111f;
-    --navy-900: #0b1729;
-    --navy-850: #101f34;
-    --navy-800: #14263d;
-    --navy-700: #203751;
-
-    --gold: #d8b46a;
-    --gold-light: #f0d69a;
-    --cyan: #48c7df;
-    --green: #4fd1a1;
-    --red: #f47782;
-    --amber: #f3bd65;
-
-    --text: #edf3fa;
-    --muted: #95a7bd;
-    --border: rgba(185, 207, 230, 0.13);
-
-    --sidebar-width: 270px;
-    --topbar-height: 76px;
-
-    --radius: 16px;
-    --shadow: 0 18px 45px rgba(0,0,0,.2);
-}
-
-* {
-    box-sizing: border-box;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-    margin: 0;
-    background: var(--navy-950);
-    color: var(--text);
-    font-family:
-        Inter,
-        "Segoe UI",
-        Arial,
-        sans-serif;
-    font-size: 14px;
-}
-
-button,
-input,
-select {
-    font: inherit;
-}
-
-button {
-    cursor: pointer;
-}
-
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-    outline: 2px solid var(--cyan);
-    outline-offset: 3px;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* ==========================================================
-   APPLICATION LAYOUT
-   ========================================================== */
-
-.app-shell {
-    display: flex;
-    min-height: 100vh;
-}
-
-.sidebar {
-    width: var(--sidebar-width);
-    flex-shrink: 0;
-    background: linear-gradient(
-        180deg,
-        #0c1b30,
-        #081322
-    );
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    z-index: 30;
-}
-
-.brand {
-    min-height: 110px;
-    padding: 25px 20px 18px;
-    border-bottom: 1px solid var(--border);
-}
-
-.brand-mark {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.brand-symbol {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--gold);
-    border-radius: 12px;
-    color: var(--gold);
-    font-weight: 800;
-    font-size: 20px;
-    background: rgba(216,180,106,.08);
-}
-
-.brand-name {
-    font-size: 23px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: var(--gold-light);
-}
-
-.brand-subtitle {
-    font-size: 9px;
-    letter-spacing: 1.3px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-top: 3px;
-}
-
-.navigation {
-    padding: 17px 12px;
-    overflow-y: auto;
-    flex: 1;
-    scrollbar-width: thin;
-}
-
-.nav-group {
-    margin-bottom: 18px;
-}
-
-.nav-heading {
-    padding: 12px 13px 8px;
-    color: var(--gold);
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.6px;
-    text-transform: uppercase;
-}
-
-.nav-link {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 11px 13px;
-    margin: 3px 0;
-    border-radius: 10px;
-    text-align: left;
-    transition: .2s ease;
-}
-
-.nav-link:hover {
-    background: rgba(255,255,255,.055);
-    color: var(--text);
-}
-
-.nav-link.active {
-    background: rgba(216,180,106,.12);
-    color: var(--gold-light);
-    box-shadow: inset 3px 0 var(--gold);
-}
-
-.nav-icon {
-    width: 21px;
-    flex-shrink: 0;
-    text-align: center;
-    font-size: 17px;
-}
-
-.sidebar-footer {
-    padding: 17px 20px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.7;
-}
-
-/* ==========================================================
-   MAIN CONTENT
-   ========================================================== */
-
-.main-area {
-    flex: 1;
-    min-width: 0;
-}
-
-.topbar {
-    min-height: var(--topbar-height);
-    background: rgba(11,23,41,.96);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 14px 28px;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    backdrop-filter: blur(12px);
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-width: 0;
-}
-
-.menu-toggle {
-    display: none;
-    background: var(--navy-800);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 9px 12px;
-}
-
-.topbar-title {
-    font-size: 15px;
-    font-weight: 750;
-    letter-spacing: .3px;
-}
-
-.topbar-subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 4px;
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-}
-
-.environment-label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 1px;
-}
-
-.connection-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--amber);
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--amber);
-}
-
-.status-dot.connected {
-    background: var(--green);
-}
-
-.status-dot.disconnected {
-    background: var(--red);
-}
-
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: rgba(216,180,106,.12);
-    color: var(--gold);
-    border: 1px solid rgba(216,180,106,.3);
-    font-weight: 800;
-}
-
-.page-content {
-    padding: 28px;
-    max-width: 1800px;
-    margin: auto;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 25px;
-}
-
-.eyebrow {
-    color: var(--gold);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.page-title {
-    font-size: clamp(23px, 3vw, 33px);
-    margin: 9px 0;
-    font-weight: 800;
-    letter-spacing: -.5px;
-}
-
-.page-description {
-    color: var(--muted);
-    line-height: 1.6;
-    max-width: 740px;
-}
-
-.page-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-/* ==========================================================
-   PREMIUM COMPONENTS
-   ========================================================== */
-
-.btn {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 11px 16px;
-    background: var(--navy-800);
-    color: var(--text);
-    font-weight: 700;
-}
-
-.btn:hover {
-    filter: brightness(1.14);
-}
-
-.btn-gold {
-    background: linear-gradient(
-        135deg,
-        #d6af62,
-        #f0d99c
-    );
-    border-color: transparent;
-    color: #152033;
-}
-
-.btn-outline {
-    border-color: rgba(216,180,106,.4);
-    background: transparent;
-    color: var(--gold-light);
-}
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-    gap: 18px;
-}
-
-.panel {
-    background: linear-gradient(
-        160deg,
-        rgba(22,40,62,.98),
-        rgba(12,26,44,.98)
-    );
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 21px;
-    box-shadow: var(--shadow);
-    min-width: 0;
-}
-
-.panel-title {
-    font-size: 14px;
-    font-weight: 750;
-    margin: 0 0 15px;
-}
-
-.metric-label {
-    color: var(--muted);
-    font-size: 12px;
-    margin-bottom: 12px;
-}
-
-.metric-value {
-    font-size: 31px;
-    font-weight: 850;
-    letter-spacing: -.7px;
-}
-
-.metric-footer {
-    margin-top: 13px;
-    font-size: 11px;
-    color: var(--muted);
-}
-
-.text-gold {
-    color: var(--gold-light);
-}
-
-.text-green {
-    color: var(--green);
-}
-
-.text-red {
-    color: var(--red);
-}
-
-.text-cyan {
-    color: var(--cyan);
-}
-
-.section-heading {
-    font-size: 17px;
-    font-weight: 800;
-    margin: 30px 0 17px;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th {
-    color: var(--muted);
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-align: left;
-    text-transform: uppercase;
-    padding: 13px 10px;
-    border-bottom: 1px solid var(--border);
-}
-
-.data-table td {
-    padding: 15px 10px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-}
-
-.table-wrap {
-    width: 100%;
-    overflow-x: auto;
-}
-
-.empty-state {
-    padding: 35px 15px;
-    text-align: center;
-    color: var(--muted);
-    line-height: 1.7;
-}
-
-.badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 30px;
-    font-size: 10px;
-    font-weight: 800;
-}
-
-.badge-critical {
-    background: rgba(244,119,130,.12);
-    color: var(--red);
-}
-
-.badge-high {
-    background: rgba(243,189,101,.12);
-    color: var(--amber);
-}
-
-.badge-normal {
-    background: rgba(79,209,161,.12);
-    color: var(--green);
-}
-
-/* ==========================================================
-   RESPONSIVE TABLET & MOBILE
-   ========================================================== */
-
-@media (max-width: 1200px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(2, minmax(0,1fr));
-    }
-}
-
-@media (max-width: 900px) {
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        transform: translateX(-100%);
-        transition: transform .25s ease;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    .menu-toggle {
-        display: inline-flex;
-    }
-
-    .page-content {
-        padding: 20px;
-    }
-
-    .topbar {
-        padding: 12px 18px;
-    }
-}
-
-@media (max-width: 550px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .topbar-subtitle,
-    .environment-label {
-        display: none;
-    }
-
-    .page-content {
-        padding: 15px;
-    }
-
-    .panel {
-        padding: 17px;
-    }
-}
+  --navy-950:#07111f; --navy-900:#0b1729; --navy-850:#101f34;
+  --navy-800:#14263d; --navy-700:#203751; --gold:#d8b46a;
+  --gold-light:#f0d69a; --cyan:#48c7df; --green:#4fd1a1;
+  --red:#f47782; --amber:#f3bd65; --text:#edf3fa; --muted:#95a7bd;
+  --border:rgba(185,207,230,.13); --sidebar-width:270px;
+  --topbar-height:76px; --radius:16px; --shadow:0 18px 45px rgba(0,0,0,.2);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--navy-950);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:14px}
+button,input,select{font:inherit}button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+a{color:inherit;text-decoration:none}.hidden{display:none!important}
+.app-shell{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-width);flex-shrink:0;background:linear-gradient(180deg,#0c1b30,#081322);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;z-index:30}
+.brand{min-height:110px;padding:25px 20px 18px;border-bottom:1px solid var(--border)}
+.brand-mark{display:flex;align-items:center;gap:12px}.brand-symbol{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--gold);border-radius:12px;color:var(--gold);font-weight:800;font-size:20px;background:rgba(216,180,106,.08)}
+.brand-name{font-size:23px;font-weight:800;letter-spacing:2px;color:var(--gold-light)}
+.brand-subtitle{font-size:9px;letter-spacing:1.3px;color:var(--muted);line-height:1.6;margin-top:3px}
+.navigation{padding:17px 12px;overflow-y:auto;flex:1;scrollbar-width:thin}.nav-group{margin-bottom:18px}
+.nav-heading{padding:12px 13px 8px;color:var(--gold);font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}
+.nav-link{width:100%;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;gap:11px;padding:11px 13px;margin:3px 0;border-radius:10px;text-align:left;transition:.2s ease}
+.nav-link:hover{background:rgba(255,255,255,.055);color:var(--text)}.nav-link.active{background:rgba(216,180,106,.12);color:var(--gold-light);box-shadow:inset 3px 0 var(--gold)}
+.nav-icon{width:21px;flex-shrink:0;text-align:center;font-size:17px}.sidebar-footer{padding:17px 20px;border-top:1px solid var(--border);color:var(--muted);font-size:11px;line-height:1.7}
+.main-area{flex:1;min-width:0}.topbar{min-height:var(--topbar-height);background:rgba(11,23,41,.96);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 28px;position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}
+.topbar-left{display:flex;align-items:center;gap:16px;min-width:0}.menu-toggle{display:none;background:var(--navy-800);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+.topbar-title{font-size:15px;font-weight:750;letter-spacing:.3px}.topbar-subtitle{color:var(--muted);font-size:11px;margin-top:4px}
+.topbar-right{display:flex;align-items:center;gap:13px;flex-wrap:wrap}.environment-label{font-size:10px;color:var(--muted);letter-spacing:1px}
+.connection-status{display:flex;align-items:center;gap:8px;color:var(--amber);font-size:11px;font-weight:700}.status-dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}.status-dot.connected{background:var(--green)}.status-dot.disconnected{background:var(--red)}
+.user-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(216,180,106,.12);color:var(--gold);border:1px solid rgba(216,180,106,.3);font-weight:800}
+.page-content{padding:28px;max-width:1800px;margin:auto}.page-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:25px}
+.eyebrow{color:var(--gold);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}.page-title{font-size:clamp(23px,3vw,33px);margin:9px 0;font-weight:800;letter-spacing:-.5px}
+.page-description{color:var(--muted);line-height:1.6;max-width:740px}.page-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--border);border-radius:10px;padding:11px 16px;background:var(--navy-800);color:var(--text);font-weight:700}.btn:hover{filter:brightness(1.14)}
+.btn-gold{background:linear-gradient(135deg,#d6af62,#f0d99c);border-color:transparent;color:#152033}.btn-outline{border-color:rgba(216,180,106,.4);background:transparent;color:var(--gold-light)}
+.dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.panel{background:linear-gradient(160deg,rgba(22,40,62,.98),rgba(12,26,44,.98));border:1px solid var(--border);border-radius:var(--radius);padding:21px;box-shadow:var(--shadow);min-width:0}
+.panel-title{font-size:14px;font-weight:750;margin:0 0 15px}.metric-label{color:var(--muted);font-size:12px;margin-bottom:12px}.metric-value{font-size:31px;font-weight:850;letter-spacing:-.7px}.metric-footer{margin-top:13px;font-size:11px;color:var(--muted)}
+.text-gold{color:var(--gold-light)}.text-green{color:var(--green)}.text-red{color:var(--red)}.text-cyan{color:var(--cyan)}
+.section-heading{font-size:17px;font-weight:800;margin:30px 0 17px}.data-table{width:100%;border-collapse:collapse}.data-table th{color:var(--muted);font-size:10px;letter-spacing:1px;text-align:left;text-transform:uppercase;padding:13px 10px;border-bottom:1px solid var(--border)}
+.data-table td{padding:15px 10px;border-bottom:1px solid var(--border);font-size:12px}.table-wrap{width:100%;overflow-x:auto}.empty-state{padding:35px 15px;text-align:center;color:var(--muted);line-height:1.7}
+.badge{display:inline-block;padding:5px 10px;border-radius:30px;font-size:10px;font-weight:800}.badge-critical{background:rgba(244,119,130,.12);color:var(--red)}.badge-high{background:rgba(243,189,101,.12);color:var(--amber)}.badge-normal{background:rgba(79,209,161,.12);color:var(--green)}
+.executive-dashboard{display:flex;flex-direction:column;gap:22px}.executive-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.kpi-card{position:relative;overflow:hidden;min-height:150px;background:linear-gradient(145deg,#192e48,#101e31);border:1px solid var(--border);border-radius:16px;padding:21px}
+.kpi-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}.kpi-card.critical:before{background:var(--red)}.kpi-card.warning:before{background:var(--amber)}.kpi-card.success:before{background:var(--green)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.kpi-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:rgba(216,180,106,.1);color:var(--gold);font-size:20px}
+.kpi-number{font-size:clamp(26px,3vw,36px);font-weight:850;margin-top:17px;letter-spacing:-.8px}.kpi-caption{font-size:12px;color:var(--muted);margin-top:6px}.kpi-footnote{margin-top:12px;color:var(--muted);font-size:10px}
+.intelligence-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}.intelligence-grid.equal{grid-template-columns:1fr 1fr}
+.panel-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:19px}.panel-header h3{margin:0;font-size:15px;font-weight:800}
+.panel-subtitle{color:var(--muted);font-size:11px;margin-top:6px;line-height:1.5}.panel-tag{color:var(--gold-light);border:1px solid rgba(216,180,106,.25);border-radius:20px;padding:6px 10px;font-size:10px;white-space:nowrap}
+.command-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.overview-item{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:11px;padding:17px}
+.overview-value{font-size:25px;font-weight:800;margin-bottom:7px}.overview-label{color:var(--muted);font-size:11px}
+.attention-indicator{display:flex;align-items:center;gap:12px;padding:15px;background:rgba(216,180,106,.05);border:1px solid var(--border);border-radius:12px;margin-bottom:17px}
+.attention-symbol{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:rgba(243,189,101,.1);color:var(--amber);font-size:22px}
+.attention-title{font-weight:800;margin-bottom:4px}.attention-description{color:var(--muted);font-size:11px;line-height:1.5}
+.domain-list{display:flex;flex-direction:column;gap:14px}.domain-row{display:grid;grid-template-columns:135px 1fr 40px;gap:12px;align-items:center}.domain-name{color:var(--text);font-size:11px;overflow-wrap:anywhere}
+.domain-track{height:8px;background:rgba(255,255,255,.07);border-radius:20px;overflow:hidden}.domain-fill{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#ae8c4e,#f0d69a);transition:width .35s ease}.domain-count{font-size:12px;font-weight:750;text-align:right}
+.command-alert{display:flex;gap:13px;align-items:flex-start;border-bottom:1px solid var(--border);padding:14px 0}.command-alert:last-child{border-bottom:0}
+.alert-symbol{width:35px;height:35px;border-radius:10px;background:rgba(244,119,130,.09);color:var(--red);display:grid;place-items:center;flex-shrink:0;font-size:18px}
+.alert-body{min-width:0;flex:1}.alert-title{font-weight:750;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.alert-meta{color:var(--muted);font-size:10px;margin-top:6px;line-height:1.6}
+.intelligence-footer{color:var(--muted);font-size:10px;padding-top:13px;border-top:1px solid var(--border);line-height:1.6}
+.dashboard-placeholder{text-align:center;padding:35px 15px;color:var(--muted);font-size:12px;line-height:1.7}.dashboard-placeholder strong{display:block;color:var(--gold-light);font-size:14px;margin-bottom:8px}.data-source-label{color:var(--muted);font-size:11px;line-height:1.5}
+.mqeip-modal{position:fixed;inset:0;z-index:1000;background:rgba(3,9,18,.88);display:flex;align-items:center;justify-content:center;padding:18px}
+.mqeip-login-card{width:100%;max-width:450px;background:#101f34;border:1px solid rgba(216,180,106,.3);border-radius:18px;padding:28px;box-shadow:0 25px 80px rgba(0,0,0,.45)}
+.mqeip-login-title{color:var(--gold-light);font-size:22px;font-weight:800;margin-bottom:8px}.mqeip-login-description{color:var(--muted);font-size:12px;line-height:1.7;margin-bottom:23px}
+.mqeip-form-group{margin-bottom:17px}.mqeip-form-label{display:block;color:var(--muted);margin-bottom:8px;font-size:12px}
+.mqeip-form-input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--border);background:#091626;color:var(--text);outline:none}.mqeip-form-input:focus{border-color:var(--gold)}
+.mqeip-login-actions{display:flex;gap:10px;margin-top:20px}.mqeip-login-actions .btn{flex:1}
+.mqeip-message{font-size:12px;line-height:1.6;margin-top:15px;color:var(--muted);overflow-wrap:anywhere}.mqeip-message.error{color:var(--red)}.mqeip-message.success{color:var(--green)}
+.mqeip-security-note{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.7}
+.mqeip-workspace{display:flex;flex-direction:column;gap:20px;text-align:left}.mqeip-workspace-header{display:flex;align-items:flex-start;gap:16px;padding:18px;background:rgba(216,180,106,.045);border:1px solid var(--border);border-radius:12px}
+.mqeip-workspace-icon{width:52px;height:52px;flex-shrink:0;display:grid;place-items:center;font-size:25px;color:var(--gold);border-radius:13px;background:rgba(216,180,106,.1)}
+.mqeip-workspace-name{font-size:19px;font-weight:800;color:var(--gold-light);margin-bottom:8px}.mqeip-workspace-description{color:var(--muted);font-size:12px;line-height:1.7}
+.mqeip-workspace-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.mqeip-workspace-card{padding:20px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:12px;min-width:0}
+.mqeip-workspace-card-title{font-size:12px;font-weight:800;color:var(--text);margin-bottom:10px}.mqeip-workspace-card-value{font-size:22px;font-weight:800;color:var(--gold-light);overflow-wrap:anywhere}
+.mqeip-workspace-card-note{color:var(--muted);font-size:11px;line-height:1.6;margin-top:10px}.mqeip-workspace-status{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:11px;background:rgba(72,199,223,.055);border:1px solid rgba(72,199,223,.18);color:var(--muted);font-size:12px;line-height:1.7}
+.mqeip-workspace-actions{display:flex;flex-wrap:wrap;gap:12px}.mqeip-workspace-actions .btn{min-width:150px}.mqeip-workspace-data{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:18px;color:var(--muted);font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.mqeip-workspace-data h4{color:var(--text);margin:0 0 12px;font-size:13px}.mqeip-workspace-data ul{padding-left:20px;margin:0}.mqeip-workspace-data li{margin-bottom:8px}
+.mqeip-security-banner{margin-top:24px;padding:15px 18px;border:1px solid var(--border);border-radius:12px;background:rgba(216,180,106,.035);color:var(--muted);font-size:11px;line-height:1.8}
+.mqeip-security-banner strong{color:var(--gold-light)}.mqeip-session-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.mqeip-session-button{padding:9px 13px;border:1px solid var(--border);border-radius:9px;background:var(--navy-800);color:var(--text);font-size:11px;font-weight:750}.mqeip-session-button:hover{border-color:var(--gold)}
+.mqeip-session-button.logout{border-color:rgba(244,119,130,.35);color:var(--red)}.mqeip-toast{position:fixed;right:22px;bottom:22px;z-index:1100;max-width:380px;padding:15px 18px;background:#14263d;color:var(--text);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.mqeip-toast.error{border-color:rgba(244,119,130,.5)}.mqeip-toast.success{border-color:rgba(79,209,161,.5)}
+@media(max-width:1200px){.dashboard-grid,.executive-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.intelligence-grid,.intelligence-grid.equal{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}.sidebar.open{transform:translateX(0)}.menu-toggle{display:inline-flex}.page-content{padding:20px}.topbar{padding:12px 18px}}
+@media(max-width:650px){.mqeip-workspace-grid{grid-template-columns:1fr}.mqeip-workspace-header{flex-direction:column}.mqeip-toast{left:15px;right:15px;bottom:15px;max-width:none}.mqeip-session-controls{width:100%}}
+@media(max-width:550px){.dashboard-grid,.executive-kpis{grid-template-columns:1fr}.topbar-subtitle,.environment-label{display:none}.page-content{padding:15px}.panel{padding:17px}.domain-row{grid-template-columns:100px 1fr 30px;gap:8px}.command-overview{grid-template-columns:1fr 1fr}}
 </style>
 </head>
-
 <body>
-
 <div class="app-shell">
-
-    <!-- ================================================
-         ENTERPRISE SIDEBAR
-         ================================================ -->
-
-    <aside class="sidebar" id="sidebar">
-
-        <div class="brand">
-            <div class="brand-mark">
-                <div class="brand-symbol">Q</div>
-
-                <div>
-                    <div class="brand-name">MQEIP</div>
-                    <div class="brand-subtitle">
-                        MARITIME QUANTUM ERP<br>
-                        & INTELLIGENCE PLATFORM
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <nav class="navigation" aria-label="Main navigation">
-
-            <div class="nav-group">
-                <div class="nav-heading">Command Centers</div>
-
-                <button class="nav-link active"
-                        data-page="executive">
-                    <span class="nav-icon">鈼�</span>
-                    Executive Command
-                </button>
-
-                <button class="nav-link"
-                        data-page="quantum">
-                    <span class="nav-icon">鉁�</span>
-                    Quantum Command
-                </button>
-
-                <button class="nav-link"
-                        data-page="analytics">
-                    <span class="nav-icon">鈻�</span>
-                    Business Intelligence
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Maritime Operations</div>
-
-                <button class="nav-link" data-page="fleet">
-                    <span class="nav-icon">鈿�</span>
-                    Fleet Management
-                </button>
-
-                <button class="nav-link" data-page="marine">
-                    <span class="nav-icon">鈼�</span>
-                    Marine Operations
-                </button>
-
-                <button class="nav-link" data-page="crew">
-                    <span class="nav-icon">鈾�</span>
-                    Crew & Certificates
-                </button>
-
-                <button class="nav-link" data-page="technical">
-                    <span class="nav-icon">鈿�</span>
-                    Technical & PMS
-                </button>
-
-                <button class="nav-link" data-page="hsse">
-                    <span class="nav-icon">猬�</span>
-                    HSSE & Compliance
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Enterprise ERP</div>
-
-                <button class="nav-link" data-page="finance">
-                    <span class="nav-icon">鈻�</span>
-                    Finance & Accounting
-                </button>
-
-                <button class="nav-link" data-page="supply">
-                    <span class="nav-icon">鈻�</span>
-                    Supply Chain
-                </button>
-
-                <button class="nav-link" data-page="inventory">
-                    <span class="nav-icon">鈻�</span>
-                    Inventory & Stores
-                </button>
-
-                <button class="nav-link" data-page="commercial">
-                    <span class="nav-icon">鈼�</span>
-                    Commercial & Chartering
-                </button>
-
-                <button class="nav-link" data-page="hr">
-                    <span class="nav-icon">鈾�</span>
-                    Human Resources
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Advanced Intelligence</div>
-
-                <button class="nav-link" data-page="ai">
-                    <span class="nav-icon">鉁�</span>
-                    AI Intelligence Center
-                </button>
-
-                <button class="nav-link" data-page="optimization">
-                    <span class="nav-icon">鈱�</span>
-                    Quantum Optimization
-                </button>
-
-                <button class="nav-link" data-page="twin">
-                    <span class="nav-icon">鈼�</span>
-                    Maritime Digital Twin
-                </button>
-
-                <button class="nav-link" data-page="esg">
-                    <span class="nav-icon">鉂�</span>
-                    ESG & Sustainability
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-heading">Enterprise Control</div>
-
-                <button class="nav-link" data-page="documents">
-                    <span class="nav-icon">鈻�</span>
-                    Document Management
-                </button>
-
-                <button class="nav-link" data-page="workflow">
-                    <span class="nav-icon">鈬�</span>
-                    Workflow & Approvals
-                </button>
-
-                <button class="nav-link" data-page="audit">
-                    <span class="nav-icon">鉁�</span>
-                    Audit & Internal Control
-                </button>
-
-                <button class="nav-link" data-page="administration">
-                    <span class="nav-icon">鈿�</span>
-                    Administration & IAM
-                </button>
-            </div>
-
-        </nav>
-
-        <div class="sidebar-footer">
-            MQEIP ENTERPRISE EDITION<br>
-            Secure Multi-Tenant Architecture<br>
-            <span class="text-gold">Version 1.0 鈥� Frontend Foundation</span>
-        </div>
-
-    </aside>
-
-    <!-- ================================================
-         MAIN APPLICATION
-         ================================================ -->
-
-    <main class="main-area">
-
-        <header class="topbar">
-
-            <div class="topbar-left">
-
-                <button class="menu-toggle"
-                        id="menuToggle"
-                        type="button"
-                        aria-label="Open navigation"
-                        aria-expanded="false">
-                    鈽�
-                </button>
-
-                <div>
-                    <div class="topbar-title" id="topbarTitle">
-                        Executive Command Center
-                    </div>
-
-                    <div class="topbar-subtitle">
-                        Enterprise Maritime Intelligence Platform
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="topbar-right">
-
-                <span class="environment-label">
-                    ENTERPRISE ENVIRONMENT
-                </span>
-
-                <div class="connection-status"
-                     id="connectionStatus">
-                    <span class="status-dot"
-                          id="connectionDot"></span>
-                    <span id="connectionText">Not connected</span>
-                </div>
-
-                <div class="user-avatar"
-                     aria-label="User profile">
-                    U
-                </div>
-
-            </div>
-
-        </header>
-
-        <div class="page-content">
-
-            <section class="page-header">
-
-                <div>
-                    <div class="eyebrow">
-                        MARITIME QUANTUM INTELLIGENCE
-                    </div>
-
-                    <h1 class="page-title" id="pageTitle">
-                        Executive Command Center
-                    </h1>
-
-                    <p class="page-description"
-                       id="pageDescription">
-                        Enterprise-wide maritime operational
-                        intelligence, strategic monitoring,
-                        and executive decision support.
-                    </p>
-                </div>
-
-                <div class="page-actions">
-                    <button class="btn btn-outline"
-                            id="refreshButton"
-                            type="button">
-                        鈫� Refresh
-                    </button>
-
-                    <button class="btn btn-gold"
-                            id="connectButton"
-                            type="button">
-                        Connect Secure API
-                    </button>
-                </div>
-
-            </section>
-
-            <!-- Dashboard sections will be inserted
-                 in FRONTEND BLOK 2 -->
-
-<!-- END OF FRONTEND BLOK 1 -->
-
- <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 2 - EXECUTIVE DASHBOARD & INTELLIGENCE PANELS
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   EXECUTIVE DASHBOARD EXTENSIONS
-   ========================================================== */
-
-.executive-dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-}
-
-.executive-kpis {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-}
-
-.kpi-card {
-    position: relative;
-    overflow: hidden;
-    min-height: 150px;
-    background: linear-gradient(
-        145deg,
-        #192e48,
-        #101e31
-    );
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 21px;
-}
-
-.kpi-card::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--gold);
-}
-
-.kpi-card.critical::before {
-    background: var(--red);
-}
-
-.kpi-card.warning::before {
-    background: var(--amber);
-}
-
-.kpi-card.success::before {
-    background: var(--green);
-}
-
-.kpi-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.kpi-icon {
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border-radius: 11px;
-    background: rgba(216,180,106,.1);
-    color: var(--gold);
-    font-size: 20px;
-}
-
-.kpi-number {
-    font-size: clamp(26px, 3vw, 36px);
-    font-weight: 850;
-    margin-top: 17px;
-    letter-spacing: -.8px;
-}
-
-.kpi-caption {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-}
-
-.kpi-footnote {
-    margin-top: 12px;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.intelligence-grid {
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 18px;
-}
-
-.intelligence-grid.equal {
-    grid-template-columns: 1fr 1fr;
-}
-
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 19px;
-}
-
-.panel-header h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 800;
-}
-
-.panel-subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 6px;
-    line-height: 1.5;
-}
-
-.panel-tag {
-    color: var(--gold-light);
-    border: 1px solid rgba(216,180,106,.25);
-    border-radius: 20px;
-    padding: 6px 10px;
-    font-size: 10px;
-    white-space: nowrap;
-}
-
-.command-overview {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 12px;
-}
-
-.overview-item {
-    background: rgba(255,255,255,.025);
-    border: 1px solid var(--border);
-    border-radius: 11px;
-    padding: 17px;
-}
-
-.overview-value {
-    font-size: 25px;
-    font-weight: 800;
-    margin-bottom: 7px;
-}
-
-.overview-label {
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.attention-indicator {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px;
-    background: rgba(216,180,106,.05);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 17px;
-}
-
-.attention-symbol {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    background: rgba(243,189,101,.1);
-    color: var(--amber);
-    font-size: 22px;
-}
-
-.attention-title {
-    font-weight: 800;
-    margin-bottom: 4px;
-}
-
-.attention-description {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-.domain-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.domain-row {
-    display: grid;
-    grid-template-columns: 135px 1fr 40px;
-    gap: 12px;
-    align-items: center;
-}
-
-.domain-name {
-    color: var(--text);
-    font-size: 11px;
-    overflow-wrap: anywhere;
-}
-
-.domain-track {
-    height: 8px;
-    background: rgba(255,255,255,.07);
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.domain-fill {
-    height: 100%;
-    width: 0;
-    border-radius: 20px;
-    background: linear-gradient(
-        90deg,
-        #ae8c4e,
-        #f0d69a
-    );
-    transition: width .35s ease;
-}
-
-.domain-count {
-    font-size: 12px;
-    font-weight: 750;
-    text-align: right;
-}
-
-.command-alert {
-    display: flex;
-    gap: 13px;
-    align-items: flex-start;
-    border-bottom: 1px solid var(--border);
-    padding: 14px 0;
-}
-
-.command-alert:last-child {
-    border-bottom: 0;
-}
-
-.alert-symbol {
-    width: 35px;
-    height: 35px;
-    border-radius: 10px;
-    background: rgba(244,119,130,.09);
-    color: var(--red);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    font-size: 18px;
-}
-
-.alert-body {
-    min-width: 0;
-    flex: 1;
-}
-
-.alert-title {
-    font-weight: 750;
-    font-size: 12px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
-.alert-meta {
-    color: var(--muted);
-    font-size: 10px;
-    margin-top: 6px;
-    line-height: 1.6;
-}
-
-.intelligence-footer {
-    color: var(--muted);
-    font-size: 10px;
-    padding-top: 13px;
-    border-top: 1px solid var(--border);
-    line-height: 1.6;
-}
-
-.dashboard-placeholder {
-    text-align: center;
-    padding: 35px 15px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-.dashboard-placeholder strong {
-    display: block;
-    color: var(--gold-light);
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
-.data-source-label {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-@media (max-width: 1200px) {
-    .executive-kpis {
-        grid-template-columns: repeat(2, minmax(0,1fr));
-    }
-}
-
-@media (max-width: 1050px) {
-    .intelligence-grid,
-    .intelligence-grid.equal {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 550px) {
-    .executive-kpis {
-        grid-template-columns: 1fr;
-    }
-
-    .domain-row {
-        grid-template-columns: 100px 1fr 30px;
-        gap: 8px;
-    }
-
-    .command-overview {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-</style>
-
-
-<!-- ==========================================================
-     EXECUTIVE COMMAND CENTER
-     ========================================================== -->
-
-<section
-    id="executiveDashboard"
-    class="executive-dashboard"
-    aria-label="Executive Command Center"
->
-
-    <!-- ======================================================
-         EXECUTIVE KPI CARDS
-         ====================================================== -->
-
-    <div class="executive-kpis">
-
-        <article class="kpi-card">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    TOTAL COMMAND EVENTS
-                </div>
-                <div class="kpi-icon">鈻�</div>
-            </div>
-
-            <div class="kpi-number text-gold"
-                 id="kpiTotalEvents">
-                鈥�
-            </div>
-
-            <div class="kpi-caption">
-                Enterprise Operational Events
-            </div>
-
-            <div class="kpi-footnote">
-                Command Center Database
-            </div>
-        </article>
-
-        <article class="kpi-card critical">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    CRITICAL EVENTS
-                </div>
-                <div class="kpi-icon">!</div>
-            </div>
-
-            <div class="kpi-number text-red"
-                 id="kpiCriticalEvents">
-                鈥�
-            </div>
-
-            <div class="kpi-caption">
-                Active Critical Priorities
-            </div>
-
-            <div class="kpi-footnote">
-                Open & In Progress
-            </div>
-        </article>
-
-        <article class="kpi-card warning">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    ACTIVE EVENTS
-                </div>
-                <div class="kpi-icon">鈼�</div>
-            </div>
-
-            <div class="kpi-number"
-                 id="kpiActiveEvents">
-                鈥�
-            </div>
-
-            <div class="kpi-caption">
-                Outstanding Operational Actions
-            </div>
-
-            <div class="kpi-footnote">
-                Open & In Progress
-            </div>
-        </article>
-
-        <article class="kpi-card success">
-            <div class="kpi-top">
-                <div class="metric-label">
-                    RESOLVED EVENTS
-                </div>
-                <div class="kpi-icon">鉁�</div>
-            </div>
-
-            <div class="kpi-number text-green"
-                 id="kpiResolvedEvents">
-                鈥�
-            </div>
-
-            <div class="kpi-caption">
-                Completed Operational Resolutions
-            </div>
-
-            <div class="kpi-footnote">
-                Recorded Command Resolutions
-            </div>
-        </article>
-
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="brand-mark"><div class="brand-symbol">Q</div><div><div class="brand-name">MQEIP</div><div class="brand-subtitle">MARITIME QUANTUM ERP<br>&amp; INTELLIGENCE PLATFORM</div></div></div></div>
+  <nav class="navigation" aria-label="Main navigation">
+    <div class="nav-group"><div class="nav-heading">Command Centers</div>
+      <button class="nav-link active" data-page="executive"><span class="nav-icon">鈼�</span>Executive Command</button>
+      <button class="nav-link" data-page="quantum"><span class="nav-icon">鉁�</span>Quantum Command</button>
+      <button class="nav-link" data-page="analytics"><span class="nav-icon">鈻�</span>Business Intelligence</button>
     </div>
-
-
-    <!-- ======================================================
-         COMMAND INTELLIGENCE OVERVIEW
-         ====================================================== -->
-
-    <div class="intelligence-grid">
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Enterprise Command Intelligence</h3>
-                    <div class="panel-subtitle">
-                        Executive operational overview
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    COMMAND CENTER
-                </span>
-            </div>
-
-            <div class="attention-indicator">
-
-                <div class="attention-symbol">
-                    鈼�
-                </div>
-
-                <div>
-                    <div class="attention-title"
-                         id="executiveAttentionLevel">
-                        Awaiting Secure Connection
-                    </div>
-
-                    <div class="attention-description"
-                         id="executiveAttentionDescription">
-                        Connect to the authenticated
-                        MQEIP API to retrieve
-                        operational intelligence.
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="command-overview">
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="overviewOpen">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        Open Events
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="overviewInProgress">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        In Progress
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value text-red"
-                         id="overviewHigh">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        High Priority
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value text-gold"
-                         id="overviewUnassigned">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        Unassigned Events
-                    </div>
-                </div>
-
-            </div>
-
-        </article>
-
-
-        <!-- ==================================================
-             DOMAIN INTELLIGENCE
-             ================================================== -->
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Enterprise Domain Intelligence</h3>
-                    <div class="panel-subtitle">
-                        Active command events by division
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    OPERATIONS
-                </span>
-            </div>
-
-            <div id="domainIntelligenceList"
-                 class="domain-list">
-
-                <div class="dashboard-placeholder">
-                    <strong>No Data Loaded</strong>
-                    Domain intelligence will appear
-                    after secure API connection.
-                </div>
-
-            </div>
-
-        </article>
-
+    <div class="nav-group"><div class="nav-heading">Maritime Operations</div>
+      <button class="nav-link" data-page="fleet"><span class="nav-icon">鈿�</span>Fleet Management</button>
+      <button class="nav-link" data-page="marine"><span class="nav-icon">鈼�</span>Marine Operations</button>
+      <button class="nav-link" data-page="crew"><span class="nav-icon">鈾�</span>Crew &amp; Certificates</button>
+      <button class="nav-link" data-page="technical"><span class="nav-icon">鈿�</span>Technical &amp; PMS</button>
+      <button class="nav-link" data-page="hsse"><span class="nav-icon">鉀�</span>HSSE &amp; Compliance</button>
     </div>
-
-
-    <!-- ======================================================
-         CRITICAL ALERTS & PRIORITY BOARD
-         ====================================================== -->
-
-    <div class="intelligence-grid equal">
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Critical Operational Alerts</h3>
-                    <div class="panel-subtitle">
-                        Events requiring executive attention
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    CRITICAL
-                </span>
-            </div>
-
-            <div id="criticalAlertsList">
-
-                <div class="dashboard-placeholder">
-                    <strong>No Alerts Loaded</strong>
-                    Critical alerts will be retrieved
-                    from the Command Center API.
-                </div>
-
-            </div>
-
-        </article>
-
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Operational Priority Board</h3>
-                    <div class="panel-subtitle">
-                        Enterprise action priorities
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    PRIORITY CONTROL
-                </span>
-            </div>
-
-            <div class="table-wrap">
-
-                <table class="data-table">
-
-                    <thead>
-                        <tr>
-                            <th>Priority</th>
-                            <th>Domain</th>
-                            <th>Event</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="priorityBoardBody">
-
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">
-                                    Connect to the secure API
-                                    to load operational priorities.
-                                </div>
-                            </td>
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </article>
-
+    <div class="nav-group"><div class="nav-heading">Enterprise ERP</div>
+      <button class="nav-link" data-page="finance"><span class="nav-icon">鈻�</span>Finance &amp; Accounting</button>
+      <button class="nav-link" data-page="supply"><span class="nav-icon">鈻�</span>Supply Chain</button>
+      <button class="nav-link" data-page="inventory"><span class="nav-icon">鈻�</span>Inventory &amp; Stores</button>
+      <button class="nav-link" data-page="commercial"><span class="nav-icon">鈼�</span>Commercial &amp; Chartering</button>
+      <button class="nav-link" data-page="hr"><span class="nav-icon">鈾�</span>Human Resources</button>
     </div>
-
-
-    <!-- ======================================================
-         STRATEGIC PERFORMANCE
-         ====================================================== -->
-
-    <div class="intelligence-grid equal">
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Executive Performance Intelligence</h3>
-                    <div class="panel-subtitle">
-                        Command event resolution metrics
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    PERFORMANCE
-                </span>
-            </div>
-
-            <div class="command-overview">
-
-                <div class="overview-item">
-                    <div class="overview-value text-green"
-                         id="performanceResolutionRate">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        Resolution Rate
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="performanceResolutionHours">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        Average Resolution Hours
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="intelligence-footer">
-                Calculated from recorded Command Center
-                events. This is not a fleet-wide performance
-                assessment until cross-module integration
-                is completed.
-            </div>
-
-        </article>
-
-
-        <article class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h3>Enterprise Data Status</h3>
-                    <div class="panel-subtitle">
-                        Backend integration visibility
-                    </div>
-                </div>
-
-                <span class="panel-tag">
-                    SYSTEM
-                </span>
-            </div>
-
-            <div class="command-overview">
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="dataConnectionState">
-                        鈥�
-                    </div>
-                    <div class="overview-label">
-                        API Connection
-                    </div>
-                </div>
-
-                <div class="overview-item">
-                    <div class="overview-value"
-                         id="dataIntegrationState">
-                        Pending
-                    </div>
-                    <div class="overview-label">
-                        ERP Module Integration
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="intelligence-footer"
-                 id="dashboardLastUpdated">
-                Last updated: Not yet connected
-            </div>
-
-        </article>
-
+    <div class="nav-group"><div class="nav-heading">Advanced Intelligence</div>
+      <button class="nav-link" data-page="ai"><span class="nav-icon">鉁�</span>AI Intelligence Center</button>
+      <button class="nav-link" data-page="optimization"><span class="nav-icon">鈱�</span>Quantum Optimization</button>
+      <button class="nav-link" data-page="twin"><span class="nav-icon">鈼�</span>Maritime Digital Twin</button>
+      <button class="nav-link" data-page="esg"><span class="nav-icon">鈾�</span>ESG &amp; Sustainability</button>
     </div>
-
-
-    <!-- ======================================================
-         DASHBOARD DATA SOURCE NOTICE
-         ====================================================== -->
-
-    <div class="data-source-label">
-        MQEIP Enterprise Command Dashboard 鈥�
-        Live values will be displayed only after
-        successful authentication and API retrieval.
-        No simulated operational figures are used.
+    <div class="nav-group"><div class="nav-heading">Enterprise Control</div>
+      <button class="nav-link" data-page="documents"><span class="nav-icon">鈻�</span>Document Management</button>
+      <button class="nav-link" data-page="workflow"><span class="nav-icon">鈬�</span>Workflow &amp; Approvals</button>
+      <button class="nav-link" data-page="audit"><span class="nav-icon">鉁�</span>Audit &amp; Internal Control</button>
+      <button class="nav-link" data-page="administration"><span class="nav-icon">鈿�</span>Administration &amp; IAM</button>
     </div>
-
-</section>
-
-
-<!-- ==========================================================
-     DYNAMIC MODULE CONTENT AREA
-     ========================================================== -->
-
-<section
-    id="moduleContent"
-    class="hidden"
-    aria-label="Enterprise Module Workspace"
->
-
-    <div class="panel">
-
-        <div class="panel-header">
-            <div>
-                <h3 id="modulePanelTitle">
-                    Enterprise Module
-                </h3>
-
-                <div class="panel-subtitle"
-                     id="modulePanelDescription">
-                    Select a module to view its workspace.
-                </div>
-            </div>
-
-            <span class="panel-tag">
-                MQEIP
-            </span>
-        </div>
-
-        <div id="modulePanelBody"
-             class="dashboard-placeholder">
-
-            <strong>Module Workspace</strong>
-
-            Secure module-specific API integration
-            will be configured in the next stages.
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 2
-     ========================================================== -->
-
-  <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 3 - SECURE API & LIVE DASHBOARD
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   SECURE CONNECTION DIALOG
-   ========================================================== */
-
-.mqeip-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(3, 9, 18, .88);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-}
-
-.mqeip-modal.hidden {
-    display: none;
-}
-
-.mqeip-login-card {
-    width: 100%;
-    max-width: 450px;
-    background: #101f34;
-    border: 1px solid rgba(216,180,106,.3);
-    border-radius: 18px;
-    padding: 28px;
-    box-shadow: 0 25px 80px rgba(0,0,0,.45);
-}
-
-.mqeip-login-title {
-    color: var(--gold-light);
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 8px;
-}
-
-.mqeip-login-description {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-    margin-bottom: 23px;
-}
-
-.mqeip-form-group {
-    margin-bottom: 17px;
-}
-
-.mqeip-form-label {
-    display: block;
-    color: var(--muted);
-    margin-bottom: 8px;
-    font-size: 12px;
-}
-
-.mqeip-form-input {
-    width: 100%;
-    padding: 12px 13px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: #091626;
-    color: var(--text);
-    outline: none;
-}
-
-.mqeip-form-input:focus {
-    border-color: var(--gold);
-}
-
-.mqeip-login-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.mqeip-login-actions .btn {
-    flex: 1;
-}
-
-.mqeip-message {
-    font-size: 12px;
-    line-height: 1.6;
-    margin-top: 15px;
-    color: var(--muted);
-    overflow-wrap: anywhere;
-}
-
-.mqeip-message.error {
-    color: var(--red);
-}
-
-.mqeip-message.success {
-    color: var(--green);
-}
-
-.mqeip-security-note {
-    margin-top: 20px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-    font-size: 10px;
-    color: var(--muted);
-    line-height: 1.7;
-}
-
-.mqeip-loading {
-    opacity: .65;
-    pointer-events: none;
-}
-</style>
-
-
-<!-- ==========================================================
-     SECURE LOGIN DIALOG
-     ========================================================== -->
-
-<div
-    id="mqeipLoginModal"
-    class="mqeip-modal hidden"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="mqeipLoginTitle"
->
-
-    <div class="mqeip-login-card">
-
-        <div class="mqeip-login-title"
-             id="mqeipLoginTitle">
-            MQEIP Secure Operations Portal
-        </div>
-
-        <div class="mqeip-login-description">
-            Authenticate to access the enterprise
-            maritime intelligence environment.
-        </div>
-
-        <form id="mqeipLoginForm">
-
-            <div class="mqeip-form-group">
-
-                <label class="mqeip-form-label"
-                       for="mqeipUsername">
-                    Username
-                </label>
-
-                <input
-                    class="mqeip-form-input"
-                    id="mqeipUsername"
-                    type="text"
-                    autocomplete="username"
-                    required
-                >
-
-            </div>
-
-            <div class="mqeip-form-group">
-
-                <label class="mqeip-form-label"
-                       for="mqeipPassword">
-                    Password
-                </label>
-
-                <input
-                    class="mqeip-form-input"
-                    id="mqeipPassword"
-                    type="password"
-                    autocomplete="current-password"
-                    required
-                >
-
-            </div>
-
-            <div class="mqeip-login-actions">
-
-                <button
-                    type="submit"
-                    class="btn btn-gold"
-                    id="mqeipLoginSubmit"
-                >
-                    Secure Login
-                </button>
-
-                <button
-                    type="button"
-                    class="btn"
-                    id="mqeipLoginCancel"
-                >
-                    Cancel
-                </button>
-
-            </div>
-
-        </form>
-
-        <div
-            id="mqeipLoginMessage"
-            class="mqeip-message"
-            role="status"
-            aria-live="polite"
-        ></div>
-
-        <div class="mqeip-security-note">
-            Credentials are sent to the configured
-            HTTPS backend. Access tokens are retained
-            only in browser memory for this session.
-            Enterprise access is enforced by the backend.
-        </div>
-
-    </div>
-
+  </nav>
+  <div class="sidebar-footer">MQEIP ENTERPRISE EDITION<br>Secure Multi-Tenant Architecture<br><span class="text-gold">Version 1.0 鈥� Frontend Foundation</span></div>
+</aside>
+<main class="main-area">
+<header class="topbar"><div class="topbar-left"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">鈽�</button><div><div class="topbar-title" id="topbarTitle">Executive Command Center</div><div class="topbar-subtitle">Enterprise Maritime Intelligence Platform</div></div></div>
+<div class="topbar-right"><span class="environment-label">ENTERPRISE ENVIRONMENT</span><div class="connection-status" id="connectionStatus"><span class="status-dot disconnected" id="connectionDot"></span><span id="connectionText">Not connected</span></div><div class="user-avatar" aria-label="User profile">U</div></div></header>
+<div class="page-content">
+<section class="page-header"><div><div class="eyebrow">MARITIME QUANTUM INTELLIGENCE</div><h1 class="page-title" id="pageTitle">Executive Command Center</h1><p class="page-description" id="pageDescription">Enterprise-wide maritime operational intelligence, strategic monitoring, and executive decision support.</p></div>
+<div class="page-actions"><button class="btn btn-outline" id="refreshButton" type="button">鈫� Refresh</button><button class="btn btn-gold" id="connectButton" type="button">Connect Secure API</button></div></section>
+<section id="executiveDashboard" class="executive-dashboard" aria-label="Executive Command Center">
+<div class="executive-kpis">
+<article class="kpi-card"><div class="kpi-top"><div class="metric-label">TOTAL COMMAND EVENTS</div><div class="kpi-icon">鈻�</div></div><div class="kpi-number text-gold" id="kpiTotalEvents">鈥�</div><div class="kpi-caption">Enterprise Operational Events</div><div class="kpi-footnote">Command Center Database</div></article>
+<article class="kpi-card critical"><div class="kpi-top"><div class="metric-label">CRITICAL EVENTS</div><div class="kpi-icon">!</div></div><div class="kpi-number text-red" id="kpiCriticalEvents">鈥�</div><div class="kpi-caption">Active Critical Priorities</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
+<article class="kpi-card warning"><div class="kpi-top"><div class="metric-label">ACTIVE EVENTS</div><div class="kpi-icon">鈼�</div></div><div class="kpi-number" id="kpiActiveEvents">鈥�</div><div class="kpi-caption">Outstanding Operational Actions</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
+<article class="kpi-card success"><div class="kpi-top"><div class="metric-label">RESOLVED EVENTS</div><div class="kpi-icon">鉁�</div></div><div class="kpi-number text-green" id="kpiResolvedEvents">鈥�</div><div class="kpi-caption">Completed Operational Resolutions</div><div class="kpi-footnote">Recorded Command Resolutions</div></article>
 </div>
-
-
+<div class="intelligence-grid">
+<article class="panel"><div class="panel-header"><div><h3>Enterprise Command Intelligence</h3><div class="panel-subtitle">Executive operational overview</div></div><span class="panel-tag">COMMAND CENTER</span></div>
+<div class="attention-indicator"><div class="attention-symbol">鈿�</div><div><div class="attention-title" id="executiveAttentionLevel">Awaiting Secure Connection</div><div class="attention-description" id="executiveAttentionDescription">Connect to the authenticated MQEIP API to retrieve operational intelligence.</div></div></div>
+<div class="command-overview"><div class="overview-item"><div class="overview-value" id="overviewOpen">鈥�</div><div class="overview-label">Open Events</div></div><div class="overview-item"><div class="overview-value" id="overviewInProgress">鈥�</div><div class="overview-label">In Progress</div></div><div class="overview-item"><div class="overview-value text-red" id="overviewHigh">鈥�</div><div class="overview-label">High Priority</div></div><div class="overview-item"><div class="overview-value text-gold" id="overviewUnassigned">鈥�</div><div class="overview-label">Unassigned Events</div></div></div></article>
+<article class="panel"><div class="panel-header"><div><h3>Enterprise Domain Intelligence</h3><div class="panel-subtitle">Active command events by division</div></div><span class="panel-tag">OPERATIONS</span></div><div id="domainIntelligenceList" class="domain-list"><div class="dashboard-placeholder"><strong>No Data Loaded</strong>Domain intelligence will appear after secure API connection.</div></div></article>
+</div>
+<div class="intelligence-grid equal">
+<article class="panel"><div class="panel-header"><div><h3>Critical Operational Alerts</h3><div class="panel-subtitle">Events requiring executive attention</div></div><span class="panel-tag">CRITICAL</span></div><div id="criticalAlertsList"><div class="dashboard-placeholder"><strong>No Alerts Loaded</strong>Critical alerts will be retrieved from the Command Center API.</div></div></article>
+<article class="panel"><div class="panel-header"><div><h3>Operational Priority Board</h3><div class="panel-subtitle">Enterprise action priorities</div></div><span class="panel-tag">PRIORITY CONTROL</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Priority</th><th>Domain</th><th>Event</th><th>Status</th></tr></thead><tbody id="priorityBoardBody"><tr><td colspan="4"><div class="empty-state">Connect to the secure API to load operational priorities.</div></td></tr></tbody></table></div></article>
+</div>
+<div class="intelligence-grid equal">
+<article class="panel"><div class="panel-header"><div><h3>Executive Performance Intelligence</h3><div class="panel-subtitle">Command event resolution metrics</div></div><span class="panel-tag">PERFORMANCE</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value text-green" id="performanceResolutionRate">鈥�</div><div class="overview-label">Resolution Rate</div></div><div class="overview-item"><div class="overview-value" id="performanceResolutionHours">鈥�</div><div class="overview-label">Average Resolution Hours</div></div></div><div class="intelligence-footer">Calculated from recorded Command Center events. This is not a fleet-wide performance assessment until cross-module integration is completed.</div></article>
+<article class="panel"><div class="panel-header"><div><h3>Enterprise Data Status</h3><div class="panel-subtitle">Backend integration visibility</div></div><span class="panel-tag">SYSTEM</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value" id="dataConnectionState">Offline</div><div class="overview-label">API Connection</div></div><div class="overview-item"><div class="overview-value" id="dataIntegrationState">Pending</div><div class="overview-label">ERP Module Integration</div></div></div><div class="intelligence-footer" id="dashboardLastUpdated">Last updated: Not yet connected</div></article>
+</div>
+<div class="data-source-label">MQEIP Enterprise Command Dashboard 鈥� Live values are displayed only after successful authentication and API retrieval. No simulated operational figures are used.</div>
+</section>
+<section id="moduleContent" class="hidden" aria-label="Enterprise Module Workspace"><div class="panel"><div class="panel-header"><div><h3 id="modulePanelTitle">Enterprise Module</h3><div class="panel-subtitle" id="modulePanelDescription">Select a module to view its workspace.</div></div><span class="panel-tag">MQEIP</span></div><div id="modulePanelBody" class="dashboard-placeholder"><strong>Module Workspace</strong>Secure module-specific API integration will be configured in the next stages.</div></div></section>
+<div class="mqeip-security-banner"><strong>MQEIP Enterprise Security</strong><div>Authenticated API access 路 Multi-tenant backend authorization 路 Session-based access token 路 Enterprise operational intelligence</div><div>Operational data is displayed only after successful API retrieval. Frontend navigation does not replace backend role-based access control.</div></div>
+</div></main></div>
+<div id="mqeipToast" class="mqeip-toast hidden" role="status" aria-live="polite"></div>
+<div id="mqeipLoginModal" class="mqeip-modal hidden" role="dialog" aria-modal="true" aria-labelledby="mqeipLoginTitle"><div class="mqeip-login-card">
+<div class="mqeip-login-title" id="mqeipLoginTitle">MQEIP Secure Operations Portal</div><div class="mqeip-login-description">Authenticate to access the enterprise maritime intelligence environment.</div>
+<form id="mqeipLoginForm"><div class="mqeip-form-group"><label class="mqeip-form-label" for="mqeipUsername">Username</label><input class="mqeip-form-input" id="mqeipUsername" type="text" autocomplete="username" required></div>
+<div class="mqeip-form-group"><label class="mqeip-form-label" for="mqeipPassword">Password</label><input class="mqeip-form-input" id="mqeipPassword" type="password" autocomplete="current-password" required></div>
+<div class="mqeip-login-actions"><button type="submit" class="btn btn-gold" id="mqeipLoginSubmit">Secure Login</button><button type="button" class="btn" id="mqeipLoginCancel">Cancel</button></div></form>
+<div id="mqeipLoginMessage" class="mqeip-message" role="status" aria-live="polite"></div><div class="mqeip-security-note">Credentials are sent to the configured HTTPS backend. Access tokens are retained only in browser memory for this session. Enterprise access is enforced by the backend.</div>
+</div></div>
 <script>
-/* ==========================================================
-   MQEIP FRONTEND BLOK 3 (FIXED)
-   SECURE API CONNECTION & DASHBOARD
-   ========================================================== */
-
 "use strict";
 
-const MQEIP_API_BASE =
-    "https://repository-name-maritime-quantum-erp-w15p.onrender.com";
-
+/* Configure this URL to match your deployed backend. */
+const MQEIP_API_BASE = "https://repository-name-maritime-quantum-erp-w15p.onrender.com";
 const MQEIP_COMMAND_API = "/api/v1/quantum-command";
-
 const MQEIP_REQUEST_TIMEOUT = 30000;
-// Render free tier bisa butuh ~50 detik untuk bangun
 const MQEIP_LOGIN_TIMEOUT = 75000;
 
 let mqeipAccessToken = null;
 let mqeipAuthenticatedUser = null;
 let mqeipRequestVersion = 0;
 let mqeipLoginInFlight = false;
-
-
-/* ==========================================================
-   DOM UTILITIES
-   ========================================================== */
-
-function mqeipElement(id) {
-    return document.getElementById(id);
-}
-
-function mqeipSetText(id, value) {
-    const element = mqeipElement(id);
-    if (element) {
-        element.textContent =
-            value === null || value === undefined
-                ? "鈥�"
-                : String(value);
-    }
-}
-
-function mqeipSetConnection(state, message) {
-    const dot = mqeipElement("connectionDot");
-
-    if (dot) {
-        dot.classList.remove("connected", "disconnected");
-        if (state === "connected") dot.classList.add("connected");
-        if (state === "disconnected") dot.classList.add("disconnected");
-    }
-
-    mqeipSetText("connectionText", message);
-    mqeipSetText(
-        "dataConnectionState",
-        state === "connected" ? "Online" : "Offline"
-    );
-}
-
-function mqeipSetLoginMessage(message, type = "") {
-    const element = mqeipElement("mqeipLoginMessage");
-    if (!element) return;
-
-    element.textContent = message;
-    element.className = "mqeip-message";
-    if (type) element.classList.add(type);
-}
-
-
-/* ==========================================================
-   LOGIN MODAL CONTROLS
-   ========================================================== */
-
-function mqeipOpenLogin() {
-    const modal = mqeipElement("mqeipLoginModal");
-    if (!modal) return;
-
-    mqeipSetLoginMessage("");
-    modal.classList.remove("hidden");
-    mqeipElement("mqeipUsername")?.focus();
-}
-
-function mqeipCloseLogin() {
-    mqeipElement("mqeipLoginModal")?.classList.add("hidden");
-
-    const password = mqeipElement("mqeipPassword");
-    if (password) password.value = "";
-}
-
-
-/* ==========================================================
-   SECURE API REQUEST
-   ========================================================== */
-
-function mqeipExtractDetail(payload) {
-    if (!payload) return "";
-
-    const detail = payload.detail ?? payload.message ?? payload.error;
-
-    if (typeof detail === "string") return detail;
-
-    if (Array.isArray(detail)) {
-        return detail
-            .map(item => {
-                if (typeof item === "string") return item;
-                const where = Array.isArray(item.loc)
-                    ? item.loc.join(".")
-                    : "";
-                return (where ? where + ": " : "") + (item.msg || "");
-            })
-            .join("; ");
-    }
-
-    return "";
-}
-
-async function mqeipApiRequest(endpoint, options = {}) {
-    if (
-        typeof endpoint !== "string" ||
-        !endpoint.startsWith("/") ||
-        endpoint.startsWith("//")
-    ) {
-        throw new Error("Invalid API endpoint.");
-    }
-
-    const { timeoutMs = MQEIP_REQUEST_TIMEOUT, ...fetchOptions } = options;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const hadToken = Boolean(mqeipAccessToken);
-
-    try {
-        const headers = {
-            "Accept": "application/json",
-            ...(fetchOptions.body
-                ? { "Content-Type": "application/json" }
-                : {}),
-            ...(mqeipAccessToken
-                ? { "Authorization": "Bearer " + mqeipAccessToken }
-                : {}),
-            ...(fetchOptions.headers || {})
-        };
-
-        const response = await fetch(MQEIP_API_BASE + endpoint, {
-            ...fetchOptions,
-            headers,
-            signal: controller.signal,
-            cache: "no-store"
-        });
-
-        const rawText = await response.text();
-        let payload = null;
-
-        try {
-            payload = rawText ? JSON.parse(rawText) : null;
-        } catch (parseError) {
-            payload = null;
-        }
-
-        if (!response.ok) {
-            const detail = mqeipExtractDetail(payload);
-            let message;
-
-            if (response.status === 401) {
-                if (hadToken) {
-                    mqeipLogout();
-                    message = "Sesi berakhir atau token ditolak.";
-                } else {
-                    message = "Username atau password salah.";
-                }
-            } else if (response.status === 403) {
-                message =
-                    "Akses ditolak. Akun tidak punya izin untuk operasi ini.";
-            } else {
-                message = "HTTP " + response.status;
-            }
-
-            if (detail) message += " (" + detail + ")";
-
-            const error = new Error(message);
-            error.status = response.status;
-            throw error;
-        }
-
-        return payload;
-
-    } catch (error) {
-        if (error.name === "AbortError") {
-            throw new Error(
-                "Request timeout. Server Render mungkin sedang bangun, coba lagi."
-            );
-        }
-
-        if (error instanceof TypeError) {
-            throw new Error(
-                "Tidak bisa menghubungi server. Kemungkinan CORS belum " +
-                "diizinkan di backend, server sedang bangun, atau jaringan bermasalah."
-            );
-        }
-
-        throw error;
-
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
-
-/* ==========================================================
-   LOGIN WITH JWT
-   Mencoba JSON dulu, lalu form-urlencoded (OAuth2PasswordRequestForm)
-   ========================================================== */
-
-async function mqeipRequestToken(username, password) {
-    const attempts = [
-        {
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password })
-        },
-        {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-                username,
-                password,
-                grant_type: "password"
-            }).toString()
-        }
-    ];
-
-    const errors = [];
-
-    for (const attempt of attempts) {
-        try {
-            return await mqeipApiRequest("/api/v1/login", {
-                method: "POST",
-                timeoutMs: MQEIP_LOGIN_TIMEOUT,
-                ...attempt
-            });
-        } catch (error) {
-            errors.push(error);
-            if (![400, 415, 422].includes(error.status)) throw error;
-        }
-    }
-
-    throw errors.find(e => e.status === 400) || errors[errors.length - 1];
-}
-
-async function mqeipLogin(username, password) {
-    const button = mqeipElement("mqeipLoginSubmit");
-    const cleanUsername = String(username || "").trim();
-
-    if (mqeipLoginInFlight) return false;
-
-    if (!cleanUsername || !password) {
-        mqeipSetLoginMessage(
-            "Username dan password wajib diisi.",
-            "error"
-        );
-        return false;
-    }
-
-    mqeipLoginInFlight = true;
-
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Authenticating...";
-    }
-
-    try {
-        mqeipSetLoginMessage("Menghubungkan ke MQEIP Backend...");
-
-        const loginData = await mqeipRequestToken(
-            cleanUsername,
-            password
-        );
-
-        const token =
-            loginData?.access_token ||
-            loginData?.token ||
-            loginData?.jwt;
-
-        if (!token) {
-            throw new Error("Backend tidak mengirim access_token.");
-        }
-
-        mqeipAccessToken = token;
-
-        mqeipSetLoginMessage("Memverifikasi token...");
-
-        let user = null;
-
-        try {
-            user = await mqeipApiRequest("/api/v1/me");
-        } catch (error) {
-            throw error;
-        }
-
-        if (!user || typeof user !== "object" || Array.isArray(user) || (user.username && String(user.username).toLowerCase() !== cleanUsername.toLowerCase())) {
-            throw new Error("Verifikasi pengguna gagal.");
-        }
-
-        mqeipAuthenticatedUser = user;
-
-        mqeipSetConnection("connected", "API Connected");
-
-        if (typeof mqeipUpdateSessionControls === "function") {
-            mqeipUpdateSessionControls();
-        }
-
-        mqeipSetLoginMessage("Login berhasil.", "success");
-
-        return true;
-
-    } catch (error) {
-        mqeipAccessToken = null;
-        mqeipAuthenticatedUser = null;
-
-        mqeipSetLoginMessage(
-            "Login gagal: " + error.message,
-            "error"
-        );
-
-        if (typeof mqeipUpdateSessionControls === "function") {
-            mqeipUpdateSessionControls();
-        }
-
-        return false;
-
-    } finally {
-        mqeipLoginInFlight = false;
-
-        if (button) {
-            button.disabled = false;
-            button.textContent = "Secure Login";
-        }
-    }
-}
-
-
-/* ==========================================================
-   LOGOUT
-   ========================================================== */
-
-function mqeipLogout() {
-    mqeipAccessToken = null;
-    mqeipAuthenticatedUser = null;
-    mqeipRequestVersion += 1;
-
-    mqeipSetConnection("disconnected", "Not Connected");
-    mqeipResetDashboard();
-
-    if (typeof mqeipUpdateSessionControls === "function") {
-        mqeipUpdateSessionControls();
-    }
-}
-
-
-/* ==========================================================
-   DASHBOARD RESET
-   ========================================================== */
-
-function mqeipResetDashboard() {
-    const fields = [
-        "kpiTotalEvents",
-        "kpiCriticalEvents",
-        "kpiActiveEvents",
-        "kpiResolvedEvents",
-        "overviewOpen",
-        "overviewInProgress",
-        "overviewHigh",
-        "overviewUnassigned",
-        "performanceResolutionRate",
-        "performanceResolutionHours"
-    ];
-
-    for (const id of fields) mqeipSetText(id, "鈥�");
-
-    mqeipSetText(
-        "executiveAttentionLevel",
-        "Awaiting Secure Connection"
-    );
-    mqeipSetText(
-        "executiveAttentionDescription",
-        "Authenticate to load operational intelligence."
-    );
-    mqeipSetText(
-        "dashboardLastUpdated",
-        "Last updated: Not connected"
-    );
-
-    const placeholders = {
-        domainIntelligenceList: "Connect to load domain intelligence.",
-        criticalAlertsList: "Connect to load critical events.",
-        priorityBoardBody: "Connect to load operational priorities."
-    };
-
-    for (const [id, message] of Object.entries(placeholders)) {
-        const element = mqeipElement(id);
-        if (!element) continue;
-
-        if (id === "priorityBoardBody") {
-            element.replaceChildren();
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.colSpan = 4;
-            cell.textContent = message;
-            row.appendChild(cell);
-            element.appendChild(row);
-        } else {
-            element.textContent = message;
-        }
-    }
-}
-
-
-/* ==========================================================
-   RENDER DOMAIN INTELLIGENCE
-   ========================================================== */
-
-function mqeipRenderDomains(domains) {
-    const container = mqeipElement("domainIntelligenceList");
-    if (!container) return;
-
-    container.replaceChildren();
-
-    if (!Array.isArray(domains) || !domains.length) {
-        container.textContent =
-            "No command events recorded by domain.";
-        return;
-    }
-
-    const maxCount = Math.max(
-        1,
-        ...domains.map(item => Number(item.active_events) || 0)
-    );
-
-    for (const domain of domains) {
-        const row = document.createElement("div");
-        row.className = "domain-row";
-
-        const name = document.createElement("div");
-        name.className = "domain-name";
-        name.textContent = String(domain.domain || "Unknown")
-            .replaceAll("_", " ");
-
-        const track = document.createElement("div");
-        track.className = "domain-track";
-
-        const fill = document.createElement("div");
-        fill.className = "domain-fill";
-
-        const count = Number(domain.active_events) || 0;
-        fill.style.width =
-            Math.min(100, Math.max(0, count / maxCount * 100)) + "%";
-
-        track.appendChild(fill);
-
-        const value = document.createElement("div");
-        value.className = "domain-count";
-        value.textContent = String(count);
-
-        row.append(name, track, value);
-        container.appendChild(row);
-    }
-}
-
-
-/* ==========================================================
-   RENDER CRITICAL ALERTS
-   ========================================================== */
-
-function mqeipRenderCriticalAlerts(events) {
-    const container = mqeipElement("criticalAlertsList");
-    if (!container) return;
-
-    container.replaceChildren();
-
-    if (!Array.isArray(events) || !events.length) {
-        container.textContent =
-            "No active critical command events recorded.";
-        return;
-    }
-
-    for (const event of events) {
-        const item = document.createElement("div");
-        item.className = "command-alert";
-
-        const symbol = document.createElement("div");
-        symbol.className = "alert-symbol";
-        symbol.textContent = "!";
-
-        const body = document.createElement("div");
-        body.className = "alert-body";
-
-        const title = document.createElement("div");
-        title.className = "alert-title";
-        title.textContent = event.title || "Untitled event";
-
-        const meta = document.createElement("div");
-        meta.className = "alert-meta";
-        meta.textContent = [
-            event.domain,
-            event.vessel_id,
-            event.command_status
-        ].filter(Boolean).join(" 鈥� ");
-
-        body.append(title, meta);
-        item.append(symbol, body);
-        container.appendChild(item);
-    }
-}
-
-
-/* ==========================================================
-   RENDER OPERATIONAL PRIORITY BOARD
-   ========================================================== */
-
-function mqeipRenderPriorityBoard(events) {
-    const body = mqeipElement("priorityBoardBody");
-    if (!body) return;
-
-    body.replaceChildren();
-
-    if (!Array.isArray(events) || !events.length) {
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        cell.colSpan = 4;
-        cell.textContent = "No active command priorities recorded.";
-        row.appendChild(cell);
-        body.appendChild(row);
-        return;
-    }
-
-    for (const event of events) {
-        const row = document.createElement("tr");
-
-        const values = [
-            event.priority,
-            event.domain,
-            event.title,
-            event.command_status
-        ];
-
-        for (const value of values) {
-            const cell = document.createElement("td");
-            cell.textContent = String(value ?? "鈥�").replaceAll("_", " ");
-            row.appendChild(cell);
-        }
-
-        body.appendChild(row);
-    }
-}
-
-
-/* ==========================================================
-   LOAD EXECUTIVE DASHBOARD
-   (Promise.allSettled: satu endpoint gagal tidak mematikan semuanya)
-   ========================================================== */
-
-async function mqeipLoadExecutiveDashboard() {
-    if (!mqeipAccessToken) {
-        mqeipOpenLogin();
-        return;
-    }
-
-    const requestVersion = ++mqeipRequestVersion;
-
-    mqeipSetText(
-        "dashboardLastUpdated",
-        "Loading live Command Center data..."
-    );
-
-    try {
-        const [dashboardResult, boardResult, performanceResult] =
-            await Promise.allSettled([
-                mqeipApiRequest(
-                    MQEIP_COMMAND_API + "/executive/dashboard"
-                ),
-                mqeipApiRequest(
-                    MQEIP_COMMAND_API +
-                    "/operations/priority-board?limit=50"
-                ),
-                mqeipApiRequest(
-                    MQEIP_COMMAND_API + "/executive/performance"
-                )
-            ]);
-
-        if (
-            requestVersion !== mqeipRequestVersion ||
-            !mqeipAccessToken
-        ) {
-            return;
-        }
-
-        const results = [
-            dashboardResult,
-            boardResult,
-            performanceResult
-        ];
-
-        if (results.every(r => r.status === "rejected")) {
-            throw dashboardResult.reason;
-        }
-
-        const failures = results
-            .filter(r => r.status === "rejected")
-            .map(r => r.reason?.message || "Unknown error");
-
-        const dashboard =
-            dashboardResult.status === "fulfilled"
-                ? dashboardResult.value || {}
-                : {};
-
-        const priorityBoard =
-            boardResult.status === "fulfilled"
-                ? boardResult.value || {}
-                : {};
-
-        const performance =
-            performanceResult.status === "fulfilled"
-                ? performanceResult.value || {}
-                : {};
-
-        const summary = dashboard.event_summary || {};
-        const total = Number(summary.total_events) || 0;
-        const open = Number(summary.open_events) || 0;
-        const inProgress = Number(summary.in_progress_events) || 0;
-
-        mqeipSetText("kpiTotalEvents", total);
-        mqeipSetText(
-            "kpiCriticalEvents",
-            Number(summary.active_critical_events) || 0
-        );
-        mqeipSetText("kpiActiveEvents", open + inProgress);
-        mqeipSetText(
-            "kpiResolvedEvents",
-            Number(summary.resolved_events) || 0
-        );
-        mqeipSetText("overviewOpen", open);
-        mqeipSetText("overviewInProgress", inProgress);
-        mqeipSetText(
-            "overviewHigh",
-            Number(summary.active_high_events) || 0
-        );
-        mqeipSetText(
-            "overviewUnassigned",
-            Number(summary.unassigned_active_events) || 0
-        );
-
-        const attention = String(
-            dashboard.executive_attention_level || "unknown"
-        ).toUpperCase();
-
-        mqeipSetText("executiveAttentionLevel", attention + " ATTENTION");
-        mqeipSetText(
-            "executiveAttentionDescription",
-            "Based on recorded Command Center events."
-        );
-
-        mqeipRenderDomains(dashboard.domain_overview || []);
-        mqeipRenderCriticalAlerts(
-            dashboard.critical_priority_events || []
-        );
-        mqeipRenderPriorityBoard(priorityBoard.events || []);
-
-        const rate = performance.resolution_rate_percent;
-
-        mqeipSetText(
-            "performanceResolutionRate",
-            rate === null || rate === undefined ? "鈥�" : rate + "%"
-        );
-        mqeipSetText(
-            "performanceResolutionHours",
-            performance.average_resolution_hours ?? "鈥�"
-        );
-
-        mqeipSetText("dataIntegrationState", "Pending");
-
-        mqeipSetText(
-            "dashboardLastUpdated",
-            "Last updated: " + new Date().toLocaleString() +
-            (failures.length
-                ? " 鈥� Sebagian data gagal dimuat: " + failures.join(" | ")
-                : "")
-        );
-
-        mqeipSetConnection("connected", "API Connected");
-
-    } catch (error) {
-        if (requestVersion !== mqeipRequestVersion) return;
-
-        // Login tetap valid; hanya data dashboard yang gagal.
-        mqeipSetText(
-            "dashboardLastUpdated",
-            "Data loading failed: " +
-            (error.message || "Unknown error")
-        );
-    }
-}
-
-
-/* ==========================================================
-   EVENT LISTENERS
-   ========================================================== */
-
-document.addEventListener("DOMContentLoaded", () => {
-    mqeipSetConnection("disconnected", "Not Connected");
-
-    mqeipElement("connectButton")
-        ?.addEventListener("click", mqeipOpenLogin);
-
-    mqeipElement("mqeipLoginCancel")
-        ?.addEventListener("click", mqeipCloseLogin);
-
-    mqeipElement("refreshButton")
-        ?.addEventListener("click", () => {
-            if (typeof mqeipCurrentPage !== "undefined" && mqeipCurrentPage === "fleet") {
-                void mqeipLoadFleet();
-            } else {
-                void mqeipLoadExecutiveDashboard();
-            }
-        });
-
-    mqeipElement("mqeipLoginForm")
-        ?.addEventListener("submit", async event => {
-            event.preventDefault();
-
-            const username =
-                mqeipElement("mqeipUsername")?.value.trim();
-            const password =
-                mqeipElement("mqeipPassword")?.value;
-
-            if (!username || !password) {
-                mqeipSetLoginMessage(
-                    "Username dan password wajib diisi.",
-                    "error"
-                );
-                return;
-            }
-
-            const ok = await mqeipLogin(username, password);
-
-            if (ok) {
-                mqeipCloseLogin();
-
-                if (typeof mqeipShowToast === "function") {
-                    mqeipShowToast("Login berhasil.", "success");
-                }
-
-                await mqeipLoadExecutiveDashboard();
-            }
-        });
-});
-
-</script>
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 3
-     ========================================================== -->
-
- <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 4 - ENTERPRISE MODULE NAVIGATION
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   ENTERPRISE MODULE WORKSPACE
-   ========================================================== */
-
-.mqeip-workspace {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    text-align: left;
-}
-
-.mqeip-workspace-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 18px;
-    background: rgba(216,180,106,.045);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-}
-
-.mqeip-workspace-icon {
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    font-size: 25px;
-    color: var(--gold);
-    border-radius: 13px;
-    background: rgba(216,180,106,.1);
-}
-
-.mqeip-workspace-name {
-    font-size: 19px;
-    font-weight: 800;
-    color: var(--gold-light);
-    margin-bottom: 8px;
-}
-
-.mqeip-workspace-description {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-.mqeip-workspace-grid {
-    display: grid;
-    grid-template-columns: repeat(
-        3,
-        minmax(0,1fr)
-    );
-    gap: 15px;
-}
-
-.mqeip-workspace-card {
-    padding: 20px;
-    background: rgba(255,255,255,.025);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    min-width: 0;
-}
-
-.mqeip-workspace-card-title {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 10px;
-}
-
-.mqeip-workspace-card-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--gold-light);
-    overflow-wrap: anywhere;
-}
-
-.mqeip-workspace-card-note {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.6;
-    margin-top: 10px;
-}
-
-.mqeip-workspace-status {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 11px;
-    background: rgba(72,199,223,.055);
-    border: 1px solid rgba(72,199,223,.18);
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-.mqeip-workspace-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.mqeip-workspace-actions .btn {
-    min-width: 150px;
-}
-
-.mqeip-workspace-data {
-    background: rgba(255,255,255,.02);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-}
-
-.mqeip-workspace-data h4 {
-    color: var(--text);
-    margin: 0 0 12px;
-    font-size: 13px;
-}
-
-.mqeip-workspace-data ul {
-    padding-left: 20px;
-    margin: 0;
-}
-
-.mqeip-workspace-data li {
-    margin-bottom: 8px;
-}
-
-@media (max-width: 1100px) {
-    .mqeip-workspace-grid {
-        grid-template-columns: repeat(
-            2,
-            minmax(0,1fr)
-        );
-    }
-}
-
-@media (max-width: 650px) {
-    .mqeip-workspace-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .mqeip-workspace-header {
-        flex-direction: column;
-    }
-}
-</style>
-
-
-<script>
-/* ==========================================================
-   MQEIP MODULE REGISTRY
-   ========================================================== */
-
-const MQEIP_MODULE_REGISTRY = {
-
-    executive: {
-        title: "Executive Command Center",
-        icon: "鈼�",
-        description:
-            "Enterprise maritime operational intelligence, " +
-            "strategic monitoring and executive decision support.",
-        capabilities: [
-            "Enterprise KPI Monitoring",
-            "Critical Operational Alerts",
-            "Executive Decision Support"
-        ]
-    },
-
-    quantum: {
-        title: "Maritime Quantum Command Center",
-        icon: "鉁�",
-        description:
-            "Enterprise command events, operational priorities, " +
-            "risk intelligence and command snapshots.",
-        capabilities: [
-            "Command Event Management",
-            "Operational Priority Board",
-            "Executive Risk Intelligence"
-        ]
-    },
-
-    analytics: {
-        title: "Business Intelligence",
-        icon: "鈻�",
-        description:
-            "Enterprise analytics and management intelligence.",
-        capabilities: [
-            "Management Reporting",
-            "Enterprise Analytics",
-            "Performance Intelligence"
-        ]
-    },
-
-    fleet: {
-        title: "Fleet Management",
-        icon: "鈿�",
-        description:
-            "Vessel registry and fleet operational administration.",
-        capabilities: [
-            "Vessel Registry",
-            "Fleet Monitoring",
-            "Fleet Operational Records"
-        ]
-    },
-
-    marine: {
-        title: "Marine Operations",
-        icon: "鈼�",
-        description:
-            "Marine operational control and voyage management.",
-        capabilities: [
-            "Voyage Operations",
-            "Marine Performance",
-            "Operational Reporting"
-        ]
-    },
-
-    crew: {
-        title: "Crew & Certificates",
-        icon: "鈾�",
-        description:
-            "Seafarer management and certificate intelligence.",
-        capabilities: [
-            "Crew Records",
-            "Certificate Tracking",
-            "Crew Compliance"
-        ]
-    },
-
-    technical: {
-        title: "Technical & PMS",
-        icon: "鈿�",
-        description:
-            "Technical engineering and planned maintenance control.",
-        capabilities: [
-            "Technical Records",
-            "Maintenance Planning",
-            "Engineering Intelligence"
-        ]
-    },
-
-    hsse: {
-        title: "HSSE & Compliance",
-        icon: "猬�",
-        description:
-            "Health, safety, security, environment and compliance.",
-        capabilities: [
-            "Safety Monitoring",
-            "Incident Management",
-            "Compliance Intelligence"
-        ]
-    },
-
-    finance: {
-        title: "Finance & Accounting",
-        icon: "鈻�",
-        description:
-            "Enterprise maritime financial administration.",
-        capabilities: [
-            "Financial Records",
-            "Cost Management",
-            "Financial Intelligence"
-        ]
-    },
-
-    supply: {
-        title: "Supply Chain & Procurement",
-        icon: "鈻�",
-        description:
-            "Procurement, vendor coordination and purchasing.",
-        capabilities: [
-            "RFQ Management",
-            "Purchase Orders",
-            "Procurement Monitoring"
-        ]
-    },
-
-    inventory: {
-        title: "Inventory & Vessel Stores",
-        icon: "鈻�",
-        description:
-            "Vessel inventory and enterprise stores management.",
-        capabilities: [
-            "Inventory Records",
-            "Stock Monitoring",
-            "Vessel Stores"
-        ]
-    },
-
-    commercial: {
-        title: "Commercial & Chartering",
-        icon: "鈼�",
-        description:
-            "Commercial maritime contracts and chartering.",
-        capabilities: [
-            "Chartering Records",
-            "Commercial Performance",
-            "Contract Monitoring"
-        ]
-    },
-
-    hr: {
-        title: "Human Resources",
-        icon: "鈾�",
-        description:
-            "Shore workforce and enterprise HR administration.",
-        capabilities: [
-            "Employee Records",
-            "Workforce Management",
-            "HR Intelligence"
-        ]
-    },
-
-    ai: {
-        title: "AI Intelligence Center",
-        icon: "鉁�",
-        description:
-            "Enterprise AI agents and intelligent analysis.",
-        capabilities: [
-            "AI Intelligence",
-            "AI Agent Operations",
-            "Automated Analysis"
-        ]
-    },
-
-    optimization: {
-        title: "Quantum Optimization",
-        icon: "鈱�",
-        description:
-            "Quantum-inspired enterprise optimization.",
-        capabilities: [
-            "Optimization Models",
-            "Scenario Analysis",
-            "Decision Optimization"
-        ]
-    },
-
-    twin: {
-        title: "Maritime Digital Twin",
-        icon: "鈼�",
-        description:
-            "Digital representation and analysis of vessel operations.",
-        capabilities: [
-            "Digital Twin Models",
-            "Operational Scenarios",
-            "Performance Analysis"
-        ]
-    },
-
-    esg: {
-        title: "ESG & Sustainability",
-        icon: "鉂�",
-        description:
-            "Environmental, social and governance intelligence.",
-        capabilities: [
-            "Sustainability Records",
-            "ESG Monitoring",
-            "Environmental Reporting"
-        ]
-    },
-
-    documents: {
-        title: "Document Management",
-        icon: "鈻�",
-        description:
-            "Enterprise document administration and control.",
-        capabilities: [
-            "Document Registry",
-            "Document Governance",
-            "Document Tracking"
-        ]
-    },
-
-    workflow: {
-        title: "Workflow & Approvals",
-        icon: "鈬�",
-        description:
-            "Enterprise business processes and approval workflows.",
-        capabilities: [
-            "Workflow Records",
-            "Approval Tracking",
-            "Process Monitoring"
-        ]
-    },
-
-    audit: {
-        title: "Audit & Internal Control",
-        icon: "鉁�",
-        description:
-            "Internal audit, governance and control monitoring.",
-        capabilities: [
-            "Audit Records",
-            "Internal Controls",
-            "Governance Monitoring"
-        ]
-    },
-
-    administration: {
-        title: "Administration & IAM",
-        icon: "鈿�",
-        description:
-            "Enterprise administration, identities and access management.",
-        capabilities: [
-            "Identity Management",
-            "Role Administration",
-            "Enterprise Security"
-        ]
-    }
-
-};
-
-
-/* ==========================================================
-   MODULE STATE
-   ========================================================== */
-
+let mqeipToastTimeout = null;
 let mqeipCurrentPage = "executive";
-
-
-/* ==========================================================
-   SAFE DOM BUILDING
-   ========================================================== */
-
-function mqeipCreateElement(
-    tag,
-    className,
-    textValue
-) {
-    const element = document.createElement(tag);
-
-    if (className) {
-        element.className = className;
-    }
-
-    if (textValue !== undefined) {
-        element.textContent = String(textValue);
-    }
-
-    return element;
-}
-
-
-/* ==========================================================
-   RENDER ENTERPRISE MODULE WORKSPACE
-   ========================================================== */
-
-function mqeipRenderModuleWorkspace(pageKey) {
-
-    const module = MQEIP_MODULE_REGISTRY[pageKey];
-
-    const container = mqeipElement(
-        "modulePanelBody"
-    );
-
-    if (!module || !container) {
-        return;
-    }
-
-    container.replaceChildren();
-    container.className = "mqeip-workspace";
-
-    const header = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-header"
-    );
-
-    const icon = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-icon",
-        module.icon
-    );
-
-    const information = document.createElement("div");
-
-    information.appendChild(
-        mqeipCreateElement(
-            "div",
-            "mqeip-workspace-name",
-            module.title
-        )
-    );
-
-    information.appendChild(
-        mqeipCreateElement(
-            "div",
-            "mqeip-workspace-description",
-            module.description
-        )
-    );
-
-    header.append(icon, information);
-    container.appendChild(header);
-
-
-    /* ======================================================
-       WORKSPACE CAPABILITY CARDS
-       ====================================================== */
-
-    const grid = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-grid"
-    );
-
-    for (const capability of module.capabilities) {
-
-        const card = mqeipCreateElement(
-            "div",
-            "mqeip-workspace-card"
-        );
-
-        card.appendChild(
-            mqeipCreateElement(
-                "div",
-                "mqeip-workspace-card-title",
-                capability
-            )
-        );
-
-        card.appendChild(
-            mqeipCreateElement(
-                "div",
-                "mqeip-workspace-card-value",
-                "鈥�"
-            )
-        );
-
-        card.appendChild(
-            mqeipCreateElement(
-                "div",
-                "mqeip-workspace-card-note",
-                "Live module data not connected."
-            )
-        );
-
-        grid.appendChild(card);
-    }
-
-    container.appendChild(grid);
-
-
-    /* ======================================================
-       MODULE INTEGRATION STATUS
-       ====================================================== */
-
-    const statusBox = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-status"
-    );
-
-    statusBox.appendChild(
-        mqeipCreateElement(
-            "span",
-            "",
-            "鈸�"
-        )
-    );
-
-    statusBox.appendChild(
-        mqeipCreateElement(
-            "span",
-            "",
-            "This module workspace is available for navigation. " +
-            "Its dedicated ERP API integration is not yet " +
-            "configured in this frontend. No operational " +
-            "figures are simulated."
-        )
-    );
-
-    container.appendChild(statusBox);
-
-
-    /* ======================================================
-       WORKSPACE ACTIONS
-       ====================================================== */
-
-    const actions = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-actions"
-    );
-
-    const returnButton = mqeipCreateElement(
-        "button",
-        "btn btn-outline",
-        "Return to Executive Command"
-    );
-
-    returnButton.type = "button";
-
-    returnButton.addEventListener(
-        "click",
-        () => mqeipNavigate("executive")
-    );
-
-    actions.appendChild(returnButton);
-
-    if (pageKey === "quantum") {
-
-        const loadButton = mqeipCreateElement(
-            "button",
-            "btn btn-gold",
-            "Load Command Intelligence"
-        );
-
-        loadButton.type = "button";
-
-        loadButton.addEventListener(
-            "click",
-            mqeipLoadQuantumWorkspace
-        );
-
-        actions.appendChild(loadButton);
-    }
-
-    container.appendChild(actions);
-
-
-    /* ======================================================
-       MODULE DATA PANEL
-       ====================================================== */
-
-    const dataPanel = mqeipCreateElement(
-        "div",
-        "mqeip-workspace-data"
-    );
-
-    dataPanel.id = "mqeipWorkspaceData";
-
-    dataPanel.textContent =
-        "Dedicated module intelligence will appear here " +
-        "when the corresponding authenticated API " +
-        "connection is implemented.";
-
-    container.appendChild(dataPanel);
-
-    // Fleet uses its own live, authenticated workspace.
-    if (pageKey === "fleet") {
-        mqeipRenderFleetWorkspace(container);
-    }
-}
-
-
-/* ==========================================================
-   FLEET MANAGEMENT 鈥� ISOLATED LIVE API WORKSPACE
-   Only runs when Fleet is selected; other modules untouched.
-   ========================================================== */
-
-const MQEIP_FLEET_ENDPOINT = "/api/v1/fleet";
 let mqeipFleetLoadId = 0;
 
-function mqeipFleetNode(tag, text, className = "") {
-    return mqeipCreateElement(tag, className, text);
+function mqeipElement(id){return document.getElementById(id)}
+function mqeipSetText(id,value){const el=mqeipElement(id);if(el)el.textContent=value===null||value===undefined?"鈥�":String(value)}
+function mqeipSetConnection(state,message){
+  const dot=mqeipElement("connectionDot");
+  if(dot){dot.classList.remove("connected","disconnected");dot.classList.add(state==="connected"?"connected":"disconnected")}
+  mqeipSetText("connectionText",message);
+  mqeipSetText("dataConnectionState",state==="connected"?"Online":"Offline");
+}
+function mqeipSetLoginMessage(message,type=""){const el=mqeipElement("mqeipLoginMessage");if(el){el.textContent=message;el.className="mqeip-message"+(type?" "+type:"")}}
+function mqeipShowToast(message,type=""){
+  const toast=mqeipElement("mqeipToast");if(!toast)return;
+  if(mqeipToastTimeout)clearTimeout(mqeipToastTimeout);
+  toast.textContent=String(message);toast.className="mqeip-toast"+(type==="error"||type==="success"?" "+type:"");
+  mqeipToastTimeout=setTimeout(()=>{toast.classList.add("hidden");mqeipToastTimeout=null},5000);
+}
+function mqeipOpenLogin(){const modal=mqeipElement("mqeipLoginModal");if(!modal)return;mqeipSetLoginMessage("");modal.classList.remove("hidden");mqeipElement("mqeipUsername")?.focus()}
+function mqeipCloseLogin(){mqeipElement("mqeipLoginModal")?.classList.add("hidden");const p=mqeipElement("mqeipPassword");if(p)p.value=""}
+function mqeipExtractDetail(payload){
+  if(!payload)return "";const detail=payload.detail??payload.message??payload.error;
+  if(typeof detail==="string")return detail;
+  if(Array.isArray(detail))return detail.map(item=>{if(typeof item==="string")return item;const where=Array.isArray(item.loc)?item.loc.join("."):"";return(where?where+": ":"")+(item.msg||"")}).join("; ");
+  return "";
+}
+async function mqeipApiRequest(endpoint,options={}){
+  if(typeof endpoint!=="string"||!endpoint.startsWith("/")||endpoint.startsWith("//"))throw new Error("Invalid API endpoint.");
+  const {timeoutMs=MQEIP_REQUEST_TIMEOUT,...fetchOptions}=options;
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);const hadToken=Boolean(mqeipAccessToken);
+  try{
+    const headers={"Accept":"application/json",...(fetchOptions.body?{"Content-Type":"application/json"}:{}),...(mqeipAccessToken?{"Authorization":"Bearer "+mqeipAccessToken}:{}),...(fetchOptions.headers||{})};
+    const response=await fetch(MQEIP_API_BASE+endpoint,{...fetchOptions,headers,signal:controller.signal,cache:"no-store"});
+    const raw=await response.text();let payload=null;
+    try{payload=raw?JSON.parse(raw):null}catch(_){payload=null}
+    if(!response.ok){
+      const detail=mqeipExtractDetail(payload);let message;
+      if(response.status===401){if(hadToken){mqeipLogout();message="Sesi berakhir atau token ditolak."}else message="Username atau password salah."}
+      else if(response.status===403)message="Akses ditolak. Akun tidak memiliki izin untuk operasi ini.";
+      else message="HTTP "+response.status;
+      if(detail)message+=" ("+detail+")";const err=new Error(message);err.status=response.status;throw err;
+    }
+    return payload;
+  }catch(error){
+    if(error.name==="AbortError")throw new Error("Request timeout. Server mungkin sedang bangun; silakan coba lagi.");
+    if(error instanceof TypeError)throw new Error("Tidak dapat menghubungi server. Periksa URL backend, CORS, atau koneksi jaringan.");
+    throw error;
+  }finally{clearTimeout(timer)}
+}
+async function mqeipRequestToken(username,password){
+  const attempts=[
+    {headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})},
+    {headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({username,password,grant_type:"password"}).toString()}
+  ];const errors=[];
+  for(const attempt of attempts){try{return await mqeipApiRequest("/api/v1/login",{method:"POST",timeoutMs:MQEIP_LOGIN_TIMEOUT,...attempt})}catch(error){errors.push(error);if(![400,415,422].includes(error.status))throw error}}
+  throw errors.find(e=>e.status===400)||errors[errors.length-1];
+}
+async function mqeipLogin(username,password){
+  const button=mqeipElement("mqeipLoginSubmit");const cleanUsername=String(username||"").trim();
+  if(mqeipLoginInFlight)return false;
+  if(!cleanUsername||!password){mqeipSetLoginMessage("Username dan password wajib diisi.","error");return false}
+  mqeipLoginInFlight=true;if(button){button.disabled=true;button.textContent="Authenticating..."}
+  try{
+    mqeipSetLoginMessage("Menghubungkan ke MQEIP Backend...");
+    const loginData=await mqeipRequestToken(cleanUsername,password);
+    const token=loginData?.access_token||loginData?.token||loginData?.jwt;
+    if(!token)throw new Error("Backend tidak mengirim access_token.");
+    mqeipAccessToken=token;mqeipSetLoginMessage("Memverifikasi token...");
+    const user=await mqeipApiRequest("/api/v1/me");
+    if(!user||typeof user!=="object"||Array.isArray(user)||(user.username&&String(user.username).toLowerCase()!==cleanUsername.toLowerCase()))throw new Error("Verifikasi pengguna gagal.");
+    mqeipAuthenticatedUser=user;mqeipSetConnection("connected","API Connected");mqeipUpdateSessionControls();
+    mqeipSetLoginMessage("Login berhasil.","success");return true;
+  }catch(error){
+    mqeipAccessToken=null;mqeipAuthenticatedUser=null;mqeipSetConnection("disconnected","Not Connected");
+    mqeipSetLoginMessage("Login gagal: "+error.message,"error");mqeipUpdateSessionControls();return false;
+  }finally{mqeipLoginInFlight=false;if(button){button.disabled=false;button.textContent="Secure Login"}}
+}
+function mqeipLogout(){mqeipAccessToken=null;mqeipAuthenticatedUser=null;mqeipRequestVersion++;mqeipSetConnection("disconnected","Not Connected");mqeipResetDashboard();mqeipUpdateSessionControls()}
+function mqeipResetDashboard(){
+  ["kpiTotalEvents","kpiCriticalEvents","kpiActiveEvents","kpiResolvedEvents","overviewOpen","overviewInProgress","overviewHigh","overviewUnassigned","performanceResolutionRate","performanceResolutionHours"].forEach(id=>mqeipSetText(id,"鈥�"));
+  mqeipSetText("executiveAttentionLevel","Awaiting Secure Connection");mqeipSetText("executiveAttentionDescription","Authenticate to load operational intelligence.");mqeipSetText("dashboardLastUpdated","Last updated: Not connected");
+  const domain=mqeipElement("domainIntelligenceList");if(domain)domain.textContent="Connect to load domain intelligence.";
+  const alerts=mqeipElement("criticalAlertsList");if(alerts)alerts.textContent="Connect to load critical events.";
+  const body=mqeipElement("priorityBoardBody");if(body){body.replaceChildren();const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="Connect to load operational priorities.";row.appendChild(cell);body.appendChild(row)}
+}
+function mqeipRenderDomains(domains){
+  const container=mqeipElement("domainIntelligenceList");if(!container)return;container.replaceChildren();
+  if(!Array.isArray(domains)||!domains.length){container.textContent="No command events recorded by domain.";return}
+  const maxCount=Math.max(1,...domains.map(item=>Number(item.active_events)||0));
+  for(const domain of domains){const row=document.createElement("div");row.className="domain-row";const name=document.createElement("div");name.className="domain-name";name.textContent=String(domain.domain||"Unknown").replaceAll("_"," ");
+    const track=document.createElement("div");track.className="domain-track";const fill=document.createElement("div");fill.className="domain-fill";const count=Number(domain.active_events)||0;fill.style.width=Math.min(100,Math.max(0,count/maxCount*100))+"%";track.appendChild(fill);
+    const value=document.createElement("div");value.className="domain-count";value.textContent=String(count);row.append(name,track,value);container.appendChild(row)}
+}
+function mqeipRenderCriticalAlerts(events){
+  const container=mqeipElement("criticalAlertsList");if(!container)return;container.replaceChildren();
+  if(!Array.isArray(events)||!events.length){container.textContent="No active critical command events recorded.";return}
+  for(const event of events){const item=document.createElement("div");item.className="command-alert";const symbol=document.createElement("div");symbol.className="alert-symbol";symbol.textContent="!";
+    const body=document.createElement("div");body.className="alert-body";const title=document.createElement("div");title.className="alert-title";title.textContent=event.title||"Untitled event";
+    const meta=document.createElement("div");meta.className="alert-meta";meta.textContent=[event.domain,event.vessel_id,event.command_status].filter(Boolean).join(" 路 ");body.append(title,meta);item.append(symbol,body);container.appendChild(item)}
+}
+function mqeipRenderPriorityBoard(events){
+  const body=mqeipElement("priorityBoardBody");if(!body)return;body.replaceChildren();
+  if(!Array.isArray(events)||!events.length){const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="No active command priorities recorded.";row.appendChild(cell);body.appendChild(row);return}
+  for(const event of events){const row=document.createElement("tr");for(const value of [event.priority,event.domain,event.title,event.command_status]){const cell=document.createElement("td");cell.textContent=String(value??"鈥�").replaceAll("_"," ");row.appendChild(cell)}body.appendChild(row)}
+}
+async function mqeipLoadExecutiveDashboard(){
+  if(!mqeipAccessToken){mqeipOpenLogin();return}const requestVersion=++mqeipRequestVersion;
+  mqeipSetText("dashboardLastUpdated","Loading live Command Center data...");
+  try{
+    const results=await Promise.allSettled([
+      mqeipApiRequest(MQEIP_COMMAND_API+"/executive/dashboard"),
+      mqeipApiRequest(MQEIP_COMMAND_API+"/operations/priority-board?limit=50"),
+      mqeipApiRequest(MQEIP_COMMAND_API+"/executive/performance")
+    ]);
+    if(requestVersion!==mqeipRequestVersion||!mqeipAccessToken)return;
+    if(results.every(r=>r.status==="rejected"))throw results[0].reason;
+    const failures=results.filter(r=>r.status==="rejected").map(r=>r.reason?.message||"Unknown error");
+    const dashboard=results[0].status==="fulfilled"?(results[0].value||{}):{};
+    const board=results[1].status==="fulfilled"?(results[1].value||{}):{};
+    const performance=results[2].status==="fulfilled"?(results[2].value||{}):{};
+    const summary=dashboard.event_summary||{};const total=Number(summary.total_events)||0;const open=Number(summary.open_events)||0;const progress=Number(summary.in_progress_events)||0;
+    mqeipSetText("kpiTotalEvents",total);mqeipSetText("kpiCriticalEvents",Number(summary.active_critical_events)||0);mqeipSetText("kpiActiveEvents",open+progress);mqeipSetText("kpiResolvedEvents",Number(summary.resolved_events)||0);
+    mqeipSetText("overviewOpen",open);mqeipSetText("overviewInProgress",progress);mqeipSetText("overviewHigh",Number(summary.active_high_events)||0);mqeipSetText("overviewUnassigned",Number(summary.unassigned_active_events)||0);
+    mqeipSetText("executiveAttentionLevel",String(dashboard.executive_attention_level||"unknown").toUpperCase()+" ATTENTION");mqeipSetText("executiveAttentionDescription","Based on recorded Command Center events.");
+    mqeipRenderDomains(dashboard.domain_overview||[]);mqeipRenderCriticalAlerts(dashboard.critical_priority_events||[]);mqeipRenderPriorityBoard(board.events||[]);
+    const rate=performance.resolution_rate_percent;mqeipSetText("performanceResolutionRate",rate==null?"鈥�":rate+"%");mqeipSetText("performanceResolutionHours",performance.average_resolution_hours??"鈥�");
+    mqeipSetText("dataIntegrationState","Pending");mqeipSetText("dashboardLastUpdated","Last updated: "+new Date().toLocaleString()+(failures.length?" 鈥� Partial failures: "+failures.join(" | "):""));mqeipSetConnection("connected","API Connected");
+  }catch(error){if(requestVersion!==mqeipRequestVersion)return;mqeipSetText("dashboardLastUpdated","Data loading failed: "+(error.message||"Unknown error"));mqeipShowToast(error.message||"Dashboard data failed to load.","error")}
+}
+function mqeipCreateElement(tag,className,textValue){const el=document.createElement(tag);if(className)el.className=className;if(textValue!==undefined)el.textContent=String(textValue);return el}
+const MQEIP_MODULE_REGISTRY={
+ executive:{title:"Executive Command Center",icon:"鈼�",description:"Enterprise maritime operational intelligence, strategic monitoring and executive decision support.",capabilities:["Enterprise KPI Monitoring","Critical Operational Alerts","Executive Decision Support"]},
+ quantum:{title:"Maritime Quantum Command Center",icon:"鉁�",description:"Enterprise command events, operational priorities, risk intelligence and command snapshots.",capabilities:["Command Event Management","Operational Priority Board","Executive Risk Intelligence"]},
+ analytics:{title:"Business Intelligence",icon:"鈻�",description:"Enterprise analytics and management intelligence.",capabilities:["Management Reporting","Enterprise Analytics","Performance Intelligence"]},
+ fleet:{title:"Fleet Management",icon:"鈿�",description:"Vessel registry and fleet operational administration.",capabilities:["Vessel Registry","Fleet Monitoring","Fleet Operational Records"]},
+ marine:{title:"Marine Operations",icon:"鈼�",description:"Marine operational control and voyage management.",capabilities:["Voyage Operations","Marine Performance","Operational Reporting"]},
+ crew:{title:"Crew & Certificates",icon:"鈾�",description:"Seafarer management and certificate intelligence.",capabilities:["Crew Records","Certificate Tracking","Crew Compliance"]},
+ technical:{title:"Technical & PMS",icon:"鈿�",description:"Technical engineering and planned maintenance control.",capabilities:["Technical Records","Maintenance Planning","Engineering Intelligence"]},
+ hsse:{title:"HSSE & Compliance",icon:"鉀�",description:"Health, safety, security, environment and compliance.",capabilities:["Safety Monitoring","Incident Management","Compliance Intelligence"]},
+ finance:{title:"Finance & Accounting",icon:"鈻�",description:"Enterprise maritime financial administration.",capabilities:["Financial Records","Cost Management","Financial Intelligence"]},
+ supply:{title:"Supply Chain & Procurement",icon:"鈻�",description:"Procurement, vendor coordination and purchasing.",capabilities:["RFQ Management","Purchase Orders","Procurement Monitoring"]},
+ inventory:{title:"Inventory & Vessel Stores",icon:"鈻�",description:"Vessel inventory and enterprise stores management.",capabilities:["Inventory Records","Stock Monitoring","Vessel Stores"]},
+ commercial:{title:"Commercial & Chartering",icon:"鈼�",description:"Commercial maritime contracts and chartering.",capabilities:["Chartering Records","Commercial Performance","Contract Monitoring"]},
+ hr:{title:"Human Resources",icon:"鈾�",description:"Shore workforce and enterprise HR administration.",capabilities:["Employee Records","Workforce Management","HR Intelligence"]},
+ ai:{title:"AI Intelligence Center",icon:"鉁�",description:"Enterprise AI agents and intelligent analysis.",capabilities:["AI Intelligence","AI Agent Operations","Automated Analysis"]},
+ optimization:{title:"Quantum Optimization",icon:"鈱�",description:"Quantum-inspired enterprise optimization.",capabilities:["Optimization Models","Scenario Analysis","Decision Optimization"]},
+ twin:{title:"Maritime Digital Twin",icon:"鈼�",description:"Digital representation and analysis of vessel operations.",capabilities:["Digital Twin Models","Operational Scenarios","Performance Analysis"]},
+ esg:{title:"ESG & Sustainability",icon:"鈾�",description:"Environmental, social and governance intelligence.",capabilities:["Sustainability Records","ESG Monitoring","Environmental Reporting"]},
+ documents:{title:"Document Management",icon:"鈻�",description:"Enterprise document administration and control.",capabilities:["Document Registry","Document Governance","Document Tracking"]},
+ workflow:{title:"Workflow & Approvals",icon:"鈬�",description:"Enterprise business processes and approval workflows.",capabilities:["Workflow Records","Approval Tracking","Process Monitoring"]},
+ audit:{title:"Audit & Internal Control",icon:"鉁�",description:"Internal audit, governance and control monitoring.",capabilities:["Audit Records","Internal Controls","Governance Monitoring"]},
+ administration:{title:"Administration & IAM",icon:"鈿�",description:"Enterprise administration, identities and access management.",capabilities:["Identity Management","Role Administration","Enterprise Security"]}
+};
+function mqeipRenderModuleWorkspace(pageKey){
+  const module=MQEIP_MODULE_REGISTRY[pageKey],container=mqeipElement("modulePanelBody");if(!module||!container)return;
+  container.replaceChildren();container.className="mqeip-workspace";
+  if(pageKey==="fleet"){mqeipRenderFleetWorkspace(container);return}
+  if(pageKey==="marine"){mqeipRenderMarineWorkspace(container);return}
+  const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
+  info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
+  const grid=mqeipCreateElement("div","mqeip-workspace-grid");
+  module.capabilities.forEach(capability=>{const card=mqeipCreateElement("div","mqeip-workspace-card");card.append(mqeipCreateElement("div","mqeip-workspace-card-title",capability),mqeipCreateElement("div","mqeip-workspace-card-value","鈥�"),mqeipCreateElement("div","mqeip-workspace-card-note","Live module data not connected."));grid.appendChild(card)});container.appendChild(grid);
+  const status=mqeipCreateElement("div","mqeip-workspace-status","This module workspace is available for navigation. Its dedicated ERP API integration is not yet configured. No operational figures are simulated.");container.appendChild(status);
+  const actions=mqeipCreateElement("div","mqeip-workspace-actions"),back=mqeipCreateElement("button","btn btn-outline","Return to Executive Command");back.type="button";back.addEventListener("click",()=>mqeipNavigate("executive"));actions.appendChild(back);
+  if(pageKey==="quantum"){const load=mqeipCreateElement("button","btn btn-gold","Load Command Intelligence");load.type="button";load.addEventListener("click",mqeipLoadQuantumWorkspace);actions.appendChild(load)}container.appendChild(actions);
+  const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
+}
+const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
+function mqeipFleetMessage(message,isError=false){const el=mqeipElement("mqeipFleetMessage");if(el){el.textContent=message;el.style.color=isError?"var(--red)":"var(--muted)"}}
+function mqeipRenderFleetWorkspace(container){
+  container.replaceChildren();const heading=mqeipFleetNode("h3","鈿� Fleet Management 鈥� Live Vessel Registry"),note=mqeipFleetNode("p","Authenticated fleet records from MQEIP Backend.");note.style.color="var(--muted)";
+  const actions=mqeipFleetNode("div","","mqeip-workspace-actions"),reload=mqeipFleetNode("button","鈫� Refresh Fleet","btn btn-outline");reload.type="button";reload.addEventListener("click",mqeipLoadFleet);
+  const add=mqeipFleetNode("button","+ Add Vessel","btn btn-gold");add.type="button";add.addEventListener("click",()=>mqeipElement("mqeipFleetForm")?.classList.toggle("hidden"));actions.append(reload,add);
+  const form=document.createElement("form");form.id="mqeipFleetForm";form.className="panel hidden";form.style.margin="16px 0";
+  const title=mqeipFleetNode("h3","Register Vessel"),nameLabel=mqeipFleetNode("label","Vessel Name (required)","mqeip-form-label"),name=document.createElement("input");name.name="vessel_name";name.required=true;name.maxLength=160;name.className="mqeip-form-input";
+  const typeLabel=mqeipFleetNode("label","Vessel Type (optional)","mqeip-form-label");typeLabel.style.marginTop="12px";const type=document.createElement("input");type.name="vessel_type";type.maxLength=100;type.className="mqeip-form-input";
+  const submit=mqeipFleetNode("button","Save Vessel","btn btn-gold");submit.type="submit";submit.style.marginTop="14px";form.append(title,nameLabel,name,typeLabel,type,submit);
+  form.addEventListener("submit",async event=>{event.preventDefault();if(!mqeipAccessToken){mqeipOpenLogin();return}submit.disabled=true;try{const payload={vessel_name:name.value.trim()};if(type.value.trim())payload.vessel_type=type.value.trim();await mqeipApiRequest(MQEIP_FLEET_ENDPOINT,{method:"POST",body:JSON.stringify(payload)});form.reset();form.classList.add("hidden");await mqeipLoadFleet();mqeipFleetMessage("Vessel saved successfully.")}catch(error){mqeipFleetMessage("Save failed: "+error.message,true)}finally{submit.disabled=false}});
+  const message=mqeipFleetNode("p","","mqeip-message");message.id="mqeipFleetMessage";message.setAttribute("role","status");
+  const wrap=mqeipFleetNode("div","","table-wrap"),table=mqeipFleetNode("table","","data-table"),thead=document.createElement("thead"),tr=document.createElement("tr");["Vessel","Type","IMO / ID","Actions"].forEach(t=>tr.appendChild(mqeipFleetNode("th",t)));thead.appendChild(tr);
+  const body=document.createElement("tbody");body.id="mqeipFleetTableBody";table.append(thead,body);wrap.appendChild(table);container.append(heading,note,actions,form,message,wrap);void mqeipLoadFleet();
+}
+function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
+function mqeipFleetRecords(payload){if(Array.isArray(payload))return payload;if(payload&&typeof payload==="object")for(const key of ["vessels","fleet","items","results","data"])if(Array.isArray(payload[key]))return payload[key];throw new Error("Fleet API returned an unexpected response format.")}
+async function mqeipLoadFleet(){
+  const loadId=++mqeipFleetLoadId,body=mqeipElement("mqeipFleetTableBody");if(!body||mqeipCurrentPage!=="fleet")return;body.replaceChildren();mqeipFleetMessage("Loading vessel registry...");
+  if(!mqeipAccessToken){mqeipFleetMessage("Secure login is required to view Fleet.");mqeipOpenLogin();return}
+  try{const records=mqeipFleetRecords(await mqeipApiRequest(MQEIP_FLEET_ENDPOINT));if(loadId!==mqeipFleetLoadId||mqeipCurrentPage!=="fleet"||body!==mqeipElement("mqeipFleetTableBody"))return;
+    if(!records.length){const row=document.createElement("tr"),cell=mqeipFleetNode("td","No vessels registered for this account.");cell.colSpan=4;row.appendChild(cell);body.appendChild(row)}
+    for(const vessel of records){const row=document.createElement("tr"),name=vessel.vessel_name??vessel.name??"鈥�",type=vessel.vessel_type??vessel.type??"鈥�",id=vessel.id??vessel.vessel_id??null,imo=vessel.imo_number??vessel.imo??id??"鈥�";
+      [name,type,imo].forEach(val=>row.appendChild(mqeipFleetNode("td",String(val))));const action=document.createElement("td");
+      if(id!==null&&id!==undefined){const remove=mqeipFleetNode("button","Delete","btn btn-outline");remove.type="button";remove.addEventListener("click",async()=>{if(!confirm("Delete vessel "+String(name)+"? This cannot be undone."))return;remove.disabled=true;try{await mqeipApiRequest(MQEIP_FLEET_ENDPOINT+"/"+encodeURIComponent(String(id)),{method:"DELETE"});await mqeipLoadFleet();mqeipFleetMessage("Vessel deleted.")}catch(error){mqeipFleetMessage("Delete failed: "+error.message,true);remove.disabled=false}});action.appendChild(remove)}else action.textContent="No record ID";
+      row.appendChild(action);body.appendChild(row)}mqeipFleetMessage(records.length+" vessel(s) loaded from backend.")
+  }catch(error){if(loadId===mqeipFleetLoadId&&mqeipCurrentPage==="fleet")mqeipFleetMessage("Unable to load Fleet: "+error.message,true)}
+}
+/* Marine Operations: authenticated, read-only API integration. */
+const MQEIP_MARINE_API="/api/v1/marine-operations";
+let mqeipMarineLoadId=0;
+function mqeipMarineValue(value){return value===null||value===undefined||value===""?"鈥�":String(value)}
+function mqeipMarineCard(parent,title,value,note=""){
+  const card=mqeipCreateElement("div","mqeip-workspace-card");
+  card.append(mqeipCreateElement("div","mqeip-workspace-card-title",title),mqeipCreateElement("div","mqeip-workspace-card-value",mqeipMarineValue(value)));
+  if(note)card.appendChild(mqeipCreateElement("div","mqeip-workspace-card-note",note));parent.appendChild(card);
+}
+function mqeipMarineFirst(source,keys){for(const key of keys){if(source&&source[key]!==undefined&&source[key]!==null)return source[key]}return null}
+function mqeipMarineList(data){if(Array.isArray(data))return data;if(data&&typeof data==="object")for(const key of ["voyages","items","results","data"]){if(Array.isArray(data[key]))return data[key]}return null}
+function mqeipRenderMarineWorkspace(container){
+  container.replaceChildren();
+  const heading=mqeipCreateElement("div","mqeip-workspace-header");
+  const info=document.createElement("div");info.append(mqeipCreateElement("div","mqeip-workspace-name","Marine Operations 鈥� Live Backend Intelligence"),mqeipCreateElement("div","mqeip-workspace-description","Voyages and operational command data retrieved from the authenticated MQEIP API. Stale AIS positions are never represented as live."));
+  heading.append(mqeipCreateElement("div","mqeip-workspace-icon","鈼�"),info);
+  const actions=mqeipCreateElement("div","mqeip-workspace-actions"),refresh=mqeipCreateElement("button","btn btn-gold","鈫� Refresh Marine Data");refresh.type="button";refresh.addEventListener("click",mqeipLoadMarine);actions.appendChild(refresh);
+  const status=mqeipCreateElement("div","mqeip-workspace-status","Waiting for Marine Operations API...");status.id="mqeipMarineStatus";
+  const grid=mqeipCreateElement("div","mqeip-workspace-grid");grid.id="mqeipMarineMetrics";
+  const voyages=mqeipCreateElement("div","mqeip-workspace-data");voyages.id="mqeipMarineVoyages";
+  container.append(heading,actions,status,grid,voyages);void mqeipLoadMarine();
+}
+async function mqeipLoadMarine(){
+  if(mqeipCurrentPage!=="marine")return;
+  const status=mqeipElement("mqeipMarineStatus"),grid=mqeipElement("mqeipMarineMetrics"),target=mqeipElement("mqeipMarineVoyages");
+  if(!status||!grid||!target)return;
+  const loadId=++mqeipMarineLoadId;grid.replaceChildren();target.replaceChildren();status.textContent="Loading Marine Operations API...";
+  if(!mqeipAccessToken){status.textContent="Secure login required.";mqeipOpenLogin();return}
+  const results=await Promise.allSettled([mqeipApiRequest(MQEIP_MARINE_API+"/command-center"),mqeipApiRequest(MQEIP_MARINE_API+"/voyages")]);
+  if(loadId!==mqeipMarineLoadId||mqeipCurrentPage!=="marine"||status!==mqeipElement("mqeipMarineStatus")||!mqeipAccessToken)return;
+  const command=results[0].status==="fulfilled"?results[0].value:null;
+  const voyageData=results[1].status==="fulfilled"?results[1].value:null;
+  const errors=results.filter(r=>r.status==="rejected").map(r=>r.reason?.message||"Unknown API error");
+  if(!command&&!voyageData){status.textContent="Marine API unavailable: "+errors.join(" | ");return}
+  status.textContent=errors.length?"Partial API response: "+errors.join(" | "):"Marine Operations API connected. Figures reflect backend data, not simulations.";
+  const stats=command?.summary||command?.statistics||command?.metrics||command||{};
+  const metrics=[
+    ["Tracked Vessels",["tracked_vessels","total_tracked_vessels","total_vessels"]],
+    ["LIVE AIS Positions",["live_positions","live_vessels"]],
+    ["STALE AIS Positions",["stale_positions","stale_vessels"]],
+    ["Active Voyages",["active_voyages","total_active_voyages"]],
+    ["Active Marine Alerts",["active_alerts","marine_alerts","total_active_alerts"]]
+  ];
+  for(const [label,keys] of metrics)mqeipMarineCard(grid,label,command?mqeipMarineFirst(stats,keys):null,label.includes("AIS")?"Provider freshness must be validated by backend.":"");
+  target.appendChild(mqeipCreateElement("h4","","Voyage Operations 鈥� Backend Records"));
+  if(!voyageData){target.appendChild(mqeipCreateElement("p","","Voyage API not available."));return}
+  const records=mqeipMarineList(voyageData);
+  if(records===null){target.appendChild(mqeipCreateElement("p","","Voyage API returned an unrecognized list format. Check the backend response schema."));return}
+  target.appendChild(mqeipCreateElement("p","",records.length+" voyage record(s) returned by backend."));
+  if(!records.length)return;
+  const wrap=mqeipCreateElement("div","table-wrap"),table=mqeipCreateElement("table","data-table"),thead=document.createElement("thead"),tr=document.createElement("tr");
+  ["Voyage","Vessel","Origin","Destination","Status"].forEach(t=>tr.appendChild(mqeipCreateElement("th","",t)));thead.appendChild(tr);
+  const tbody=document.createElement("tbody");
+  for(const voyage of records){const row=document.createElement("tr");
+    const values=[mqeipMarineFirst(voyage,["voyage_number","voyage_no","voyage_id","id"]),mqeipMarineFirst(voyage,["vessel_name","vessel_id","vessel"]),mqeipMarineFirst(voyage,["origin","departure_port","port_of_departure","from_port"]),mqeipMarineFirst(voyage,["destination","arrival_port","port_of_arrival","to_port"]),mqeipMarineFirst(voyage,["status","voyage_status"])];
+    for(const value of values)row.appendChild(mqeipCreateElement("td","",mqeipMarineValue(value)));tbody.appendChild(row);
+  }
+  table.append(thead,tbody);wrap.appendChild(table);target.appendChild(wrap);
 }
 
-function mqeipFleetMessage(text, isError = false) {
-    const el = mqeipElement("mqeipFleetMessage");
-    if (el) {
-        el.textContent = text;
-        el.style.color = isError ? "var(--red)" : "var(--muted)";
-    }
+async function mqeipLoadQuantumWorkspace(){
+  if(mqeipCurrentPage!=="quantum")return;if(!mqeipAccessToken){mqeipOpenLogin();return}
+  const target=mqeipElement("mqeipWorkspaceData");if(!target)return;target.textContent="Loading authenticated Command Center data...";
+  try{const data=await mqeipApiRequest(MQEIP_COMMAND_API+"/intelligence/events");if(mqeipCurrentPage!=="quantum"||target!==mqeipElement("mqeipWorkspaceData")||!mqeipAccessToken)return;
+    target.replaceChildren();target.appendChild(mqeipCreateElement("h4","","Live Command Event Intelligence"));const summary=data.summary||{},list=document.createElement("ul");
+    [["Total Events","total_events"],["Open Events","open_events"],["In Progress","in_progress_events"],["Resolved Events","resolved_events"],["Active Critical","active_critical_events"],["Active High","active_high_events"]].forEach(([label,key])=>{const item=document.createElement("li"),value=summary[key];item.textContent=label+": "+(value==null?"Unavailable":String(value));list.appendChild(item)});target.appendChild(list)
+  }catch(error){if(target===mqeipElement("mqeipWorkspaceData"))target.textContent="Unable to load Command Center data: "+(error.message||"Unknown error")}
 }
-
-function mqeipRenderFleetWorkspace(container) {
-    // Remove only the Fleet placeholder contents, never other modules.
-    container.replaceChildren();
-    const heading = mqeipFleetNode("h3", "鈿� Fleet Management 鈥� Live Vessel Registry");
-    const note = mqeipFleetNode("p", "Authenticated fleet records from MQEIP Backend.");
-    note.style.color = "var(--muted)";
-    const actions = mqeipFleetNode("div", "", "mqeip-workspace-actions");
-    const reload = mqeipFleetNode("button", "鈫� Refresh Fleet", "btn btn-outline");
-    reload.type = "button";
-    reload.addEventListener("click", mqeipLoadFleet);
-    const add = mqeipFleetNode("button", "+ Add Vessel", "btn btn-gold");
-    add.type = "button";
-    add.addEventListener("click", () => {
-        const form = mqeipElement("mqeipFleetForm");
-        if (form) form.classList.toggle("hidden");
-    });
-    actions.append(reload, add);
-
-    const form = document.createElement("form");
-    form.id = "mqeipFleetForm";
-    form.className = "panel hidden";
-    form.style.margin = "16px 0";
-    const formTitle = mqeipFleetNode("h3", "Register Vessel");
-    const nameLabel = mqeipFleetNode("label", "Vessel Name (required)", "mqeip-form-label");
-    const name = document.createElement("input");
-    name.name = "vessel_name";
-    name.required = true;
-    name.maxLength = 160;
-    name.className = "mqeip-form-input";
-    const typeLabel = mqeipFleetNode("label", "Vessel Type (optional)", "mqeip-form-label");
-    typeLabel.style.marginTop = "12px";
-    const type = document.createElement("input");
-    type.name = "vessel_type";
-    type.maxLength = 100;
-    type.className = "mqeip-form-input";
-    const submit = mqeipFleetNode("button", "Save Vessel", "btn btn-gold");
-    submit.type = "submit";
-    submit.style.marginTop = "14px";
-    form.append(formTitle, nameLabel, name, typeLabel, type, submit);
-    form.addEventListener("submit", async event => {
-        event.preventDefault();
-        if (!mqeipAccessToken) { mqeipOpenLogin(); return; }
-        submit.disabled = true;
-        try {
-            const payload = { vessel_name: name.value.trim() };
-            if (type.value.trim()) payload.vessel_type = type.value.trim();
-            await mqeipApiRequest(MQEIP_FLEET_ENDPOINT, {
-                method: "POST", body: JSON.stringify(payload)
-            });
-            form.reset();
-            form.classList.add("hidden");
-            await mqeipLoadFleet();
-            mqeipFleetMessage("Vessel saved successfully.");
-        } catch (error) {
-            mqeipFleetMessage("Save failed: " + error.message, true);
-        } finally { submit.disabled = false; }
-    });
-
-    const message = mqeipFleetNode("p", "", "mqeip-message");
-    message.id = "mqeipFleetMessage";
-    message.setAttribute("role", "status");
-    const tableWrap = mqeipFleetNode("div", "", "table-wrap");
-    const table = mqeipFleetNode("table", "", "data-table");
-    const head = document.createElement("thead");
-    const tr = document.createElement("tr");
-    ["Vessel", "Type", "IMO / ID", "Actions"].forEach(t => tr.appendChild(mqeipFleetNode("th", t)));
-    head.appendChild(tr);
-    const body = document.createElement("tbody");
-    body.id = "mqeipFleetTableBody";
-    table.append(head, body);
-    tableWrap.appendChild(table);
-    container.append(heading, note, actions, form, message, tableWrap);
-    void mqeipLoadFleet();
+function mqeipNavigate(pageKey){
+  const module=MQEIP_MODULE_REGISTRY[pageKey];if(!module)return;mqeipCurrentPage=pageKey;
+  document.querySelectorAll(".nav-link[data-page]").forEach(button=>{const active=button.dataset.page===pageKey;button.classList.toggle("active",active);if(active)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current")});
+  mqeipSetText("topbarTitle",module.title);mqeipSetText("pageTitle",module.title);mqeipSetText("pageDescription",module.description);
+  const dashboard=mqeipElement("executiveDashboard"),workspace=mqeipElement("moduleContent");
+  if(pageKey==="executive"){dashboard?.classList.remove("hidden");workspace?.classList.add("hidden")}else{dashboard?.classList.add("hidden");workspace?.classList.remove("hidden");mqeipSetText("modulePanelTitle",module.title);mqeipSetText("modulePanelDescription",module.description);mqeipRenderModuleWorkspace(pageKey)}
+  mqeipElement("sidebar")?.classList.remove("open");mqeipElement("menuToggle")?.setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});
 }
-
-function mqeipFleetRecords(payload) {
-    if (Array.isArray(payload)) return payload;
-    if (payload && typeof payload === "object") {
-        for (const key of ["vessels", "fleet", "items", "results", "data"]) {
-            if (Array.isArray(payload[key])) return payload[key];
-        }
-    }
-    throw new Error("Fleet API returned an unexpected response format.");
+function mqeipToggleSidebar(){const sidebar=mqeipElement("sidebar"),toggle=mqeipElement("menuToggle");if(!sidebar)return;const open=sidebar.classList.toggle("open");toggle?.setAttribute("aria-expanded",String(open))}
+function mqeipUpdateSessionControls(){
+  const authenticated=Boolean(mqeipAccessToken),login=mqeipElement("mqeipTopbarLogin"),logout=mqeipElement("mqeipTopbarLogout");
+  if(login)login.classList.toggle("hidden",authenticated);if(logout)logout.classList.toggle("hidden",!authenticated);
+  const avatar=document.querySelector(".user-avatar");if(avatar){avatar.textContent=authenticated?"鉁�":"U";avatar.setAttribute("aria-label",authenticated?"Authenticated user":"Unauthenticated user")}
+  const connect=mqeipElement("connectButton");if(connect){connect.textContent=authenticated?"API Connected":"Connect Secure API";connect.disabled=authenticated}
 }
-
-async function mqeipLoadFleet() {
-    const loadId = ++mqeipFleetLoadId;
-    const body = mqeipElement("mqeipFleetTableBody");
-    if (!body || mqeipCurrentPage !== "fleet") return;
-    body.replaceChildren();
-    mqeipFleetMessage("Loading vessel registry...");
-    if (!mqeipAccessToken) {
-        mqeipFleetMessage("Secure login is required to view Fleet.");
-        mqeipOpenLogin();
-        return;
-    }
-    try {
-        const records = mqeipFleetRecords(await mqeipApiRequest(MQEIP_FLEET_ENDPOINT));
-        if (loadId !== mqeipFleetLoadId || mqeipCurrentPage !== "fleet" || body !== mqeipElement("mqeipFleetTableBody")) return;
-        if (!records.length) {
-            const row = document.createElement("tr");
-            const cell = mqeipFleetNode("td", "No vessels registered for this account.");
-            cell.colSpan = 4;
-            row.appendChild(cell);
-            body.appendChild(row);
-        }
-        for (const vessel of records) {
-            const row = document.createElement("tr");
-            const name = vessel.vessel_name ?? vessel.name ?? "鈥�";
-            const type = vessel.vessel_type ?? vessel.type ?? "鈥�";
-            const id = vessel.id ?? vessel.vessel_id ?? null;
-            const imo = vessel.imo_number ?? vessel.imo ?? id ?? "鈥�";
-            for (const val of [name, type, imo]) row.appendChild(mqeipFleetNode("td", String(val)));
-            const actionCell = document.createElement("td");
-            if (id !== null && id !== undefined) {
-                const remove = mqeipFleetNode("button", "Delete", "btn btn-outline");
-                remove.type = "button";
-                remove.addEventListener("click", async () => {
-                    if (!window.confirm("Delete vessel " + String(name) + "? This cannot be undone.")) return;
-                    remove.disabled = true;
-                    try {
-                        await mqeipApiRequest(MQEIP_FLEET_ENDPOINT + "/" + encodeURIComponent(String(id)), {method: "DELETE"});
-                        await mqeipLoadFleet();
-                        mqeipFleetMessage("Vessel deleted.");
-                    } catch (error) {
-                        mqeipFleetMessage("Delete failed: " + error.message, true);
-                        remove.disabled = false;
-                    }
-                });
-                actionCell.appendChild(remove);
-            } else {
-                actionCell.textContent = "No record ID";
-            }
-            row.appendChild(actionCell);
-            body.appendChild(row);
-        }
-        mqeipFleetMessage(records.length + " vessel(s) loaded from backend.");
-    } catch (error) {
-        if (loadId === mqeipFleetLoadId && mqeipCurrentPage === "fleet") {
-            mqeipFleetMessage("Unable to load Fleet: " + error.message, true);
-        }
-    }
+function mqeipCreateSessionControls(){
+  const topbar=document.querySelector(".topbar-right");if(!topbar||mqeipElement("mqeipSessionControls"))return;
+  const controls=document.createElement("div");controls.id="mqeipSessionControls";controls.className="mqeip-session-controls";
+  const login=mqeipCreateElement("button","mqeip-session-button","Login");login.id="mqeipTopbarLogin";login.type="button";login.addEventListener("click",mqeipOpenLogin);
+  const logout=mqeipCreateElement("button","mqeip-session-button logout","Logout");logout.id="mqeipTopbarLogout";logout.type="button";logout.addEventListener("click",()=>{if(!mqeipAccessToken)return;mqeipLogout();mqeipNavigate("executive");mqeipShowToast("Local session cleared successfully.","success")});
+  controls.append(login,logout);topbar.appendChild(controls);mqeipUpdateSessionControls();
 }
-
-/* ==========================================================
-   QUANTUM COMMAND WORKSPACE DATA
-   ========================================================== */
-
-async function mqeipLoadQuantumWorkspace() {
-
-    if (mqeipCurrentPage !== "quantum") {
-        return;
-    }
-
-    if (!mqeipAccessToken) {
-        mqeipOpenLogin();
-        return;
-    }
-
-    const target = mqeipElement(
-        "mqeipWorkspaceData"
-    );
-
-    if (!target) {
-        return;
-    }
-
-    target.textContent =
-        "Loading authenticated Command Center data...";
-
-    try {
-        const data = await mqeipApiRequest(
-            MQEIP_COMMAND_API +
-            "/intelligence/events"
-        );
-
-        if (
-            mqeipCurrentPage !== "quantum" ||
-            target !== mqeipElement("mqeipWorkspaceData") ||
-            !mqeipAccessToken
-        ) {
-            return;
-        }
-
-        target.replaceChildren();
-
-        target.appendChild(
-            mqeipCreateElement(
-                "h4",
-                "",
-                "Live Command Event Intelligence"
-            )
-        );
-
-        const summary = data.summary || {};
-
-        const fields = [
-            ["Total Events", "total_events"],
-            ["Open Events", "open_events"],
-            ["In Progress", "in_progress_events"],
-            ["Resolved Events", "resolved_events"],
-            ["Active Critical", "active_critical_events"],
-            ["Active High", "active_high_events"]
-        ];
-
-        const list = document.createElement("ul");
-
-        for (const [label, key] of fields) {
-
-            const item = document.createElement("li");
-
-            const value = summary[key];
-
-            item.textContent =
-                label + ": " +
-                (
-                    value === null ||
-                    value === undefined
-                        ? "Unavailable"
-                        : String(value)
-                );
-
-            list.appendChild(item);
-        }
-
-        target.appendChild(list);
-
-    } catch (error) {
-
-        if (target === mqeipElement("mqeipWorkspaceData")) {
-            target.textContent =
-                "Unable to load Command Center data: " +
-                (error.message || "Unknown error");
-        }
-    }
+function mqeipValidateApplication(){
+  const required=["sidebar","topbarTitle","pageTitle","executiveDashboard","moduleContent","connectButton","refreshButton","mqeipLoginModal","mqeipLoginForm","connectionStatus"];
+  const missing=required.filter(id=>!mqeipElement(id));if(missing.length){console.error("MQEIP frontend elements missing:",missing);mqeipShowToast("Application initialization incomplete.","error");return false}return true;
 }
-
-
-/* ==========================================================
-   PAGE NAVIGATION
-   ========================================================== */
-
-function mqeipNavigate(pageKey) {
-
-    const module = MQEIP_MODULE_REGISTRY[pageKey];
-
-    if (!module) {
-        return;
-    }
-
-    mqeipCurrentPage = pageKey;
-
-    document.querySelectorAll(
-        ".nav-link[data-page]"
-    ).forEach(button => {
-
-        const isActive =
-            button.dataset.page === pageKey;
-
-        button.classList.toggle(
-            "active",
-            isActive
-        );
-
-        if (isActive) {
-            button.setAttribute(
-                "aria-current",
-                "page"
-            );
-        } else {
-            button.removeAttribute(
-                "aria-current"
-            );
-        }
-    });
-
-    mqeipSetText(
-        "topbarTitle",
-        module.title
-    );
-
-    mqeipSetText(
-        "pageTitle",
-        module.title
-    );
-
-    mqeipSetText(
-        "pageDescription",
-        module.description
-    );
-
-    const dashboard = mqeipElement(
-        "executiveDashboard"
-    );
-
-    const workspace = mqeipElement(
-        "moduleContent"
-    );
-
-    if (pageKey === "executive") {
-
-        dashboard?.classList.remove("hidden");
-        workspace?.classList.add("hidden");
-
-    } else {
-
-        dashboard?.classList.add("hidden");
-        workspace?.classList.remove("hidden");
-
-        mqeipSetText(
-            "modulePanelTitle",
-            module.title
-        );
-
-        mqeipSetText(
-            "modulePanelDescription",
-            module.description
-        );
-
-        mqeipRenderModuleWorkspace(pageKey);
-    }
-
-    const sidebar = mqeipElement("sidebar");
-
-    sidebar?.classList.remove("open");
-
-    const toggle = mqeipElement("menuToggle");
-
-    toggle?.setAttribute(
-        "aria-expanded",
-        "false"
-    );
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
-
-
-/* ==========================================================
-   RESPONSIVE SIDEBAR CONTROLS
-   ========================================================== */
-
-function mqeipToggleSidebar() {
-
-    const sidebar = mqeipElement("sidebar");
-    const toggle = mqeipElement("menuToggle");
-
-    if (!sidebar) {
-        return;
-    }
-
-    const isOpen = sidebar.classList.toggle("open");
-
-    toggle?.setAttribute(
-        "aria-expanded",
-        String(isOpen)
-    );
-}
-
-
-/* ==========================================================
-   REGISTER NAVIGATION EVENTS
-   ========================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        document.querySelectorAll(
-            ".nav-link[data-page]"
-        ).forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-                    mqeipNavigate(
-                        button.dataset.page
-                    );
-                }
-            );
-        });
-
-        mqeipElement("menuToggle")
-            ?.addEventListener(
-                "click",
-                mqeipToggleSidebar
-            );
-
-        mqeipNavigate("executive");
-    }
-);
-
+document.addEventListener("DOMContentLoaded",()=>{
+  mqeipSetConnection("disconnected","Not Connected");mqeipCreateSessionControls();mqeipValidateApplication();
+  mqeipElement("connectButton")?.addEventListener("click",mqeipOpenLogin);
+  mqeipElement("mqeipLoginCancel")?.addEventListener("click",mqeipCloseLogin);
+  mqeipElement("refreshButton")?.addEventListener("click",()=>{if(mqeipCurrentPage==="fleet")void mqeipLoadFleet();else if(mqeipCurrentPage==="quantum")void mqeipLoadQuantumWorkspace();else if(mqeipCurrentPage==="executive")void mqeipLoadExecutiveDashboard();else if(mqeipCurrentPage==="marine")void mqeipLoadMarine();else mqeipShowToast("API untuk modul ini belum dikonfigurasi.","error")});
+  mqeipElement("mqeipLoginForm")?.addEventListener("submit",async event=>{event.preventDefault();const username=mqeipElement("mqeipUsername")?.value.trim(),password=mqeipElement("mqeipPassword")?.value;if(!username||!password){mqeipSetLoginMessage("Username dan password wajib diisi.","error");return}const ok=await mqeipLogin(username,password);if(ok){mqeipCloseLogin();mqeipShowToast("Login berhasil.","success");await mqeipLoadExecutiveDashboard()}});
+  document.querySelectorAll(".nav-link[data-page]").forEach(button=>button.addEventListener("click",()=>mqeipNavigate(button.dataset.page)));
+  mqeipElement("menuToggle")?.addEventListener("click",mqeipToggleSidebar);
+  mqeipNavigate("executive");
+});
 </script>
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 4
-     ========================================================== -->
-
- <!-- ==========================================================
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     BLOK 5 - FINAL CONTROLS & HTML CLOSING
-     ========================================================== -->
-
-<style>
-/* ==========================================================
-   FINAL ENTERPRISE CONTROLS
-   ========================================================== */
-
-.mqeip-session-controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.mqeip-session-button {
-    padding: 9px 13px;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    background: var(--navy-800);
-    color: var(--text);
-    font-size: 11px;
-    font-weight: 750;
-}
-
-.mqeip-session-button:hover {
-    border-color: var(--gold);
-}
-
-.mqeip-session-button.logout {
-    border-color: rgba(244,119,130,.35);
-    color: var(--red);
-}
-
-.mqeip-session-button:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
-.mqeip-security-banner {
-    margin-top: 24px;
-    padding: 15px 18px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: rgba(216,180,106,.035);
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.8;
-}
-
-.mqeip-security-banner strong {
-    color: var(--gold-light);
-}
-
-.mqeip-toast {
-    position: fixed;
-    right: 22px;
-    bottom: 22px;
-    z-index: 1100;
-    max-width: 380px;
-    padding: 15px 18px;
-    background: #14263d;
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    font-size: 12px;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-
-.mqeip-toast.error {
-    border-color: rgba(244,119,130,.5);
-}
-
-.mqeip-toast.success {
-    border-color: rgba(79,209,161,.5);
-}
-
-@media (max-width: 650px) {
-    .mqeip-toast {
-        left: 15px;
-        right: 15px;
-        bottom: 15px;
-        max-width: none;
-    }
-
-    .mqeip-session-controls {
-        width: 100%;
-    }
-}
-</style>
-
-
-<!-- ==========================================================
-     ENTERPRISE SECURITY NOTICE
-     ========================================================== -->
-
-<div class="mqeip-security-banner">
-    <strong>MQEIP Enterprise Security</strong>
-
-    <div>
-        Authenticated API access 鈥�
-        Multi-tenant backend authorization 鈥�
-        Session-based access token 鈥�
-        Enterprise operational intelligence
-    </div>
-
-    <div>
-        Operational data is displayed only after
-        successful API retrieval. Frontend navigation
-        does not replace backend role-based access control.
-    </div>
-</div>
-
-
-<!-- ==========================================================
-     CLOSE APPLICATION CONTAINERS
-     ========================================================== -->
-
-        </div>
-        <!-- END page-content -->
-
-    </main>
-    <!-- END main-area -->
-
-</div>
-<!-- END app-shell -->
-
-
-<!-- ==========================================================
-     TOAST NOTIFICATIONS
-     ========================================================== -->
-
-<div
-    id="mqeipToast"
-    class="mqeip-toast hidden"
-    role="status"
-    aria-live="polite"
-></div>
-
-
-<script>
-/* ==========================================================
-   MQEIP FRONTEND BLOK 5
-   FINAL APPLICATION CONTROLS
-   ========================================================== */
-
-"use strict";
-
-let mqeipToastTimeout = null;
-
-
-/* ==========================================================
-   TOAST NOTIFICATIONS
-   ========================================================== */
-
-function mqeipShowToast(
-    message,
-    type = ""
-) {
-    const toast = mqeipElement("mqeipToast");
-
-    if (!toast) return;
-
-    if (mqeipToastTimeout !== null) {
-        clearTimeout(mqeipToastTimeout);
-    }
-
-    toast.textContent = String(message);
-
-    toast.className = "mqeip-toast";
-
-    if (type === "error" || type === "success") {
-        toast.classList.add(type);
-    }
-
-    mqeipToastTimeout = setTimeout(() => {
-        toast.classList.add("hidden");
-        mqeipToastTimeout = null;
-    }, 5000);
-}
-
-
-/* ==========================================================
-   CREATE SESSION BUTTONS
-   ========================================================== */
-
-function mqeipCreateSessionControls() {
-
-    const topbar = document.querySelector(
-        ".topbar-right"
-    );
-
-    if (!topbar) return;
-
-    if (mqeipElement("mqeipSessionControls")) {
-        return;
-    }
-
-    const controls = document.createElement("div");
-
-    controls.id = "mqeipSessionControls";
-    controls.className = "mqeip-session-controls";
-
-    const loginButton = document.createElement("button");
-
-    loginButton.id = "mqeipTopbarLogin";
-    loginButton.type = "button";
-    loginButton.className = "mqeip-session-button";
-    loginButton.textContent = "Login";
-
-    loginButton.addEventListener(
-        "click",
-        mqeipOpenLogin
-    );
-
-    const logoutButton = document.createElement("button");
-
-    logoutButton.id = "mqeipTopbarLogout";
-    logoutButton.type = "button";
-    logoutButton.className =
-        "mqeip-session-button logout";
-    logoutButton.textContent = "Logout";
-
-    logoutButton.addEventListener(
-        "click",
-        () => {
-            if (!mqeipAccessToken) {
-                return;
-            }
-
-            mqeipLogout();
-
-            mqeipUpdateSessionControls();
-
-            mqeipNavigate("executive");
-
-            mqeipShowToast(
-                "Local session cleared successfully.",
-                "success"
-            );
-        }
-    );
-
-    controls.append(
-        loginButton,
-        logoutButton
-    );
-
-    topbar.appendChild(controls);
-
-    mqeipUpdateSessionControls();
-}
-
-
-/* ==========================================================
-   UPDATE SESSION CONTROLS
-   ========================================================== */
-
-function mqeipUpdateSessionControls() {
-
-    const authenticated = Boolean(
-        mqeipAccessToken
-    );
-
-    const loginButton = mqeipElement(
-        "mqeipTopbarLogin"
-    );
-
-    const logoutButton = mqeipElement(
-        "mqeipTopbarLogout"
-    );
-
-    if (loginButton) {
-        loginButton.classList.toggle(
-            "hidden",
-            authenticated
-        );
-    }
-
-    if (logoutButton) {
-        logoutButton.classList.toggle(
-            "hidden",
-            !authenticated
-        );
-    }
-
-    const avatar = document.querySelector(
-        ".user-avatar"
-    );
-
-    if (avatar) {
-        avatar.textContent =
-            authenticated ? "鉁�" : "U";
-
-        avatar.setAttribute(
-            "aria-label",
-            authenticated
-                ? "Authenticated user"
-                : "Unauthenticated user"
-        );
-    }
-
-    const connectButton = mqeipElement(
-        "connectButton"
-    );
-
-    if (connectButton) {
-        connectButton.textContent =
-            authenticated
-                ? "API Connected"
-                : "Connect Secure API";
-
-        connectButton.disabled = authenticated;
-    }
-}
-
-
-/* ==========================================================
-   SESSION STATE OBSERVATION
-   ========================================================== */
-
-function mqeipStartSessionObserver() {
-
-    let previousAuthenticated = Boolean(
-        mqeipAccessToken
-    );
-
-    window.setInterval(() => {
-
-        const currentAuthenticated = Boolean(
-            mqeipAccessToken
-        );
-
-        if (
-            currentAuthenticated !==
-            previousAuthenticated
-        ) {
-            previousAuthenticated =
-                currentAuthenticated;
-
-            mqeipUpdateSessionControls();
-        }
-
-    }, 1000);
-}
-
-
-/* ==========================================================
-   INITIAL APPLICATION VALIDATION
-   ========================================================== */
-
-function mqeipValidateApplication() {
-
-    const requiredElements = [
-        "sidebar",
-        "topbarTitle",
-        "pageTitle",
-        "executiveDashboard",
-        "moduleContent",
-        "connectButton",
-        "refreshButton",
-        "mqeipLoginModal",
-        "mqeipLoginForm",
-        "connectionStatus"
-    ];
-
-    const missing = requiredElements.filter(
-        id => !mqeipElement(id)
-    );
-
-    if (missing.length > 0) {
-        console.error(
-            "MQEIP frontend elements missing:",
-            missing
-        );
-
-        mqeipShowToast(
-            "Application initialization incomplete.",
-            "error"
-        );
-
-        return false;
-    }
-
-    return true;
-}
-
-
-/* ==========================================================
-   GLOBAL ERROR HANDLING
-   ========================================================== */
-
-window.addEventListener(
-    "unhandledrejection",
-    event => {
-        console.error(
-            "MQEIP asynchronous operation failed:",
-            event.reason
-        );
-
-        mqeipShowToast(
-            "An application operation failed. " +
-            "Please review the connection or retry.",
-            "error"
-        );
-    }
-);
-
-
-/* ==========================================================
-   FINAL APPLICATION INITIALIZATION
-   ========================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        mqeipCreateSessionControls();
-
-        mqeipStartSessionObserver();
-
-        const valid = mqeipValidateApplication();
-
-        if (!valid) {
-            return;
-        }
-
-        mqeipUpdateSessionControls();
-
-        console.info(
-            "MQEIP Premium Enterprise Frontend initialized."
-        );
-
-    }
-);
-
-</script>
-
-
-<!-- ==========================================================
-     END OF FRONTEND BLOK 5
-     MQEIP PREMIUM ENTERPRISE FRONTEND
-     ========================================================== -->
-
 </body>
-</html>         
-
-          
-
-          
+</html>
