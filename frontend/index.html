@@ -490,5 +490,256 @@ document.addEventListener("DOMContentLoaded",()=>{
   mqeipNavigate("executive");
 });
 </script>
+<!-- MQEIP AIS LIVE VESSEL TRACKING MAP -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+#mqeip-ais-launch {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 9998;
+  background: #d8b46a;
+  color: #07111f;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 25px #0008;
+}
+#mqeip-ais-panel {
+  display: none;
+  position: fixed;
+  inset: 3%;
+  z-index: 9999;
+  background: #07111f;
+  color: #edf3fa;
+  border: 1px solid #d8b46a;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 70px #000b;
+}
+#mqeip-ais-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #101f34;
+}
+#mqeip-ais-header button {
+  background: #d8b46a;
+  border: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#mqeip-ais-map {
+  height: calc(100% - 112px);
+  width: 100%;
+  background: #102338;
+}
+#mqeip-ais-info {
+  padding: 10px 18px;
+  font-size: 13px;
+}
+.mqeip-ais-ship {
+  font-size: 22px;
+  color: #00d9ff;
+  text-shadow: 0 0 5px #001b2a;
+}
+</style>
+
+<button id="mqeip-ais-launch" type="button">
+  ⚓ AIS LIVE TRACKING
+</button>
+
+<section id="mqeip-ais-panel" aria-label="AIS Live Vessel Tracking">
+  <div id="mqeip-ais-header">
+    <strong>MQEIP | AIS LIVE VESSEL TRACKING</strong>
+    <button id="mqeip-ais-close" type="button">✕ CLOSE</button>
+  </div>
+  <div id="mqeip-ais-info">Menunggu koneksi AIS...</div>
+  <div id="mqeip-ais-map"></div>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+(() => {
+  "use strict";
+
+  const API = "https://mqeip-backend.onrender.com";
+  const launch = document.getElementById("mqeip-ais-launch");
+  const panel = document.getElementById("mqeip-ais-panel");
+  const close = document.getElementById("mqeip-ais-close");
+  const info = document.getElementById("mqeip-ais-info");
+
+  let map = null;
+  let layer = null;
+  let timer = null;
+  let loading = false;
+
+  function getToken() {
+    // Gunakan sesi login MQEIP yang sudah ada.
+    const keys = [
+      "mqeip_access_token",
+      "access_token",
+      "MQEIP_ACCESS_TOKEN",
+      "mqeip_token"
+    ];
+
+    for (const storage of [sessionStorage, localStorage]) {
+      for (const key of keys) {
+        try {
+          const token = storage.getItem(key);
+          if (token) return token;
+        } catch (_) {}
+      }
+    }
+
+    return null;
+  }
+
+  function setInfo(message) {
+    info.textContent = message;
+  }
+
+  function initMap() {
+    if (map) return;
+
+    if (typeof L === "undefined") {
+      setInfo("Library peta Leaflet gagal dimuat.");
+      return;
+    }
+
+    map = L.map("mqeip-ais-map").setView([-2.5, 118], 5);
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 18
+      }
+    ).addTo(map);
+
+    layer = L.layerGroup().addTo(map);
+  }
+
+  async function loadAIS() {
+    if (loading || !map) return;
+
+    const token = getToken();
+
+    if (!token) {
+      setInfo("Silakan login ke MQEIP terlebih dahulu.");
+      return;
+    }
+
+    loading = true;
+
+    try {
+      const response = await fetch(
+        API + "/api/v1/ais/positions?limit=1000",
+        {
+          headers: {
+            "Authorization": "Bearer " + token
+          },
+          cache: "no-store"
+        }
+      );
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Sesi login tidak valid. Silakan login ulang.");
+      }
+
+      if (!response.ok) {
+        throw new Error("API AIS HTTP " + response.status);
+      }
+
+      const result = await response.json();
+      const vessels = Array.isArray(result.items) ? result.items : [];
+
+      layer.clearLayers();
+
+      let displayed = 0;
+
+      for (const vessel of vessels) {
+        const lat = Number(vessel.latitude);
+        const lon = Number(vessel.longitude);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) continue;
+
+        const marker = L.circleMarker([lat, lon], {
+          radius: 5,
+          color: "#00d9ff",
+          fillColor: "#00d9ff",
+          fillOpacity: 0.85,
+          weight: 1
+        });
+
+        // DOM textContent mencegah HTML berbahaya dari data AIS.
+        const popup = document.createElement("div");
+        const lines = [
+          ["Vessel", vessel.name || "Unknown"],
+          ["MMSI", vessel.mmsi],
+          ["Speed", vessel.sog == null ? "-" : vessel.sog + " kn"],
+          ["Course", vessel.cog == null ? "-" : vessel.cog + "°"],
+          ["Heading", vessel.heading == null ? "-" : vessel.heading + "°"]
+        ];
+
+        for (const [label, value] of lines) {
+          const row = document.createElement("div");
+          row.textContent = label + ": " + value;
+          popup.appendChild(row);
+        }
+
+        marker.bindPopup(popup);
+        marker.addTo(layer);
+        displayed++;
+      }
+
+      setInfo(
+        "AIS ONLINE | " +
+        displayed +
+        " kapal ditampilkan | " +
+        (result.count ?? vessels.length) +
+        " kapal terpantau | Update 15 detik"
+      );
+
+    } catch (error) {
+      setInfo("AIS: " + error.message);
+    } finally {
+      loading = false;
+    }
+  }
+
+  launch.addEventListener("click", () => {
+    panel.style.display = "block";
+    initMap();
+
+    if (map) {
+      setTimeout(() => map.invalidateSize(), 100);
+      loadAIS();
+
+      if (!timer) {
+        timer = setInterval(loadAIS, 15000);
+      }
+    }
+  });
+
+  close.addEventListener("click", () => {
+    panel.style.display = "none";
+
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  });
+})();
+</script>
+<!-- END MQEIP AIS LIVE VESSEL TRACKING MAP -->
 </body>
 </html>
