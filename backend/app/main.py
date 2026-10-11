@@ -63,12 +63,6 @@ def create_access_token(user_id: str, tenant_id: str, role: str, email: str | No
     return jwt.encode(payload, secret, algorithm="HS256")
 
 
-app = FastAPI(
-    title="Maritime Quantum ERP & Intelligence Platform",
-    description="Enterprise Maritime ERP, Integration and Intelligence API",
-    version=__version__,
-)
-
 import asyncio
 from contextlib import asynccontextmanager
 from .modules.aisstream_connector import stream_ais
@@ -90,7 +84,12 @@ async def ais_lifespan(app):
             except asyncio.CancelledError:
                 pass
 
-app.router.lifespan_context = ais_lifespan
+app = FastAPI(
+    title="Maritime Quantum ERP & Intelligence Platform",
+    description="Enterprise Maritime ERP, Integration and Intelligence API",
+    version=__version__,
+    lifespan=ais_lifespan,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
