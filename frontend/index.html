@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#07111f">
-<title>MQEIP | Maritime Quantum ERP & Intelligence Platform</title>
+<title>MQEIP | Maritime Quantum ERP &amp; Intelligence Platform</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoqHNHhA+0J3Q=" crossorigin="">
 <style>
 :root {
   --navy-950:#07111f; --navy-900:#0b1729; --navy-850:#101f34;
@@ -40,7 +41,7 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 .page-content{padding:28px;max-width:1800px;margin:auto}.page-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:25px}
 .eyebrow{color:var(--gold);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}.page-title{font-size:clamp(23px,3vw,33px);margin:9px 0;font-weight:800;letter-spacing:-.5px}
 .page-description{color:var(--muted);line-height:1.6;max-width:740px}.page-actions{display:flex;gap:10px;flex-wrap:wrap}
-.btn{border:1px solid var(--border);border-radius:10px;padding:11px 16px;background:var(--navy-800);color:var(--text);font-weight:700}.btn:hover{filter:brightness(1.14)}
+.btn{border:1px solid var(--border);border-radius:10px;padding:11px 16px;background:var(--navy-800);color:var(--text);font-weight:700}.btn:hover{filter:brightness(1.14)}.btn:disabled{opacity:.6;cursor:not-allowed}
 .btn-gold{background:linear-gradient(135deg,#d6af62,#f0d99c);border-color:transparent;color:#152033}.btn-outline{border-color:rgba(216,180,106,.4);background:transparent;color:var(--gold-light)}
 .dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
 .panel{background:linear-gradient(160deg,rgba(22,40,62,.98),rgba(12,26,44,.98));border:1px solid var(--border);border-radius:var(--radius);padding:21px;box-shadow:var(--shadow);min-width:0}
@@ -95,6 +96,21 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}.sidebar.open{transform:translateX(0)}.menu-toggle{display:inline-flex}.page-content{padding:20px}.topbar{padding:12px 18px}}
 @media(max-width:650px){.mqeip-workspace-grid{grid-template-columns:1fr}.mqeip-workspace-header{flex-direction:column}.mqeip-toast{left:15px;right:15px;bottom:15px;max-width:none}.mqeip-session-controls{width:100%}}
 @media(max-width:550px){.dashboard-grid,.executive-kpis{grid-template-columns:1fr}.topbar-subtitle,.environment-label{display:none}.page-content{padding:15px}.panel{padding:17px}.domain-row{grid-template-columns:100px 1fr 30px;gap:8px}.command-overview{grid-template-columns:1fr 1fr}}
+
+/* AIS LIVE TRACKING */
+#aisLiveButton{position:fixed;right:20px;bottom:20px;z-index:850;background:linear-gradient(135deg,#d6af62,#f0d99c);color:#152033;border:0;border-radius:30px;padding:13px 19px;font-weight:800;box-shadow:0 8px 30px #0008}
+#aisLiveModal{position:fixed;inset:0;z-index:1200;background:rgba(3,9,18,.92);padding:14px;display:flex;align-items:center;justify-content:center}
+#aisLiveModal.hidden{display:none!important}
+#aisLivePanel{width:min(1200px,100%);height:min(90vh,850px);min-height:350px;min-width:0;background:#101f34;border:1px solid rgba(216,180,106,.5);border-radius:15px;display:flex;flex-direction:column;overflow:hidden}
+#aisLiveHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;color:#f0d69a;font-weight:800}
+#aisLiveHeader button{background:#203751;color:#edf3fa;border:1px solid #53657a;border-radius:8px;padding:8px 12px}
+#aisLiveStatus{padding:8px 16px;font-size:12px;color:#d9e4f1;min-height:32px}
+#aisLiveMap{display:block;position:relative;flex:1 1 auto;width:100%;height:100%;min-height:0;background:#07111f;overflow:hidden}
+#aisLiveMap.leaflet-container{width:100%;height:100%;min-height:0}
+#aisLiveMap .leaflet-pane,#aisLiveMap .leaflet-tile-container{position:absolute}
+#aisLiveMap .leaflet-tile{max-width:none!important;max-height:none!important}
+#aisLiveMap img.leaflet-tile{display:block}
+@media(max-width:600px){#aisLivePanel{height:90dvh}#aisLiveHeader{padding:10px}#aisLiveStatus{padding:8px 10px}}
 </style>
 </head>
 <body>
@@ -103,56 +119,56 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
   <div class="brand"><div class="brand-mark"><div class="brand-symbol">Q</div><div><div class="brand-name">MQEIP</div><div class="brand-subtitle">MARITIME QUANTUM ERP<br>&amp; INTELLIGENCE PLATFORM</div></div></div></div>
   <nav class="navigation" aria-label="Main navigation">
     <div class="nav-group"><div class="nav-heading">Command Centers</div>
-      <button class="nav-link active" data-page="executive"><span class="nav-icon">鈼�</span>Executive Command</button>
-      <button class="nav-link" data-page="quantum"><span class="nav-icon">鉁�</span>Quantum Command</button>
-      <button class="nav-link" data-page="analytics"><span class="nav-icon">鈻�</span>Business Intelligence</button>
+      <button class="nav-link active" data-page="executive"><span class="nav-icon">&#9672;</span>Executive Command</button>
+      <button class="nav-link" data-page="quantum"><span class="nav-icon">&#10022;</span>Quantum Command</button>
+      <button class="nav-link" data-page="analytics"><span class="nav-icon">&#9635;</span>Business Intelligence</button>
     </div>
     <div class="nav-group"><div class="nav-heading">Maritime Operations</div>
-      <button class="nav-link" data-page="fleet"><span class="nav-icon">鈿�</span>Fleet Management</button>
-      <button class="nav-link" data-page="marine"><span class="nav-icon">鈼�</span>Marine Operations</button>
-      <button class="nav-link" data-page="crew"><span class="nav-icon">鈾�</span>Crew &amp; Certificates</button>
-      <button class="nav-link" data-page="technical"><span class="nav-icon">鈿�</span>Technical &amp; PMS</button>
-      <button class="nav-link" data-page="hsse"><span class="nav-icon">鉀�</span>HSSE &amp; Compliance</button>
+      <button class="nav-link" data-page="fleet"><span class="nav-icon">&#9875;</span>Fleet Management</button>
+      <button class="nav-link" data-page="marine"><span class="nav-icon">&#9678;</span>Marine Operations</button>
+      <button class="nav-link" data-page="crew"><span class="nav-icon">&#9786;</span>Crew &amp; Certificates</button>
+      <button class="nav-link" data-page="technical"><span class="nav-icon">&#9881;</span>Technical &amp; PMS</button>
+      <button class="nav-link" data-page="hsse"><span class="nav-icon">&#9937;</span>HSSE &amp; Compliance</button>
     </div>
     <div class="nav-group"><div class="nav-heading">Enterprise ERP</div>
-      <button class="nav-link" data-page="finance"><span class="nav-icon">鈻�</span>Finance &amp; Accounting</button>
-      <button class="nav-link" data-page="supply"><span class="nav-icon">鈻�</span>Supply Chain</button>
-      <button class="nav-link" data-page="inventory"><span class="nav-icon">鈻�</span>Inventory &amp; Stores</button>
-      <button class="nav-link" data-page="commercial"><span class="nav-icon">鈼�</span>Commercial &amp; Chartering</button>
-      <button class="nav-link" data-page="hr"><span class="nav-icon">鈾�</span>Human Resources</button>
+      <button class="nav-link" data-page="finance"><span class="nav-icon">&#9636;</span>Finance &amp; Accounting</button>
+      <button class="nav-link" data-page="supply"><span class="nav-icon">&#9638;</span>Supply Chain</button>
+      <button class="nav-link" data-page="inventory"><span class="nav-icon">&#9637;</span>Inventory &amp; Stores</button>
+      <button class="nav-link" data-page="commercial"><span class="nav-icon">&#9673;</span>Commercial &amp; Chartering</button>
+      <button class="nav-link" data-page="hr"><span class="nav-icon">&#9787;</span>Human Resources</button>
     </div>
     <div class="nav-group"><div class="nav-heading">Advanced Intelligence</div>
-      <button class="nav-link" data-page="ai"><span class="nav-icon">鉁�</span>AI Intelligence Center</button>
-      <button class="nav-link" data-page="optimization"><span class="nav-icon">鈱�</span>Quantum Optimization</button>
-      <button class="nav-link" data-page="twin"><span class="nav-icon">鈼�</span>Maritime Digital Twin</button>
-      <button class="nav-link" data-page="esg"><span class="nav-icon">鈾�</span>ESG &amp; Sustainability</button>
+      <button class="nav-link" data-page="ai"><span class="nav-icon">&#10023;</span>AI Intelligence Center</button>
+      <button class="nav-link" data-page="optimization"><span class="nav-icon">&#9004;</span>Quantum Optimization</button>
+      <button class="nav-link" data-page="twin"><span class="nav-icon">&#9677;</span>Maritime Digital Twin</button>
+      <button class="nav-link" data-page="esg"><span class="nav-icon">&#9851;</span>ESG &amp; Sustainability</button>
     </div>
     <div class="nav-group"><div class="nav-heading">Enterprise Control</div>
-      <button class="nav-link" data-page="documents"><span class="nav-icon">鈻�</span>Document Management</button>
-      <button class="nav-link" data-page="workflow"><span class="nav-icon">鈬�</span>Workflow &amp; Approvals</button>
-      <button class="nav-link" data-page="audit"><span class="nav-icon">鉁�</span>Audit &amp; Internal Control</button>
-      <button class="nav-link" data-page="administration"><span class="nav-icon">鈿�</span>Administration &amp; IAM</button>
+      <button class="nav-link" data-page="documents"><span class="nav-icon">&#9639;</span>Document Management</button>
+      <button class="nav-link" data-page="workflow"><span class="nav-icon">&#8644;</span>Workflow &amp; Approvals</button>
+      <button class="nav-link" data-page="audit"><span class="nav-icon">&#10004;</span>Audit &amp; Internal Control</button>
+      <button class="nav-link" data-page="administration"><span class="nav-icon">&#9919;</span>Administration &amp; IAM</button>
     </div>
   </nav>
-  <div class="sidebar-footer">MQEIP ENTERPRISE EDITION<br>Secure Multi-Tenant Architecture<br><span class="text-gold">Version 1.0 鈥� Frontend Foundation</span></div>
+  <div class="sidebar-footer">MQEIP ENTERPRISE EDITION<br>Secure Multi-Tenant Architecture<br><span class="text-gold">Version 1.1 &mdash; Frontend Foundation</span></div>
 </aside>
 <main class="main-area">
-<header class="topbar"><div class="topbar-left"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">鈽�</button><div><div class="topbar-title" id="topbarTitle">Executive Command Center</div><div class="topbar-subtitle">Enterprise Maritime Intelligence Platform</div></div></div>
+<header class="topbar"><div class="topbar-left"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button><div><div class="topbar-title" id="topbarTitle">Executive Command Center</div><div class="topbar-subtitle">Enterprise Maritime Intelligence Platform</div></div></div>
 <div class="topbar-right"><span class="environment-label">ENTERPRISE ENVIRONMENT</span><div class="connection-status" id="connectionStatus"><span class="status-dot disconnected" id="connectionDot"></span><span id="connectionText">Not connected</span></div><div class="user-avatar" aria-label="User profile">U</div></div></header>
 <div class="page-content">
 <section class="page-header"><div><div class="eyebrow">MARITIME QUANTUM INTELLIGENCE</div><h1 class="page-title" id="pageTitle">Executive Command Center</h1><p class="page-description" id="pageDescription">Enterprise-wide maritime operational intelligence, strategic monitoring, and executive decision support.</p></div>
-<div class="page-actions"><button class="btn btn-outline" id="refreshButton" type="button">鈫� Refresh</button><button class="btn btn-gold" id="connectButton" type="button">Connect Secure API</button></div></section>
+<div class="page-actions"><button class="btn btn-outline" id="refreshButton" type="button">&#8635; Refresh</button><button class="btn btn-gold" id="connectButton" type="button">Connect Secure API</button></div></section>
 <section id="executiveDashboard" class="executive-dashboard" aria-label="Executive Command Center">
 <div class="executive-kpis">
-<article class="kpi-card"><div class="kpi-top"><div class="metric-label">TOTAL COMMAND EVENTS</div><div class="kpi-icon">鈻�</div></div><div class="kpi-number text-gold" id="kpiTotalEvents">鈥�</div><div class="kpi-caption">Enterprise Operational Events</div><div class="kpi-footnote">Command Center Database</div></article>
-<article class="kpi-card critical"><div class="kpi-top"><div class="metric-label">CRITICAL EVENTS</div><div class="kpi-icon">!</div></div><div class="kpi-number text-red" id="kpiCriticalEvents">鈥�</div><div class="kpi-caption">Active Critical Priorities</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
-<article class="kpi-card warning"><div class="kpi-top"><div class="metric-label">ACTIVE EVENTS</div><div class="kpi-icon">鈼�</div></div><div class="kpi-number" id="kpiActiveEvents">鈥�</div><div class="kpi-caption">Outstanding Operational Actions</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
-<article class="kpi-card success"><div class="kpi-top"><div class="metric-label">RESOLVED EVENTS</div><div class="kpi-icon">鉁�</div></div><div class="kpi-number text-green" id="kpiResolvedEvents">鈥�</div><div class="kpi-caption">Completed Operational Resolutions</div><div class="kpi-footnote">Recorded Command Resolutions</div></article>
+<article class="kpi-card"><div class="kpi-top"><div class="metric-label">TOTAL COMMAND EVENTS</div><div class="kpi-icon">&#9635;</div></div><div class="kpi-number text-gold" id="kpiTotalEvents">&mdash;</div><div class="kpi-caption">Enterprise Operational Events</div><div class="kpi-footnote">Command Center Database</div></article>
+<article class="kpi-card critical"><div class="kpi-top"><div class="metric-label">CRITICAL EVENTS</div><div class="kpi-icon">!</div></div><div class="kpi-number text-red" id="kpiCriticalEvents">&mdash;</div><div class="kpi-caption">Active Critical Priorities</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
+<article class="kpi-card warning"><div class="kpi-top"><div class="metric-label">ACTIVE EVENTS</div><div class="kpi-icon">&#9678;</div></div><div class="kpi-number" id="kpiActiveEvents">&mdash;</div><div class="kpi-caption">Outstanding Operational Actions</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
+<article class="kpi-card success"><div class="kpi-top"><div class="metric-label">RESOLVED EVENTS</div><div class="kpi-icon">&#10004;</div></div><div class="kpi-number text-green" id="kpiResolvedEvents">&mdash;</div><div class="kpi-caption">Completed Operational Resolutions</div><div class="kpi-footnote">Recorded Command Resolutions</div></article>
 </div>
 <div class="intelligence-grid">
 <article class="panel"><div class="panel-header"><div><h3>Enterprise Command Intelligence</h3><div class="panel-subtitle">Executive operational overview</div></div><span class="panel-tag">COMMAND CENTER</span></div>
-<div class="attention-indicator"><div class="attention-symbol">鈿�</div><div><div class="attention-title" id="executiveAttentionLevel">Awaiting Secure Connection</div><div class="attention-description" id="executiveAttentionDescription">Connect to the authenticated MQEIP API to retrieve operational intelligence.</div></div></div>
-<div class="command-overview"><div class="overview-item"><div class="overview-value" id="overviewOpen">鈥�</div><div class="overview-label">Open Events</div></div><div class="overview-item"><div class="overview-value" id="overviewInProgress">鈥�</div><div class="overview-label">In Progress</div></div><div class="overview-item"><div class="overview-value text-red" id="overviewHigh">鈥�</div><div class="overview-label">High Priority</div></div><div class="overview-item"><div class="overview-value text-gold" id="overviewUnassigned">鈥�</div><div class="overview-label">Unassigned Events</div></div></div></article>
+<div class="attention-indicator"><div class="attention-symbol">&#9888;</div><div><div class="attention-title" id="executiveAttentionLevel">Awaiting Secure Connection</div><div class="attention-description" id="executiveAttentionDescription">Connect to the authenticated MQEIP API to retrieve operational intelligence.</div></div></div>
+<div class="command-overview"><div class="overview-item"><div class="overview-value" id="overviewOpen">&mdash;</div><div class="overview-label">Open Events</div></div><div class="overview-item"><div class="overview-value" id="overviewInProgress">&mdash;</div><div class="overview-label">In Progress</div></div><div class="overview-item"><div class="overview-value text-red" id="overviewHigh">&mdash;</div><div class="overview-label">High Priority</div></div><div class="overview-item"><div class="overview-value text-gold" id="overviewUnassigned">&mdash;</div><div class="overview-label">Unassigned Events</div></div></div></article>
 <article class="panel"><div class="panel-header"><div><h3>Enterprise Domain Intelligence</h3><div class="panel-subtitle">Active command events by division</div></div><span class="panel-tag">OPERATIONS</span></div><div id="domainIntelligenceList" class="domain-list"><div class="dashboard-placeholder"><strong>No Data Loaded</strong>Domain intelligence will appear after secure API connection.</div></div></article>
 </div>
 <div class="intelligence-grid equal">
@@ -160,14 +176,15 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 <article class="panel"><div class="panel-header"><div><h3>Operational Priority Board</h3><div class="panel-subtitle">Enterprise action priorities</div></div><span class="panel-tag">PRIORITY CONTROL</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Priority</th><th>Domain</th><th>Event</th><th>Status</th></tr></thead><tbody id="priorityBoardBody"><tr><td colspan="4"><div class="empty-state">Connect to the secure API to load operational priorities.</div></td></tr></tbody></table></div></article>
 </div>
 <div class="intelligence-grid equal">
-<article class="panel"><div class="panel-header"><div><h3>Executive Performance Intelligence</h3><div class="panel-subtitle">Command event resolution metrics</div></div><span class="panel-tag">PERFORMANCE</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value text-green" id="performanceResolutionRate">鈥�</div><div class="overview-label">Resolution Rate</div></div><div class="overview-item"><div class="overview-value" id="performanceResolutionHours">鈥�</div><div class="overview-label">Average Resolution Hours</div></div></div><div class="intelligence-footer">Calculated from recorded Command Center events. This is not a fleet-wide performance assessment until cross-module integration is completed.</div></article>
+<article class="panel"><div class="panel-header"><div><h3>Executive Performance Intelligence</h3><div class="panel-subtitle">Command event resolution metrics</div></div><span class="panel-tag">PERFORMANCE</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value text-green" id="performanceResolutionRate">&mdash;</div><div class="overview-label">Resolution Rate</div></div><div class="overview-item"><div class="overview-value" id="performanceResolutionHours">&mdash;</div><div class="overview-label">Average Resolution Hours</div></div></div><div class="intelligence-footer">Calculated from recorded Command Center events. This is not a fleet-wide performance assessment until cross-module integration is completed.</div></article>
 <article class="panel"><div class="panel-header"><div><h3>Enterprise Data Status</h3><div class="panel-subtitle">Backend integration visibility</div></div><span class="panel-tag">SYSTEM</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value" id="dataConnectionState">Offline</div><div class="overview-label">API Connection</div></div><div class="overview-item"><div class="overview-value" id="dataIntegrationState">Pending</div><div class="overview-label">ERP Module Integration</div></div></div><div class="intelligence-footer" id="dashboardLastUpdated">Last updated: Not yet connected</div></article>
 </div>
-<div class="data-source-label">MQEIP Enterprise Command Dashboard 鈥� Live values are displayed only after successful authentication and API retrieval. No simulated operational figures are used.</div>
+<div class="data-source-label">MQEIP Enterprise Command Dashboard &mdash; Live values are displayed only after successful authentication and API retrieval. No simulated operational figures are used.</div>
 </section>
 <section id="moduleContent" class="hidden" aria-label="Enterprise Module Workspace"><div class="panel"><div class="panel-header"><div><h3 id="modulePanelTitle">Enterprise Module</h3><div class="panel-subtitle" id="modulePanelDescription">Select a module to view its workspace.</div></div><span class="panel-tag">MQEIP</span></div><div id="modulePanelBody" class="dashboard-placeholder"><strong>Module Workspace</strong>Secure module-specific API integration will be configured in the next stages.</div></div></section>
-<div class="mqeip-security-banner"><strong>MQEIP Enterprise Security</strong><div>Authenticated API access 路 Multi-tenant backend authorization 路 Session-based access token 路 Enterprise operational intelligence</div><div>Operational data is displayed only after successful API retrieval. Frontend navigation does not replace backend role-based access control.</div></div>
+<div class="mqeip-security-banner"><strong>MQEIP Enterprise Security</strong><div>Authenticated API access &middot; Multi-tenant backend authorization &middot; Session-based access token &middot; Enterprise operational intelligence</div><div>Operational data is displayed only after successful API retrieval. Frontend navigation does not replace backend role-based access control.</div></div>
 </div></main></div>
+
 <div id="mqeipToast" class="mqeip-toast hidden" role="status" aria-live="polite"></div>
 <div id="mqeipLoginModal" class="mqeip-modal hidden" role="dialog" aria-modal="true" aria-labelledby="mqeipLoginTitle"><div class="mqeip-login-card">
 <div class="mqeip-login-title" id="mqeipLoginTitle">MQEIP Secure Operations Portal</div><div class="mqeip-login-description">Authenticate to access the enterprise maritime intelligence environment.</div>
@@ -176,14 +193,27 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 <div class="mqeip-login-actions"><button type="submit" class="btn btn-gold" id="mqeipLoginSubmit">Secure Login</button><button type="button" class="btn" id="mqeipLoginCancel">Cancel</button></div></form>
 <div id="mqeipLoginMessage" class="mqeip-message" role="status" aria-live="polite"></div><div class="mqeip-security-note">Credentials are sent to the configured HTTPS backend. Access tokens are retained only in browser memory for this session. Enterprise access is enforced by the backend.</div>
 </div></div>
+
+<button id="aisLiveButton" type="button">&#9875; AIS LIVE TRACKING</button>
+<div id="aisLiveModal" class="hidden" role="dialog" aria-modal="true" aria-label="AIS Live Tracking">
+  <div id="aisLivePanel">
+    <div id="aisLiveHeader"><span>&#9875; MQEIP &mdash; AIS LIVE TRACKING &middot; INDONESIA</span><div><button id="aisLiveRefresh" type="button">&#8635; Refresh</button> <button id="aisLiveClose" type="button">&#10005; Close</button></div></div>
+    <div id="aisLiveStatus" role="status" aria-live="polite">Menunggu koneksi AIS...</div>
+    <div id="aisLiveMap" aria-label="Peta posisi kapal AIS Indonesia"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 "use strict";
 
-/* Configure this URL to match your deployed backend. */
+/* Sesuaikan URL ini dengan backend yang sudah di-deploy. */
 const MQEIP_API_BASE = "https://repository-name-maritime-quantum-erp-w15p.onrender.com";
 const MQEIP_COMMAND_API = "/api/v1/quantum-command";
 const MQEIP_REQUEST_TIMEOUT = 30000;
 const MQEIP_LOGIN_TIMEOUT = 75000;
+const DASH = "\u2014";
+const DOT = " \u00B7 ";
 
 let mqeipAccessToken = null;
 let mqeipAuthenticatedUser = null;
@@ -194,7 +224,7 @@ let mqeipCurrentPage = "executive";
 let mqeipFleetLoadId = 0;
 
 function mqeipElement(id){return document.getElementById(id)}
-function mqeipSetText(id,value){const el=mqeipElement(id);if(el)el.textContent=value===null||value===undefined?"鈥�":String(value)}
+function mqeipSetText(id,value){const el=mqeipElement(id);if(el)el.textContent=value===null||value===undefined?DASH:String(value)}
 function mqeipSetConnection(state,message){
   const dot=mqeipElement("connectionDot");
   if(dot){dot.classList.remove("connected","disconnected");dot.classList.add(state==="connected"?"connected":"disconnected")}
@@ -267,9 +297,13 @@ async function mqeipLogin(username,password){
     mqeipSetLoginMessage("Login gagal: "+error.message,"error");mqeipUpdateSessionControls();return false;
   }finally{mqeipLoginInFlight=false;if(button){button.disabled=false;button.textContent="Secure Login"}}
 }
-function mqeipLogout(){mqeipAccessToken=null;mqeipAuthenticatedUser=null;mqeipRequestVersion++;mqeipSetConnection("disconnected","Not Connected");mqeipResetDashboard();mqeipUpdateSessionControls()}
+function mqeipLogout(){
+  mqeipAccessToken=null;mqeipAuthenticatedUser=null;mqeipRequestVersion++;
+  mqeipSetConnection("disconnected","Not Connected");mqeipResetDashboard();mqeipUpdateSessionControls();
+  if(typeof window.mqeipAisReset==="function")window.mqeipAisReset();
+}
 function mqeipResetDashboard(){
-  ["kpiTotalEvents","kpiCriticalEvents","kpiActiveEvents","kpiResolvedEvents","overviewOpen","overviewInProgress","overviewHigh","overviewUnassigned","performanceResolutionRate","performanceResolutionHours"].forEach(id=>mqeipSetText(id,"鈥�"));
+  ["kpiTotalEvents","kpiCriticalEvents","kpiActiveEvents","kpiResolvedEvents","overviewOpen","overviewInProgress","overviewHigh","overviewUnassigned","performanceResolutionRate","performanceResolutionHours"].forEach(id=>mqeipSetText(id,DASH));
   mqeipSetText("executiveAttentionLevel","Awaiting Secure Connection");mqeipSetText("executiveAttentionDescription","Authenticate to load operational intelligence.");mqeipSetText("dashboardLastUpdated","Last updated: Not connected");
   const domain=mqeipElement("domainIntelligenceList");if(domain)domain.textContent="Connect to load domain intelligence.";
   const alerts=mqeipElement("criticalAlertsList");if(alerts)alerts.textContent="Connect to load critical events.";
@@ -288,12 +322,12 @@ function mqeipRenderCriticalAlerts(events){
   if(!Array.isArray(events)||!events.length){container.textContent="No active critical command events recorded.";return}
   for(const event of events){const item=document.createElement("div");item.className="command-alert";const symbol=document.createElement("div");symbol.className="alert-symbol";symbol.textContent="!";
     const body=document.createElement("div");body.className="alert-body";const title=document.createElement("div");title.className="alert-title";title.textContent=event.title||"Untitled event";
-    const meta=document.createElement("div");meta.className="alert-meta";meta.textContent=[event.domain,event.vessel_id,event.command_status].filter(Boolean).join(" 路 ");body.append(title,meta);item.append(symbol,body);container.appendChild(item)}
+    const meta=document.createElement("div");meta.className="alert-meta";meta.textContent=[event.domain,event.vessel_id,event.command_status].filter(Boolean).join(DOT);body.append(title,meta);item.append(symbol,body);container.appendChild(item)}
 }
 function mqeipRenderPriorityBoard(events){
   const body=mqeipElement("priorityBoardBody");if(!body)return;body.replaceChildren();
   if(!Array.isArray(events)||!events.length){const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="No active command priorities recorded.";row.appendChild(cell);body.appendChild(row);return}
-  for(const event of events){const row=document.createElement("tr");for(const value of [event.priority,event.domain,event.title,event.command_status]){const cell=document.createElement("td");cell.textContent=String(value??"鈥�").replaceAll("_"," ");row.appendChild(cell)}body.appendChild(row)}
+  for(const event of events){const row=document.createElement("tr");for(const value of [event.priority,event.domain,event.title,event.command_status]){const cell=document.createElement("td");cell.textContent=String(value??DASH).replaceAll("_"," ");row.appendChild(cell)}body.appendChild(row)}
 }
 async function mqeipLoadExecutiveDashboard(){
   if(!mqeipAccessToken){mqeipOpenLogin();return}const requestVersion=++mqeipRequestVersion;
@@ -315,33 +349,33 @@ async function mqeipLoadExecutiveDashboard(){
     mqeipSetText("overviewOpen",open);mqeipSetText("overviewInProgress",progress);mqeipSetText("overviewHigh",Number(summary.active_high_events)||0);mqeipSetText("overviewUnassigned",Number(summary.unassigned_active_events)||0);
     mqeipSetText("executiveAttentionLevel",String(dashboard.executive_attention_level||"unknown").toUpperCase()+" ATTENTION");mqeipSetText("executiveAttentionDescription","Based on recorded Command Center events.");
     mqeipRenderDomains(dashboard.domain_overview||[]);mqeipRenderCriticalAlerts(dashboard.critical_priority_events||[]);mqeipRenderPriorityBoard(board.events||[]);
-    const rate=performance.resolution_rate_percent;mqeipSetText("performanceResolutionRate",rate==null?"鈥�":rate+"%");mqeipSetText("performanceResolutionHours",performance.average_resolution_hours??"鈥�");
-    mqeipSetText("dataIntegrationState","Pending");mqeipSetText("dashboardLastUpdated","Last updated: "+new Date().toLocaleString()+(failures.length?" 鈥� Partial failures: "+failures.join(" | "):""));mqeipSetConnection("connected","API Connected");
+    const rate=performance.resolution_rate_percent;mqeipSetText("performanceResolutionRate",rate==null?DASH:rate+"%");mqeipSetText("performanceResolutionHours",performance.average_resolution_hours??DASH);
+    mqeipSetText("dataIntegrationState","Pending");mqeipSetText("dashboardLastUpdated","Last updated: "+new Date().toLocaleString()+(failures.length?" "+DASH+" Partial failures: "+failures.join(" | "):""));mqeipSetConnection("connected","API Connected");
   }catch(error){if(requestVersion!==mqeipRequestVersion)return;mqeipSetText("dashboardLastUpdated","Data loading failed: "+(error.message||"Unknown error"));mqeipShowToast(error.message||"Dashboard data failed to load.","error")}
 }
 function mqeipCreateElement(tag,className,textValue){const el=document.createElement(tag);if(className)el.className=className;if(textValue!==undefined)el.textContent=String(textValue);return el}
 const MQEIP_MODULE_REGISTRY={
- executive:{title:"Executive Command Center",icon:"鈼�",description:"Enterprise maritime operational intelligence, strategic monitoring and executive decision support.",capabilities:["Enterprise KPI Monitoring","Critical Operational Alerts","Executive Decision Support"]},
- quantum:{title:"Maritime Quantum Command Center",icon:"鉁�",description:"Enterprise command events, operational priorities, risk intelligence and command snapshots.",capabilities:["Command Event Management","Operational Priority Board","Executive Risk Intelligence"]},
- analytics:{title:"Business Intelligence",icon:"鈻�",description:"Enterprise analytics and management intelligence.",capabilities:["Management Reporting","Enterprise Analytics","Performance Intelligence"]},
- fleet:{title:"Fleet Management",icon:"鈿�",description:"Vessel registry and fleet operational administration.",capabilities:["Vessel Registry","Fleet Monitoring","Fleet Operational Records"]},
- marine:{title:"Marine Operations",icon:"鈼�",description:"Marine operational control and voyage management.",capabilities:["Voyage Operations","Marine Performance","Operational Reporting"]},
- crew:{title:"Crew & Certificates",icon:"鈾�",description:"Seafarer management and certificate intelligence.",capabilities:["Crew Records","Certificate Tracking","Crew Compliance"]},
- technical:{title:"Technical & PMS",icon:"鈿�",description:"Technical engineering and planned maintenance control.",capabilities:["Technical Records","Maintenance Planning","Engineering Intelligence"]},
- hsse:{title:"HSSE & Compliance",icon:"鉀�",description:"Health, safety, security, environment and compliance.",capabilities:["Safety Monitoring","Incident Management","Compliance Intelligence"]},
- finance:{title:"Finance & Accounting",icon:"鈻�",description:"Enterprise maritime financial administration.",capabilities:["Financial Records","Cost Management","Financial Intelligence"]},
- supply:{title:"Supply Chain & Procurement",icon:"鈻�",description:"Procurement, vendor coordination and purchasing.",capabilities:["RFQ Management","Purchase Orders","Procurement Monitoring"]},
- inventory:{title:"Inventory & Vessel Stores",icon:"鈻�",description:"Vessel inventory and enterprise stores management.",capabilities:["Inventory Records","Stock Monitoring","Vessel Stores"]},
- commercial:{title:"Commercial & Chartering",icon:"鈼�",description:"Commercial maritime contracts and chartering.",capabilities:["Chartering Records","Commercial Performance","Contract Monitoring"]},
- hr:{title:"Human Resources",icon:"鈾�",description:"Shore workforce and enterprise HR administration.",capabilities:["Employee Records","Workforce Management","HR Intelligence"]},
- ai:{title:"AI Intelligence Center",icon:"鉁�",description:"Enterprise AI agents and intelligent analysis.",capabilities:["AI Intelligence","AI Agent Operations","Automated Analysis"]},
- optimization:{title:"Quantum Optimization",icon:"鈱�",description:"Quantum-inspired enterprise optimization.",capabilities:["Optimization Models","Scenario Analysis","Decision Optimization"]},
- twin:{title:"Maritime Digital Twin",icon:"鈼�",description:"Digital representation and analysis of vessel operations.",capabilities:["Digital Twin Models","Operational Scenarios","Performance Analysis"]},
- esg:{title:"ESG & Sustainability",icon:"鈾�",description:"Environmental, social and governance intelligence.",capabilities:["Sustainability Records","ESG Monitoring","Environmental Reporting"]},
- documents:{title:"Document Management",icon:"鈻�",description:"Enterprise document administration and control.",capabilities:["Document Registry","Document Governance","Document Tracking"]},
- workflow:{title:"Workflow & Approvals",icon:"鈬�",description:"Enterprise business processes and approval workflows.",capabilities:["Workflow Records","Approval Tracking","Process Monitoring"]},
- audit:{title:"Audit & Internal Control",icon:"鉁�",description:"Internal audit, governance and control monitoring.",capabilities:["Audit Records","Internal Controls","Governance Monitoring"]},
- administration:{title:"Administration & IAM",icon:"鈿�",description:"Enterprise administration, identities and access management.",capabilities:["Identity Management","Role Administration","Enterprise Security"]}
+ executive:{title:"Executive Command Center",icon:"\u25C8",description:"Enterprise maritime operational intelligence, strategic monitoring and executive decision support.",capabilities:["Enterprise KPI Monitoring","Critical Operational Alerts","Executive Decision Support"]},
+ quantum:{title:"Maritime Quantum Command Center",icon:"\u2726",description:"Enterprise command events, operational priorities, risk intelligence and command snapshots.",capabilities:["Command Event Management","Operational Priority Board","Executive Risk Intelligence"]},
+ analytics:{title:"Business Intelligence",icon:"\u25A3",description:"Enterprise analytics and management intelligence.",capabilities:["Management Reporting","Enterprise Analytics","Performance Intelligence"]},
+ fleet:{title:"Fleet Management",icon:"\u2693",description:"Vessel registry and fleet operational administration.",capabilities:["Vessel Registry","Fleet Monitoring","Fleet Operational Records"]},
+ marine:{title:"Marine Operations",icon:"\u25CE",description:"Marine operational control and voyage management.",capabilities:["Voyage Operations","Marine Performance","Operational Reporting"]},
+ crew:{title:"Crew & Certificates",icon:"\u263A",description:"Seafarer management and certificate intelligence.",capabilities:["Crew Records","Certificate Tracking","Crew Compliance"]},
+ technical:{title:"Technical & PMS",icon:"\u2699",description:"Technical engineering and planned maintenance control.",capabilities:["Technical Records","Maintenance Planning","Engineering Intelligence"]},
+ hsse:{title:"HSSE & Compliance",icon:"\u26D1",description:"Health, safety, security, environment and compliance.",capabilities:["Safety Monitoring","Incident Management","Compliance Intelligence"]},
+ finance:{title:"Finance & Accounting",icon:"\u25A4",description:"Enterprise maritime financial administration.",capabilities:["Financial Records","Cost Management","Financial Intelligence"]},
+ supply:{title:"Supply Chain & Procurement",icon:"\u25A6",description:"Procurement, vendor coordination and purchasing.",capabilities:["RFQ Management","Purchase Orders","Procurement Monitoring"]},
+ inventory:{title:"Inventory & Vessel Stores",icon:"\u25A5",description:"Vessel inventory and enterprise stores management.",capabilities:["Inventory Records","Stock Monitoring","Vessel Stores"]},
+ commercial:{title:"Commercial & Chartering",icon:"\u25C9",description:"Commercial maritime contracts and chartering.",capabilities:["Chartering Records","Commercial Performance","Contract Monitoring"]},
+ hr:{title:"Human Resources",icon:"\u263B",description:"Shore workforce and enterprise HR administration.",capabilities:["Employee Records","Workforce Management","HR Intelligence"]},
+ ai:{title:"AI Intelligence Center",icon:"\u2727",description:"Enterprise AI agents and intelligent analysis.",capabilities:["AI Intelligence","AI Agent Operations","Automated Analysis"]},
+ optimization:{title:"Quantum Optimization",icon:"\u232C",description:"Quantum-inspired enterprise optimization.",capabilities:["Optimization Models","Scenario Analysis","Decision Optimization"]},
+ twin:{title:"Maritime Digital Twin",icon:"\u25CD",description:"Digital representation and analysis of vessel operations.",capabilities:["Digital Twin Models","Operational Scenarios","Performance Analysis"]},
+ esg:{title:"ESG & Sustainability",icon:"\u267B",description:"Environmental, social and governance intelligence.",capabilities:["Sustainability Records","ESG Monitoring","Environmental Reporting"]},
+ documents:{title:"Document Management",icon:"\u25A7",description:"Enterprise document administration and control.",capabilities:["Document Registry","Document Governance","Document Tracking"]},
+ workflow:{title:"Workflow & Approvals",icon:"\u21C4",description:"Enterprise business processes and approval workflows.",capabilities:["Workflow Records","Approval Tracking","Process Monitoring"]},
+ audit:{title:"Audit & Internal Control",icon:"\u2714",description:"Internal audit, governance and control monitoring.",capabilities:["Audit Records","Internal Controls","Governance Monitoring"]},
+ administration:{title:"Administration & IAM",icon:"\u26BF",description:"Enterprise administration, identities and access management.",capabilities:["Identity Management","Role Administration","Enterprise Security"]}
 };
 function mqeipRenderModuleWorkspace(pageKey){
   const module=MQEIP_MODULE_REGISTRY[pageKey],container=mqeipElement("modulePanelBody");if(!module||!container)return;
@@ -350,17 +384,19 @@ function mqeipRenderModuleWorkspace(pageKey){
   const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
   info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
   const grid=mqeipCreateElement("div","mqeip-workspace-grid");
-  module.capabilities.forEach(capability=>{const card=mqeipCreateElement("div","mqeip-workspace-card");card.append(mqeipCreateElement("div","mqeip-workspace-card-title",capability),mqeipCreateElement("div","mqeip-workspace-card-value","鈥�"),mqeipCreateElement("div","mqeip-workspace-card-note","Live module data not connected."));grid.appendChild(card)});container.appendChild(grid);
+  module.capabilities.forEach(capability=>{const card=mqeipCreateElement("div","mqeip-workspace-card");card.append(mqeipCreateElement("div","mqeip-workspace-card-title",capability),mqeipCreateElement("div","mqeip-workspace-card-value",DASH),mqeipCreateElement("div","mqeip-workspace-card-note","Live module data not connected."));grid.appendChild(card)});container.appendChild(grid);
   const status=mqeipCreateElement("div","mqeip-workspace-status","This module workspace is available for navigation. Its dedicated ERP API integration is not yet configured. No operational figures are simulated.");container.appendChild(status);
   const actions=mqeipCreateElement("div","mqeip-workspace-actions"),back=mqeipCreateElement("button","btn btn-outline","Return to Executive Command");back.type="button";back.addEventListener("click",()=>mqeipNavigate("executive"));actions.appendChild(back);
   if(pageKey==="quantum"){const load=mqeipCreateElement("button","btn btn-gold","Load Command Intelligence");load.type="button";load.addEventListener("click",mqeipLoadQuantumWorkspace);actions.appendChild(load)}container.appendChild(actions);
   const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
 }
 const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
+function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
 function mqeipFleetMessage(message,isError=false){const el=mqeipElement("mqeipFleetMessage");if(el){el.textContent=message;el.style.color=isError?"var(--red)":"var(--muted)"}}
 function mqeipRenderFleetWorkspace(container){
-  container.replaceChildren();const heading=mqeipFleetNode("h3","鈿� Fleet Management 鈥� Live Vessel Registry"),note=mqeipFleetNode("p","Authenticated fleet records from MQEIP Backend.");note.style.color="var(--muted)";
-  const actions=mqeipFleetNode("div","","mqeip-workspace-actions"),reload=mqeipFleetNode("button","鈫� Refresh Fleet","btn btn-outline");reload.type="button";reload.addEventListener("click",mqeipLoadFleet);
+  container.replaceChildren();
+  const heading=mqeipFleetNode("h3","\u2693 Fleet Management "+DASH+" Live Vessel Registry"),note=mqeipFleetNode("p","Authenticated fleet records from MQEIP Backend.");note.style.color="var(--muted)";
+  const actions=mqeipFleetNode("div","","mqeip-workspace-actions"),reload=mqeipFleetNode("button","\u21BB Refresh Fleet","btn btn-outline");reload.type="button";reload.addEventListener("click",mqeipLoadFleet);
   const add=mqeipFleetNode("button","+ Add Vessel","btn btn-gold");add.type="button";add.addEventListener("click",()=>mqeipElement("mqeipFleetForm")?.classList.toggle("hidden"));actions.append(reload,add);
   const form=document.createElement("form");form.id="mqeipFleetForm";form.className="panel hidden";form.style.margin="16px 0";
   const title=mqeipFleetNode("h3","Register Vessel"),nameLabel=mqeipFleetNode("label","Vessel Name (required)","mqeip-form-label"),name=document.createElement("input");name.name="vessel_name";name.required=true;name.maxLength=160;name.className="mqeip-form-input";
@@ -368,18 +404,17 @@ function mqeipRenderFleetWorkspace(container){
   const submit=mqeipFleetNode("button","Save Vessel","btn btn-gold");submit.type="submit";submit.style.marginTop="14px";form.append(title,nameLabel,name,typeLabel,type,submit);
   form.addEventListener("submit",async event=>{event.preventDefault();if(!mqeipAccessToken){mqeipOpenLogin();return}submit.disabled=true;try{const payload={vessel_name:name.value.trim()};if(type.value.trim())payload.vessel_type=type.value.trim();await mqeipApiRequest(MQEIP_FLEET_ENDPOINT,{method:"POST",body:JSON.stringify(payload)});form.reset();form.classList.add("hidden");await mqeipLoadFleet();mqeipFleetMessage("Vessel saved successfully.")}catch(error){mqeipFleetMessage("Save failed: "+error.message,true)}finally{submit.disabled=false}});
   const message=mqeipFleetNode("p","","mqeip-message");message.id="mqeipFleetMessage";message.setAttribute("role","status");
-  const wrap=mqeipFleetNode("div","","table-wrap"),table=mqeipFleetNode("table","","data-table"),thead=document.createElement("thead"),tr=document.createElement("tr");["Vessel","Type","IMO / ID","Actions"].forEach(t=>tr.appendChild(mqeipFleetNode("th",t)));thead.appendChild(tr);
+  const wrap=mqeipFleetNode("div","","table-wrap"),table=mqeipFleetNode("table","","data-table"),thead=document.createElement("thead"),tr=document.createElement("tr");["Vessel","Type","IMO","Record ID","Actions"].forEach(t=>tr.appendChild(mqeipFleetNode("th",t)));thead.appendChild(tr);
   const body=document.createElement("tbody");body.id="mqeipFleetTableBody";table.append(thead,body);wrap.appendChild(table);container.append(heading,note,actions,form,message,wrap);void mqeipLoadFleet();
 }
-function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
 function mqeipFleetRecords(payload){if(Array.isArray(payload))return payload;if(payload&&typeof payload==="object")for(const key of ["vessels","fleet","items","results","data"])if(Array.isArray(payload[key]))return payload[key];throw new Error("Fleet API returned an unexpected response format.")}
 async function mqeipLoadFleet(){
   const loadId=++mqeipFleetLoadId,body=mqeipElement("mqeipFleetTableBody");if(!body||mqeipCurrentPage!=="fleet")return;body.replaceChildren();mqeipFleetMessage("Loading vessel registry...");
   if(!mqeipAccessToken){mqeipFleetMessage("Secure login is required to view Fleet.");mqeipOpenLogin();return}
   try{const records=mqeipFleetRecords(await mqeipApiRequest(MQEIP_FLEET_ENDPOINT));if(loadId!==mqeipFleetLoadId||mqeipCurrentPage!=="fleet"||body!==mqeipElement("mqeipFleetTableBody"))return;
-    if(!records.length){const row=document.createElement("tr"),cell=mqeipFleetNode("td","No vessels registered for this account.");cell.colSpan=4;row.appendChild(cell);body.appendChild(row)}
-    for(const vessel of records){const row=document.createElement("tr"),name=vessel.vessel_name??vessel.name??"鈥�",type=vessel.vessel_type??vessel.type??"鈥�",id=vessel.id??vessel.vessel_id??null,imo=vessel.imo_number??vessel.imo??id??"鈥�";
-      [name,type,imo].forEach(val=>row.appendChild(mqeipFleetNode("td",String(val))));const action=document.createElement("td");
+    if(!records.length){const row=document.createElement("tr"),cell=mqeipFleetNode("td","No vessels registered for this account.");cell.colSpan=5;row.appendChild(cell);body.appendChild(row)}
+    for(const vessel of records){const row=document.createElement("tr"),name=vessel.vessel_name??vessel.name??DASH,type=vessel.vessel_type??vessel.type??DASH,id=vessel.id??vessel.vessel_id??null,imo=vessel.imo_number??vessel.imo??DASH;
+      [name,type,imo,id??DASH].forEach(val=>row.appendChild(mqeipFleetNode("td",String(val))));const action=document.createElement("td");
       if(id!==null&&id!==undefined){const remove=mqeipFleetNode("button","Delete","btn btn-outline");remove.type="button";remove.addEventListener("click",async()=>{if(!confirm("Delete vessel "+String(name)+"? This cannot be undone."))return;remove.disabled=true;try{await mqeipApiRequest(MQEIP_FLEET_ENDPOINT+"/"+encodeURIComponent(String(id)),{method:"DELETE"});await mqeipLoadFleet();mqeipFleetMessage("Vessel deleted.")}catch(error){mqeipFleetMessage("Delete failed: "+error.message,true);remove.disabled=false}});action.appendChild(remove)}else action.textContent="No record ID";
       row.appendChild(action);body.appendChild(row)}mqeipFleetMessage(records.length+" vessel(s) loaded from backend.")
   }catch(error){if(loadId===mqeipFleetLoadId&&mqeipCurrentPage==="fleet")mqeipFleetMessage("Unable to load Fleet: "+error.message,true)}
@@ -404,7 +439,7 @@ function mqeipToggleSidebar(){const sidebar=mqeipElement("sidebar"),toggle=mqeip
 function mqeipUpdateSessionControls(){
   const authenticated=Boolean(mqeipAccessToken),login=mqeipElement("mqeipTopbarLogin"),logout=mqeipElement("mqeipTopbarLogout");
   if(login)login.classList.toggle("hidden",authenticated);if(logout)logout.classList.toggle("hidden",!authenticated);
-  const avatar=document.querySelector(".user-avatar");if(avatar){avatar.textContent=authenticated?"鉁�":"U";avatar.setAttribute("aria-label",authenticated?"Authenticated user":"Unauthenticated user")}
+  const avatar=document.querySelector(".user-avatar");if(avatar){avatar.textContent=authenticated?"\u2726":"U";avatar.setAttribute("aria-label",authenticated?"Authenticated user":"Unauthenticated user")}
   const connect=mqeipElement("connectButton");if(connect){connect.textContent=authenticated?"API Connected":"Connect Secure API";connect.disabled=authenticated}
 }
 function mqeipCreateSessionControls(){
@@ -430,37 +465,15 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 </script>
 
-<!-- MQEIP AIS LIVE TRACKING: uses existing in-memory JWT and authenticated API helper. -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoqHNHhA+0J3Q=" crossorigin="">
-<style>
-#aisLiveButton{position:fixed;right:20px;bottom:20px;z-index:850;background:linear-gradient(135deg,#d6af62,#f0d99c);color:#152033;border:0;border-radius:30px;padding:13px 19px;font-weight:800;box-shadow:0 8px 30px #0008}
-#aisLiveModal{position:fixed;inset:0;z-index:1200;background:rgba(3,9,18,.92);padding:14px;display:flex;align-items:center;justify-content:center}
-#aisLiveModal.hidden{display:none!important}
-#aisLivePanel{width:min(1200px,100%);height:min(90vh,850px);min-height:350px;background:#101f34;border:1px solid rgba(216,180,106,.5);border-radius:15px;display:flex;flex-direction:column;overflow:hidden}
-#aisLiveHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;color:#f0d69a;font-weight:800}
-#aisLiveHeader button{background:#203751;color:#edf3fa;border:1px solid #53657a;border-radius:8px;padding:8px 12px}
-#aisLiveStatus{padding:8px 16px;font-size:12px;color:#d9e4f1;min-height:32px}
-#aisLiveMap{display:block;position:relative;flex:1 1 auto;width:100%;height:100%;min-height:0;background:#07111f;overflow:hidden}
-#aisLivePanel{min-width:0}
-#aisLiveMap .leaflet-container{width:100%;height:100%}
-@media(max-width:600px){#aisLivePanel{height:90dvh}#aisLiveHeader{padding:10px}#aisLiveStatus{padding:8px 10px}}
-</style>
-<button id="aisLiveButton" type="button">鈿� AIS LIVE TRACKING</button>
-<div id="aisLiveModal" class="hidden" role="dialog" aria-modal="true" aria-label="AIS Live Tracking">
-  <div id="aisLivePanel">
-    <div id="aisLiveHeader"><span>鈿� MQEIP 鈥� AIS LIVE TRACKING 路 INDONESIA</span><div><button id="aisLiveRefresh" type="button">鈫� Refresh</button> <button id="aisLiveClose" type="button">鉁� Close</button></div></div>
-    <div id="aisLiveStatus" role="status" aria-live="polite">Menunggu koneksi AIS...</div>
-    <div id="aisLiveMap" aria-label="Peta posisi kapal AIS Indonesia"></div>
-  </div>
-</div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 "use strict";
+/* AIS LIVE TRACKING: memakai token JWT di memori dan helper mqeipApiRequest. */
 (() => {
   let map = null, vesselLayer = null, refreshTimer = null, busy = false, resizeObserver = null;
   const el = id => document.getElementById(id);
   const status = message => { const target=el("aisLiveStatus"); if(target) target.textContent=message; };
   const bounds = () => L.latLngBounds([[-12,94],[7,142]]);
+  const isOpen = () => !el("aisLiveModal").classList.contains("hidden");
   const extractRecords = result => {
     if(Array.isArray(result)) return result;
     for(const value of [result?.items,result?.positions,result?.vessels,result?.data,result?.results,result?.data?.items,result?.data?.positions]) {
@@ -468,40 +481,43 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
     throw new Error("Format respons AIS tidak dikenali. Periksa struktur JSON endpoint AIS.");
   };
-  const resizeMap = () => { if(map && !el("aisLiveModal").classList.contains("hidden")) map.invalidateSize({pan:false}); };
+  const resizeMap = () => { if(map && isOpen()) { map.invalidateSize({pan:false,animate:false}); } };
 
   async function loadVessels() {
-    if(busy || el("aisLiveModal").classList.contains("hidden")) return;
+    if(busy || !isOpen()) return;
     if(!mqeipAccessToken){status("Silakan login ke MQEIP terlebih dahulu. Posisi AIS memerlukan akses backend.");return;}
     if(!map){status("Peta belum siap.");return;}
     busy=true;
     status("Mengambil data posisi AIS dari MQEIP Backend...");
     try {
       const result=await mqeipApiRequest("/api/v1/ais/positions?limit=1000",{timeoutMs:45000});
-      if(el("aisLiveModal").classList.contains("hidden")) return;
+      if(!isOpen()||!mqeipAccessToken) return;
       const records=extractRecords(result);
       vesselLayer.clearLayers();
       let visible=0;
+      const area=bounds();
       for(const v of records){
         const lat=Number(v.latitude ?? v.lat ?? v.position?.latitude ?? v.position?.lat);
         const lon=Number(v.longitude ?? v.lon ?? v.lng ?? v.position?.longitude ?? v.position?.lon);
-        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!bounds().contains([lat,lon]))continue;
+        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!area.contains([lat,lon]))continue;
         const marker=L.circleMarker([lat,lon],{radius:6,color:"#d8b46a",weight:2,fillColor:"#48c7df",fillOpacity:.9});
         const popup=document.createElement("div");
         const title=document.createElement("strong");title.textContent=String(v.vessel_name ?? v.name ?? v.ship_name ?? "Unknown Vessel");popup.appendChild(title);
-        for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo ?? v.imo_number],["Speed",v.sog == null ? null : v.sog+" kn"],["Course",v.cog == null ? null : v.cog+"掳"],["Updated",v.timestamp ?? v.last_updated ?? v.updated_at]]){
+        for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo ?? v.imo_number],["Speed",v.sog == null ? null : v.sog+" kn"],["Course",v.cog == null ? null : v.cog+"\u00B0"],["Updated",v.timestamp ?? v.last_updated ?? v.updated_at]]){
           if(value==null)continue;
           const line=document.createElement("div");line.textContent=label+": "+String(value);popup.appendChild(line);
         }
         marker.bindPopup(popup).addTo(vesselLayer);visible++;
       }
-      status(visible+" kapal ditampilkan di Indonesia 路 "+records.length+" posisi diterima 路 "+new Date().toLocaleTimeString("id-ID")+(records.length===0?" 路 Sumber AIS belum mengirim posisi.":""));
+      status(visible+" kapal ditampilkan di Indonesia \u00B7 "+records.length+" posisi diterima \u00B7 "+new Date().toLocaleTimeString("id-ID")+(records.length===0?" \u00B7 Sumber AIS belum mengirim posisi.":(visible===0?" \u00B7 Semua posisi berada di luar area Indonesia.":"")));
       resizeMap();
     }catch(error){
       const message=error?.message||"Kesalahan koneksi";
-      status("AIS belum tersedia: "+message+(message.includes("404")?" 路 Endpoint /api/v1/ais/positions belum terpasang pada backend.":""));
+      status("AIS belum tersedia: "+message+(message.includes("404")?" \u00B7 Endpoint /api/v1/ais/positions belum terpasang pada backend.":""));
     }finally{busy=false;}
   }
+
+  function stopTimer(){ if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;} }
 
   function openAIS(){
     el("aisLiveModal").classList.remove("hidden");
@@ -515,18 +531,26 @@ document.addEventListener("DOMContentLoaded",()=>{
         resizeObserver.observe(el("aisLiveMap"));
       }
     }
-    requestAnimationFrame(()=>{resizeMap();requestAnimationFrame(resizeMap);});
-    setTimeout(resizeMap,250);setTimeout(resizeMap,700);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{resizeMap();map.setView([-2,118],5,{animate:false});}));
+    setTimeout(resizeMap,250);setTimeout(resizeMap,700);setTimeout(resizeMap,1500);
     void loadVessels();
-    if(refreshTimer)clearInterval(refreshTimer);
+    stopTimer();
     refreshTimer=setInterval(()=>void loadVessels(),60000);
   }
-  function closeAIS(){el("aisLiveModal").classList.add("hidden");if(refreshTimer)clearInterval(refreshTimer);refreshTimer=null;}
+  function closeAIS(){el("aisLiveModal").classList.add("hidden");stopTimer();}
+
+  /* Dipanggil mqeipLogout(): hentikan refresh dan kosongkan peta. */
+  window.mqeipAisReset = () => {
+    stopTimer();
+    if(vesselLayer) vesselLayer.clearLayers();
+    status("Sesi berakhir. Silakan login ke MQEIP untuk melihat posisi AIS.");
+  };
+
   el("aisLiveButton")?.addEventListener("click",openAIS);
   el("aisLiveRefresh")?.addEventListener("click",()=>{resizeMap();void loadVessels();});
   el("aisLiveClose")?.addEventListener("click",closeAIS);
   window.addEventListener("resize",resizeMap);
-  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!el("aisLiveModal").classList.contains("hidden"))closeAIS();});
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&isOpen())closeAIS();});
 })();
 </script>
 </body>
