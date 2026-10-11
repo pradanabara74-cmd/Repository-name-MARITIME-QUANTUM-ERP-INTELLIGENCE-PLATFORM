@@ -72,6 +72,7 @@ app = FastAPI(
 import asyncio
 from contextlib import asynccontextmanager
 from .modules.aisstream_connector import stream_ais
+from .modules.aisstream_connector import router as ais_router
 
 @asynccontextmanager
 async def ais_lifespan(app):
@@ -122,6 +123,7 @@ app.include_router(notifications_router)
 app.include_router(esg_router)
 app.include_router(bi_router)
 app.include_router(ai_router)
+app.include_router(ais_router)
 app.include_router(quantum_router)
 app.include_router(digital_twin.router)
 app.include_router(mqx_gateway.router)
