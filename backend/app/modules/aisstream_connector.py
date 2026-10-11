@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
+import random
 
 import websockets
 
@@ -100,6 +101,7 @@ async def send_to_mqeip(position):
 
 
 async def stream_ais():
+    retry_delay = 30
     while True:
         try:
             async with websockets.connect(
@@ -113,6 +115,7 @@ async def stream_ais():
                 )
 
                 logger.info("AIS Stream subscription sent")
+                retry_delay = 30
 
                 async for raw_message in websocket:
                     message = json.loads(raw_message)
@@ -134,7 +137,8 @@ async def stream_ais():
             raise
         except Exception:
             logger.exception("AIS Stream connection failed")
-            await asyncio.sleep(300)
+            await asyncio.sleep(retry_delay + random.uniform(0, 10))
+            retry_delay = min(retry_delay * 2, 900)
 
 
 if __name__ == "__main__":
