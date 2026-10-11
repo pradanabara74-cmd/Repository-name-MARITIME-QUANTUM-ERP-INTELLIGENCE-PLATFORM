@@ -1,146 +1,421 @@
+"""
+AISStream Connector — MQEIP
+
+Features:
+- Non-blocking asynchronous WebSocket connection
+- Automatic reconnect with exponential backoff and jitter
+- HTTP 429 rate-limit handling
+- Configurable geographic bounding box and MMSI filters
+- In-memory vessel position cache
+- JWT-protected monitoring endpoints
+
+Environment:
+    AISSTREAM_API_KEY
+    AISSTREAM_BBOX (optional): lat1,lon1,lat2,lon2
+    AISSTREAM_MMSI (optional): comma-separated MMSI values
+"""
+
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timezone
 import random
+import time
 
-import websockets
+from datetime import datetime, timezone
+from typing import Any
 
-logger = logging.getLogger(__name__)
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-AISSTREAM_URL = "wss://stream.aisstream.io/v0/stream"
-
-# Configure these in Render Environment.
-AISSTREAM_API_KEY = os.getenv("AISSTREAM_API_KEY", "")
-MQEIP_AIS_INGEST_URL = os.getenv(
-    "MQEIP_AIS_INGEST_URL",
-    "http://127.0.0.1:8000/api/v1/marine-operations/ais/positions",
-)
-MQEIP_ACCESS_TOKEN = os.getenv("MQEIP_ACCESS_TOKEN", "")
-
-# Geographic coverage: Singapore, Batam and surrounding waters.
-BOUNDING_BOXES = [
-    [[0.5, 103.0], [2.0, 105.0]]
-]
+from ..core.security import TokenIdentity, verify_access_token
 
 
-def build_subscription():
-    if not AISSTREAM_API_KEY:
-        raise RuntimeError("AISSTREAM_API_KEY is missing")
+logger = logging.getLogger("mqeip.ais")
 
-    return {
-        "APIKey": AISSTREAM_API_KEY,
-        "BoundingBoxes": BOUNDING_BOXES,
+AIS_URL = "wss://stream.aisstream.io/v0/stream"
+
+# Default geographic coverage: Batam and Singapore waters.
+DEFAULT_BBOX = [[0.5, 103.0], [2.0, 105.0]]
+
+MAX_VESSELS = 5000
+STALE_SECONDS = 6 * 3600
+IDLE_TIMEOUT = 120
+
+INITIAL_BACKOFF = 30
+MAX_BACKOFF = 900
+RATE_LIMIT_BACKOFF = 300
+
+
+# ============================================================
+# RUNTIME STATE
+# ============================================================
+
+_positions: dict[int, dict[str, Any]] = {}
+
+_status: dict[str, Any] = {
+    "enabled": False,
+    "connected": False,
+    "messages_received": 0,
+    "last_message_at": None,
+    "last_error": None,
+    "reconnects": 0,
+}
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+# ============================================================
+# GEOGRAPHIC FILTER
+# ============================================================
+
+def _parse_bbox() -> list[list[list[float]]]:
+    raw = os.getenv("AISSTREAM_BBOX", "").strip()
+
+    if raw:
+        try:
+            values = [float(x.strip()) for x in raw.split(",")]
+
+            if len(values) != 4:
+                raise ValueError("Expected four coordinates")
+
+            lat1, lon1, lat2, lon2 = values
+
+            if not (
+                -90 <= lat1 <= 90
+                and -90 <= lat2 <= 90
+                and -180 <= lon1 <= 180
+                and -180 <= lon2 <= 180
+                and lat1 < lat2
+                and lon1 < lon2
+            ):
+                raise ValueError("Invalid bounding box")
+
+            return [[[lat1, lon1], [lat2, lon2]]]
+
+        except ValueError:
+            logger.warning(
+                "Invalid AISSTREAM_BBOX; using default."
+            )
+
+    return [DEFAULT_BBOX]
+
+
+# ============================================================
+# SUBSCRIPTION
+# ============================================================
+
+def _subscription(api_key: str) -> dict[str, Any]:
+
+    subscription: dict[str, Any] = {
+        "APIKey": api_key,
+        "BoundingBoxes": _parse_bbox(),
         "FilterMessageTypes": ["PositionReport"],
     }
 
+    raw_mmsi = os.getenv("AISSTREAM_MMSI", "")
 
-def parse_position(message):
-    if message.get("MessageType") != "PositionReport":
-        return None
+    mmsi = [
+        value.strip()
+        for value in raw_mmsi.split(",")
+        if value.strip().isdigit()
+    ]
 
-    metadata = message.get("MetaData") or {}
-    report = (message.get("Message") or {}).get("PositionReport") or {}
+    if mmsi:
+        subscription["FiltersShipMMSI"] = mmsi[:50]
+
+    return subscription
+
+
+# ============================================================
+# POSITION STORAGE
+# ============================================================
+
+def _store(msg: dict[str, Any]) -> None:
+
+    metadata = msg.get("MetaData") or {}
+
+    report = (
+        (msg.get("Message") or {}).get("PositionReport")
+        or {}
+    )
 
     mmsi = metadata.get("MMSI") or report.get("UserID")
-    latitude = report.get("Latitude")
-    longitude = report.get("Longitude")
 
-    if not mmsi or latitude is None or longitude is None:
-        return None
+    if not mmsi:
+        return
 
-    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-        return None
+    latitude = metadata.get(
+        "latitude",
+        report.get("Latitude")
+    )
 
-    observed_at = metadata.get("time_utc")
-    if not observed_at:
-        return None
+    longitude = metadata.get(
+        "longitude",
+        report.get("Longitude")
+    )
 
-    observed_at = observed_at.replace("Z", "+00:00")
+    if latitude is None or longitude is None:
+        return
 
     try:
-        timestamp = datetime.fromisoformat(observed_at)
-    except ValueError:
-        return None
+        mmsi = int(mmsi)
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except (TypeError, ValueError):
+        return
 
-    if timestamp.tzinfo is None:
-        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    if not (-90 <= latitude <= 90):
+        return
 
-    return {
-        "vessel_name": metadata.get("ShipName") or f"MMSI-{mmsi}",
-        "mmsi": str(mmsi),
+    if not (-180 <= longitude <= 180):
+        return
+
+    _positions[mmsi] = {
+        "mmsi": mmsi,
+        "name": (
+            (metadata.get("ShipName") or "").strip()
+            or None
+        ),
         "latitude": latitude,
         "longitude": longitude,
-        "sog_knots": report.get("Sog"),
-        "cog_degrees": report.get("Cog"),
-        "heading_degrees": report.get("TrueHeading"),
-        "source": "AISSTREAM",
-        "source_type": "AIS",
-        "observed_at": timestamp.isoformat(),
+        "sog": report.get("Sog"),
+        "cog": report.get("Cog"),
+        "heading": report.get("TrueHeading"),
+        "nav_status": report.get("NavigationalStatus"),
+        "time_utc": metadata.get("time_utc"),
+        "received_at": time.time(),
     }
 
+    # Remove stale positions and enforce memory limit.
+    if len(_positions) > MAX_VESSELS:
 
-async def send_to_mqeip(position):
-    import httpx
+        cutoff = time.time() - STALE_SECONDS
 
-    if not MQEIP_ACCESS_TOKEN:
-        raise RuntimeError("MQEIP_ACCESS_TOKEN is missing")
+        stale_keys = [
+            key
+            for key, value in _positions.items()
+            if value["received_at"] < cutoff
+        ]
 
-    headers = {
-        "Authorization": f"Bearer {MQEIP_ACCESS_TOKEN}"
-    }
+        for key in stale_keys:
+            _positions.pop(key, None)
 
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(
-            MQEIP_AIS_INGEST_URL,
-            json=position,
-            headers=headers,
+        while len(_positions) > MAX_VESSELS:
+
+            oldest = min(
+                _positions,
+                key=lambda key: _positions[key]["received_at"]
+            )
+
+            _positions.pop(oldest, None)
+
+
+# ============================================================
+# AISSTREAM SESSION
+# ============================================================
+
+async def _session(api_key: str) -> None:
+
+    import websockets
+
+    async with websockets.connect(
+        AIS_URL,
+        ping_interval=20,
+        ping_timeout=20,
+        close_timeout=5,
+        max_queue=64,
+    ) as websocket:
+
+        # Send subscription immediately after connection.
+        await websocket.send(
+            json.dumps(_subscription(api_key))
         )
-        response.raise_for_status()
 
+        _status["connected"] = True
+        _status["last_error"] = None
 
-async def stream_ais():
-    retry_delay = 30
-    while True:
-        try:
-            async with websockets.connect(
-                AISSTREAM_URL,
-                ping_interval=20,
-                ping_timeout=20,
-            ) as websocket:
+        logger.info("AIS Stream subscription sent")
 
-                await websocket.send(
-                    json.dumps(build_subscription())
+        while True:
+
+            raw = await asyncio.wait_for(
+                websocket.recv(),
+                timeout=IDLE_TIMEOUT
+            )
+
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8")
+
+            try:
+                message = json.loads(raw)
+            except (ValueError, TypeError):
+                continue
+
+            if not isinstance(message, dict):
+                continue
+
+            if "error" in message:
+                raise RuntimeError(
+                    f"AISStream error: {message['error']}"
                 )
 
-                logger.info("AIS Stream subscription sent")
-                retry_delay = 30
+            if message.get("MessageType") != "PositionReport":
+                continue
 
-                async for raw_message in websocket:
-                    message = json.loads(raw_message)
-                    position = parse_position(message)
+            _store(message)
 
-                    if position:
-                        try:
-                            await send_to_mqeip(position)
-                            logger.info(
-                                "AIS position stored: %s",
-                                position["mmsi"],
-                            )
-                        except Exception:
-                            logger.exception(
-                                "Failed to ingest AIS position"
-                            )
+            _status["messages_received"] += 1
+            _status["last_message_at"] = _now_iso()
+
+            await asyncio.sleep(0)
+
+
+# ============================================================
+# RECONNECT MANAGER
+# ============================================================
+
+async def stream_ais() -> None:
+
+    api_key = os.getenv(
+        "AISSTREAM_API_KEY",
+        ""
+    ).strip()
+
+    if not api_key:
+        logger.info(
+            "AISSTREAM_API_KEY missing; AIS disabled."
+        )
+        return
+
+    try:
+        import websockets  # noqa: F401
+
+    except ImportError:
+
+        _status["last_error"] = (
+            "Python package 'websockets' is not installed"
+        )
+
+        logger.error(_status["last_error"])
+        return
+
+    _status["enabled"] = True
+
+    backoff = INITIAL_BACKOFF
+
+    while True:
+
+        previous_messages = _status["messages_received"]
+
+        retry_after = None
+
+        try:
+            await _session(api_key)
 
         except asyncio.CancelledError:
+            _status["connected"] = False
             raise
-        except Exception:
-            logger.exception("AIS Stream connection failed")
-            await asyncio.sleep(retry_delay + random.uniform(0, 10))
-            retry_delay = min(retry_delay * 2, 900)
+
+        except Exception as exc:
+
+            error_text = f"{type(exc).__name__}: {exc}"
+
+            _status["last_error"] = error_text[:300]
+
+            logger.warning(
+                "AIS connection failed: %s",
+                _status["last_error"]
+            )
+
+            # Respect upstream rate limiting.
+            if (
+                "429" in error_text
+                or "rate limit" in error_text.lower()
+            ):
+                retry_after = RATE_LIMIT_BACKOFF
+
+        finally:
+            _status["connected"] = False
+
+        _status["reconnects"] += 1
+
+        if _status["messages_received"] > previous_messages:
+            backoff = INITIAL_BACKOFF
+        else:
+            backoff = min(
+                backoff * 2,
+                MAX_BACKOFF
+            )
+
+        delay = max(
+            backoff,
+            retry_after or 0
+        )
+
+        delay += random.uniform(0, 15)
+
+        logger.info(
+            "AIS reconnect scheduled in %.1f seconds",
+            delay
+        )
+
+        await asyncio.sleep(delay)
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    asyncio.run(stream_ais())
+# ============================================================
+# AIS API ROUTER
+# ============================================================
+
+router = APIRouter(
+    prefix="/api/v1/ais",
+    tags=["AIS Intelligence"]
+)
+
+
+@router.get("/status")
+async def ais_status(
+    identity: TokenIdentity = Depends(verify_access_token)
+):
+    return {
+        **_status,
+        "vessels_tracked": len(_positions),
+    }
+
+
+@router.get("/positions")
+async def ais_positions(
+    limit: int = Query(200, ge=1, le=1000),
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+
+    items = sorted(
+        _positions.values(),
+        key=lambda value: value["received_at"],
+        reverse=True
+    )
+
+    return {
+        "count": len(items),
+        "items": items[:limit],
+    }
+
+
+@router.get("/positions/{mmsi}")
+async def ais_position(
+    mmsi: int,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+
+    item = _positions.get(mmsi)
+
+    if not item:
+        raise HTTPException(
+            status_code=404,
+            detail="MMSI belum terpantau."
+        )
+
+    return item
