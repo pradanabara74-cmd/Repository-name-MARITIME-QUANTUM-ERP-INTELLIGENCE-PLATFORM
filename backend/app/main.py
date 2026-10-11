@@ -77,6 +77,7 @@ from .modules.aisstream_connector import router as ais_router
 @asynccontextmanager
 async def ais_lifespan(app):
     task = None
+    print("MQEIP AIS LIFESPAN STARTED", flush=True)
     if os.getenv("AISSTREAM_API_KEY"):
         task = asyncio.create_task(stream_ais())
     try:
