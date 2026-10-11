@@ -134,7 +134,7 @@ async def stream_ais():
             raise
         except Exception:
             logger.exception("AIS Stream connection failed")
-            await asyncio.sleep(10)
+            await asyncio.sleep(300)
 
 
 if __name__ == "__main__":
