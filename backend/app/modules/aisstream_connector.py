@@ -1,15 +1,4 @@
-"""
-MQEIP AIS INTELLIGENCE
-Production-oriented AISStream connector.
-
-Features:
-- Non-blocking asyncio WebSocket
-- Automatic reconnect with HTTP 429 backoff
-- Indonesia bounding box and MMSI filtering
-- Bounded in-memory vessel positions
-- Secure JWT-protected AIS endpoints
-- Real-time connection diagnostics
-"""
+"""" MQEIP AIS INTELLIGENCE Production-oriented AISStream connector. Features: - Non-blocking asyncio WebSocket - Automatic reconnect with HTTP 429 backoff - Indonesia bounding box and MMSI filtering - Bounded in-memory vessel positions - Secure JWT-protected AIS endpoints - Real-time connection diagnostics """
 
 from __future__ import annotations
 
@@ -34,7 +23,9 @@ DEFAULT_BBOX = [[-12.0, 94.0], [8.0, 142.0]]
 MAX_VESSELS = 5000
 STALE_SECONDS = 6 * 3600
 IDLE_TIMEOUT = 180
-MAX_BACKOFF = 300
+MAX_BACKOFF = 900
+RATE_LIMIT_COOLDOWN = 900
+_stream_running = False
 
 _positions: dict[int, dict[str, Any]] = {}
 
@@ -257,11 +248,13 @@ async def _session(api_key: str) -> None:
 
 
 async def stream_ais() -> None:
-    """
-    Start through the existing FastAPI lifespan.
-    Do not create a second FastAPI application.
-    """
+    """ Start through the existing FastAPI lifespan. Do not create a second FastAPI application. """
 
+    global _stream_running
+    if _stream_running:
+        logger.warning("AIS task already running; skipping duplicate")
+        return
+    _stream_running = True
     _status["task_started"] = True
     _status["connected"] = False
 
@@ -281,6 +274,7 @@ async def stream_ais() -> None:
             "AISSTREAM_ENABLED is disabled"
         )
         _status["task_started"] = False
+        _stream_running = False
         return
 
     if not api_key:
@@ -289,6 +283,7 @@ async def stream_ais() -> None:
             "AISSTREAM_API_KEY is missing"
         )
         _status["task_started"] = False
+        _stream_running = False
         return
 
     try:
@@ -299,6 +294,7 @@ async def stream_ais() -> None:
             "Python package websockets is missing"
         )
         _status["task_started"] = False
+        _stream_running = False
         return
 
     _status["enabled"] = True
@@ -336,7 +332,7 @@ async def stream_ais() -> None:
                     or "rate limit" in error.lower()
                     or "too many requests" in error.lower()
                 ):
-                    backoff = max(backoff, 120)
+                    backoff = max(backoff, RATE_LIMIT_COOLDOWN)
 
             finally:
                 _status["connected"] = False
@@ -374,6 +370,7 @@ async def stream_ais() -> None:
         _status["connected"] = False
         _status["enabled"] = False
         _status["task_started"] = False
+        _stream_running = False
 
 
 router = APIRouter(
@@ -383,26 +380,13 @@ router = APIRouter(
 
 
 @router.get("/status")
-async def ais_status(
-    identity: TokenIdentity = Depends(
-        verify_access_token
-    ),
-):
+async def ais_status( identity: TokenIdentity = Depends( verify_access_token ), ):
     _cleanup_positions()
     return dict(_status)
 
 
 @router.get("/positions")
-async def ais_positions(
-    limit: int = Query(
-        default=200,
-        ge=1,
-        le=1000,
-    ),
-    identity: TokenIdentity = Depends(
-        verify_access_token
-    ),
-):
+async def ais_positions( limit: int = Query( default=200, ge=1, le=1000, ), identity: TokenIdentity = Depends( verify_access_token ), ):
     _cleanup_positions()
 
     items = sorted(
@@ -418,12 +402,7 @@ async def ais_positions(
 
 
 @router.get("/positions/{mmsi}")
-async def ais_position(
-    mmsi: int,
-    identity: TokenIdentity = Depends(
-        verify_access_token
-    ),
-):
+async def ais_position( mmsi: int, identity: TokenIdentity = Depends( verify_access_token ), ):
     _cleanup_positions()
 
     vessel = _positions.get(mmsi)
