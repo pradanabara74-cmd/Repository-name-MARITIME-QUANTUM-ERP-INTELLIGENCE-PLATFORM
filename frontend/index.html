@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#07111f">
-<title>MQEIP | Maritime Quantum ERP &amp; Intelligence Platform</title>
+<title>MQEIP | Maritime Quantum ERP & Intelligence Platform - AIS Live</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoqHNHhA+0J3Q=" crossorigin="">
 <style>
 :root {
-  --navy-950:#07111f; --navy-900:#0b1729; --navy-850:#101f34;
-  --navy-800:#14263d; --navy-700:#203751; --gold:#d8b46a;
-  --gold-light:#f0d69a; --cyan:#48c7df; --green:#4fd1a1;
-  --red:#f47782; --amber:#f3bd65; --text:#edf3fa; --muted:#95a7bd;
-  --border:rgba(185,207,230,.13); --sidebar-width:270px;
-  --topbar-height:76px; --radius:16px; --shadow:0 18px 45px rgba(0,0,0,.2);
+--navy-950:#07111f; --navy-900:#0b1729; --navy-850:#101f34;
+--navy-800:#14263d; --navy-700:#203751; --gold:#d8b46a;
+--gold-light:#f0d69a; --cyan:#48c7df; --green:#4fd1a1;
+--red:#f47782; --amber:#f3bd65; --text:#edf3fa; --muted:#95a7bd;
+--border:rgba(185,207,230,.13); --sidebar-width:270px;
+--topbar-height:76px; --radius:16px; --shadow:0 18px 45px rgba(0,0,0,.2);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -91,63 +91,190 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 .mqeip-session-button{padding:9px 13px;border:1px solid var(--border);border-radius:9px;background:var(--navy-800);color:var(--text);font-size:11px;font-weight:750}.mqeip-session-button:hover{border-color:var(--gold)}
 .mqeip-session-button.logout{border-color:rgba(244,119,130,.35);color:var(--red)}.mqeip-toast{position:fixed;right:22px;bottom:22px;z-index:1100;max-width:380px;padding:15px 18px;background:#14263d;color:var(--text);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
 .mqeip-toast.error{border-color:rgba(244,119,130,.5)}.mqeip-toast.success{border-color:rgba(79,209,161,.5)}
-@media(max-width:1200px){.dashboard-grid,.executive-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:1050px){.intelligence-grid,.intelligence-grid.equal{grid-template-columns:1fr}}
-@media(max-width:900px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}.sidebar.open{transform:translateX(0)}.menu-toggle{display:inline-flex}.page-content{padding:20px}.topbar{padding:12px 18px}}
-@media(max-width:650px){.mqeip-workspace-grid{grid-template-columns:1fr}.mqeip-workspace-header{flex-direction:column}.mqeip-toast{left:15px;right:15px;bottom:15px;max-width:none}.mqeip-session-controls{width:100%}}
-@media(max-width:550px){.dashboard-grid,.executive-kpis{grid-template-columns:1fr}.topbar-subtitle,.environment-label{display:none}.page-content{padding:15px}.panel{padding:17px}.domain-row{grid-template-columns:100px 1fr 30px;gap:8px}.command-overview{grid-template-columns:1fr 1fr}}
 
-/* AIS LIVE TRACKING */
-#aisLiveButton{position:fixed;right:20px;bottom:20px;z-index:850;background:linear-gradient(135deg,#d6af62,#f0d99c);color:#152033;border:0;border-radius:30px;padding:13px 19px;font-weight:800;box-shadow:0 8px 30px #0008}
-#aisLiveModal{position:fixed;inset:0;z-index:1200;background:rgba(3,9,18,.92);padding:14px;display:flex;align-items:center;justify-content:center}
+/* AIS LIVE TRACKING STYLES - IMPROVED */
+#aisLiveButton{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    z-index:850;
+    background:linear-gradient(135deg,#d6af62,#f0d99c);
+    color:#152033;
+    border:0;
+    border-radius:30px;
+    padding:13px 19px;
+    font-weight:800;
+    font-size:14px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.4);
+    cursor:pointer;
+    transition:all 0.3s ease;
+}
+#aisLiveButton:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 40px rgba(216,180,106,0.5);
+}
+#aisLiveModal{
+    position:fixed;
+    inset:0;
+    z-index:1200;
+    background:rgba(3,9,18,0.95);
+    padding:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backdrop-filter:blur(5px);
+}
 #aisLiveModal.hidden{display:none!important}
-#aisLivePanel{width:min(1200px,100%);height:min(90vh,850px);min-height:350px;min-width:0;background:#101f34;border:1px solid rgba(216,180,106,.5);border-radius:15px;display:flex;flex-direction:column;overflow:hidden}
-#aisLiveHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;color:#f0d69a;font-weight:800}
-#aisLiveHeader button{background:#203751;color:#edf3fa;border:1px solid #53657a;border-radius:8px;padding:8px 12px}
-#aisLiveStatus{padding:8px 16px;font-size:12px;color:#d9e4f1;min-height:32px}
-#aisLiveMap{display:block;position:relative;flex:1 1 auto;width:100%;height:100%;min-height:0;background:#07111f;overflow:hidden}
-#aisLiveMap .leaflet-container{width:100%;height:100%}
-@media(max-width:600px){#aisLivePanel{height:90dvh}#aisLiveHeader{padding:10px}#aisLiveStatus{padding:8px 10px}}
+#aisLivePanel{
+    width:min(1200px,100%);
+    height:min(90vh,850px);
+    min-height:350px;
+    min-width:0;
+    background:#101f34;
+    border:2px solid rgba(216,180,106,0.5);
+    border-radius:15px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 25px 100px rgba(0,0,0,0.6);
+}
+#aisLiveHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:16px 20px;
+    background:linear-gradient(135deg,#1a2f4a,#0f1a29);
+    color:#f0d69a;
+    font-weight:800;
+    border-bottom:1px solid rgba(216,180,106,0.3);
+}
+#aisLiveHeader button{
+    background:#203751;
+    color:#edf3fa;
+    border:1px solid #53657a;
+    border-radius:8px;
+    padding:8px 16px;
+    cursor:pointer;
+    font-weight:700;
+    transition:all 0.2s ease;
+}
+#aisLiveHeader button:hover{
+    background:#2a4a6f;
+    border-color:#d8b46a;
+}
+#aisLiveStatus{
+    padding:10px 20px;
+    font-size:13px;
+    color:#d9e4f1;
+    min-height:36px;
+    background:rgba(72,199,223,0.05);
+    border-bottom:1px solid rgba(185,207,230,0.1);
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+#aisLiveStatus::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#f3bd65;
+    animation:pulse 2s infinite;
+}
+#aisLiveStatus.connected::before{
+    background:#4fd1a1;
+}
+#aisLiveStatus.error::before{
+    background:#f47782;
+}
+@keyframes pulse{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:0.5;transform:scale(0.8)}
+}
+#aisLiveMap{
+    display:block;
+    position:relative;
+    flex:1 1 auto;
+    width:100%;
+    height:100%;
+    min-height:0;
+    background:#07111f;
+    overflow:hidden;
+    z-index:1;
+}
+#aisLiveMap.leaflet-container{width:100%;height:100%;min-height:0}
+#aisLiveMap .leaflet-pane,#aisLiveMap .leaflet-tile-container{position:absolute}
+#aisLiveMap .leaflet-tile{max-width:none!important;max-height:none!important}
+#aisLiveMap img.leaflet-tile{display:block}
+.ais-loading{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    padding:40px;
+    color:#95a7bd;
+    font-size:14px;
+}
+.ais-loading::before{
+    content:"";
+    width:24px;
+    height:24px;
+    border:3px solid rgba(216,180,106,0.3);
+    border-top-color:#d8b46a;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+@media(max-width:600px){
+    #aisLivePanel{height:90dvh}
+    #aisLiveHeader{padding:12px 15px;font-size:14px}
+    #aisLiveStatus{padding:8px 15px;font-size:12px}
+    #aisLiveButton{padding:11px 16px;font-size:13px;right:15px;bottom:15px}
+}
 </style>
 </head>
 <body>
 <div class="app-shell">
 <aside class="sidebar" id="sidebar">
-  <div class="brand"><div class="brand-mark"><div class="brand-symbol">Q</div><div><div class="brand-name">MQEIP</div><div class="brand-subtitle">MARITIME QUANTUM ERP<br>&amp; INTELLIGENCE PLATFORM</div></div></div></div>
-  <nav class="navigation" aria-label="Main navigation">
-    <div class="nav-group"><div class="nav-heading">Command Centers</div>
-      <button class="nav-link active" data-page="executive"><span class="nav-icon">&#9672;</span>Executive Command</button>
-      <button class="nav-link" data-page="quantum"><span class="nav-icon">&#10022;</span>Quantum Command</button>
-      <button class="nav-link" data-page="analytics"><span class="nav-icon">&#9635;</span>Business Intelligence</button>
-    </div>
-    <div class="nav-group"><div class="nav-heading">Maritime Operations</div>
-      <button class="nav-link" data-page="fleet"><span class="nav-icon">&#9875;</span>Fleet Management</button>
-      <button class="nav-link" data-page="marine"><span class="nav-icon">&#9678;</span>Marine Operations</button>
-      <button class="nav-link" data-page="crew"><span class="nav-icon">&#9786;</span>Crew &amp; Certificates</button>
-      <button class="nav-link" data-page="technical"><span class="nav-icon">&#9881;</span>Technical &amp; PMS</button>
-      <button class="nav-link" data-page="hsse"><span class="nav-icon">&#9937;</span>HSSE &amp; Compliance</button>
-    </div>
-    <div class="nav-group"><div class="nav-heading">Enterprise ERP</div>
-      <button class="nav-link" data-page="finance"><span class="nav-icon">&#9636;</span>Finance &amp; Accounting</button>
-      <button class="nav-link" data-page="supply"><span class="nav-icon">&#9638;</span>Supply Chain</button>
-      <button class="nav-link" data-page="inventory"><span class="nav-icon">&#9637;</span>Inventory &amp; Stores</button>
-      <button class="nav-link" data-page="commercial"><span class="nav-icon">&#9673;</span>Commercial &amp; Chartering</button>
-      <button class="nav-link" data-page="hr"><span class="nav-icon">&#9787;</span>Human Resources</button>
-    </div>
-    <div class="nav-group"><div class="nav-heading">Advanced Intelligence</div>
-      <button class="nav-link" data-page="ai"><span class="nav-icon">&#10023;</span>AI Intelligence Center</button>
-      <button class="nav-link" data-page="optimization"><span class="nav-icon">&#9004;</span>Quantum Optimization</button>
-      <button class="nav-link" data-page="twin"><span class="nav-icon">&#9677;</span>Maritime Digital Twin</button>
-      <button class="nav-link" data-page="esg"><span class="nav-icon">&#9851;</span>ESG &amp; Sustainability</button>
-    </div>
-    <div class="nav-group"><div class="nav-heading">Enterprise Control</div>
-      <button class="nav-link" data-page="documents"><span class="nav-icon">&#9639;</span>Document Management</button>
-      <button class="nav-link" data-page="workflow"><span class="nav-icon">&#8644;</span>Workflow &amp; Approvals</button>
-      <button class="nav-link" data-page="audit"><span class="nav-icon">&#10004;</span>Audit &amp; Internal Control</button>
-      <button class="nav-link" data-page="administration"><span class="nav-icon">&#9919;</span>Administration &amp; IAM</button>
-    </div>
-  </nav>
-  <div class="sidebar-footer">MQEIP ENTERPRISE EDITION<br>Secure Multi-Tenant Architecture<br><span class="text-gold">Version 1.1 &mdash; Frontend Foundation</span></div>
+<div class="brand"><div class="brand-mark"><div class="brand-symbol">Q</div><div><div class="brand-name">MQEIP</div><div class="brand-subtitle">MARITIME QUANTUM ERP<br>& INTELLIGENCE PLATFORM</div></div></div></div>
+<nav class="navigation" aria-label="Main navigation">
+<div class="nav-group"><div class="nav-heading">Command Centers</div>
+<button class="nav-link active" data-page="executive"><span class="nav-icon">&#9672;</span>Executive Command</button>
+<button class="nav-link" data-page="quantum"><span class="nav-icon">&#10022;</span>Quantum Command</button>
+<button class="nav-link" data-page="analytics"><span class="nav-icon">&#9635;</span>Business Intelligence</button>
+</div>
+<div class="nav-group"><div class="nav-heading">Maritime Operations</div>
+<button class="nav-link" data-page="fleet"><span class="nav-icon">&#9875;</span>Fleet Management</button>
+<button class="nav-link" data-page="marine"><span class="nav-icon">&#9678;</span>Marine Operations</button>
+<button class="nav-link" data-page="crew"><span class="nav-icon">&#9786;</span>Crew & Certificates</button>
+<button class="nav-link" data-page="technical"><span class="nav-icon">&#9881;</span>Technical & PMS</button>
+<button class="nav-link" data-page="hsse"><span class="nav-icon">&#9937;</span>HSSE & Compliance</button>
+</div>
+<div class="nav-group"><div class="nav-heading">Enterprise ERP</div>
+<button class="nav-link" data-page="finance"><span class="nav-icon">&#9636;</span>Finance & Accounting</button>
+<button class="nav-link" data-page="supply"><span class="nav-icon">&#9638;</span>Supply Chain</button>
+<button class="nav-link" data-page="inventory"><span class="nav-icon">&#9637;</span>Inventory & Stores</button>
+<button class="nav-link" data-page="commercial"><span class="nav-icon">&#9673;</span>Commercial & Chartering</button>
+<button class="nav-link" data-page="hr"><span class="nav-icon">&#9787;</span>Human Resources</button>
+</div>
+<div class="nav-group"><div class="nav-heading">Advanced Intelligence</div>
+<button class="nav-link" data-page="ai"><span class="nav-icon">&#10023;</span>AI Intelligence Center</button>
+<button class="nav-link" data-page="optimization"><span class="nav-icon">&#9004;</span>Quantum Optimization</button>
+<button class="nav-link" data-page="twin"><span class="nav-icon">&#9677;</span>Maritime Digital Twin</button>
+<button class="nav-link" data-page="esg"><span class="nav-icon">&#9851;</span>ESG & Sustainability</button>
+</div>
+<div class="nav-group"><div class="nav-heading">Enterprise Control</div>
+<button class="nav-link" data-page="documents"><span class="nav-icon">&#9639;</span>Document Management</button>
+<button class="nav-link" data-page="workflow"><span class="nav-icon">&#8644;</span>Workflow & Approvals</button>
+<button class="nav-link" data-page="audit"><span class="nav-icon">&#10004;</span>Audit & Internal Control</button>
+<button class="nav-link" data-page="administration"><span class="nav-icon">&#9919;</span>Administration & IAM</button>
+</div>
+</nav>
+<div class="sidebar-footer">MQEIP ENTERPRISE EDITION<br>Secure Multi-Tenant Architecture<br><span class="text-gold">Version 1.1 - Frontend Foundation</span></div>
 </aside>
 <main class="main-area">
 <header class="topbar"><div class="topbar-left"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button><div><div class="topbar-title" id="topbarTitle">Executive Command Center</div><div class="topbar-subtitle">Enterprise Maritime Intelligence Platform</div></div></div>
@@ -158,8 +285,8 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 <section id="executiveDashboard" class="executive-dashboard" aria-label="Executive Command Center">
 <div class="executive-kpis">
 <article class="kpi-card"><div class="kpi-top"><div class="metric-label">TOTAL COMMAND EVENTS</div><div class="kpi-icon">&#9635;</div></div><div class="kpi-number text-gold" id="kpiTotalEvents">&mdash;</div><div class="kpi-caption">Enterprise Operational Events</div><div class="kpi-footnote">Command Center Database</div></article>
-<article class="kpi-card critical"><div class="kpi-top"><div class="metric-label">CRITICAL EVENTS</div><div class="kpi-icon">!</div></div><div class="kpi-number text-red" id="kpiCriticalEvents">&mdash;</div><div class="kpi-caption">Active Critical Priorities</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
-<article class="kpi-card warning"><div class="kpi-top"><div class="metric-label">ACTIVE EVENTS</div><div class="kpi-icon">&#9678;</div></div><div class="kpi-number" id="kpiActiveEvents">&mdash;</div><div class="kpi-caption">Outstanding Operational Actions</div><div class="kpi-footnote">Open &amp; In Progress</div></article>
+<article class="kpi-card critical"><div class="kpi-top"><div class="metric-label">CRITICAL EVENTS</div><div class="kpi-icon">!</div></div><div class="kpi-number text-red" id="kpiCriticalEvents">&mdash;</div><div class="kpi-caption">Active Critical Priorities</div><div class="kpi-footnote">Open & In Progress</div></article>
+<article class="kpi-card warning"><div class="kpi-top"><div class="metric-label">ACTIVE EVENTS</div><div class="kpi-icon">&#9678;</div></div><div class="kpi-number" id="kpiActiveEvents">&mdash;</div><div class="kpi-caption">Outstanding Operational Actions</div><div class="kpi-footnote">Open & In Progress</div></article>
 <article class="kpi-card success"><div class="kpi-top"><div class="metric-label">RESOLVED EVENTS</div><div class="kpi-icon">&#10004;</div></div><div class="kpi-number text-green" id="kpiResolvedEvents">&mdash;</div><div class="kpi-caption">Completed Operational Resolutions</div><div class="kpi-footnote">Recorded Command Resolutions</div></article>
 </div>
 <div class="intelligence-grid">
@@ -176,12 +303,11 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 <article class="panel"><div class="panel-header"><div><h3>Executive Performance Intelligence</h3><div class="panel-subtitle">Command event resolution metrics</div></div><span class="panel-tag">PERFORMANCE</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value text-green" id="performanceResolutionRate">&mdash;</div><div class="overview-label">Resolution Rate</div></div><div class="overview-item"><div class="overview-value" id="performanceResolutionHours">&mdash;</div><div class="overview-label">Average Resolution Hours</div></div></div><div class="intelligence-footer">Calculated from recorded Command Center events. This is not a fleet-wide performance assessment until cross-module integration is completed.</div></article>
 <article class="panel"><div class="panel-header"><div><h3>Enterprise Data Status</h3><div class="panel-subtitle">Backend integration visibility</div></div><span class="panel-tag">SYSTEM</span></div><div class="command-overview"><div class="overview-item"><div class="overview-value" id="dataConnectionState">Offline</div><div class="overview-label">API Connection</div></div><div class="overview-item"><div class="overview-value" id="dataIntegrationState">Pending</div><div class="overview-label">ERP Module Integration</div></div></div><div class="intelligence-footer" id="dashboardLastUpdated">Last updated: Not yet connected</div></article>
 </div>
-<div class="data-source-label">MQEIP Enterprise Command Dashboard &mdash; Live values are displayed only after successful authentication and API retrieval. No simulated operational figures are used.</div>
+<div class="data-source-label">MQEIP Enterprise Command Dashboard - Live values are displayed only after successful authentication and API retrieval. No simulated operational figures are used.</div>
 </section>
 <section id="moduleContent" class="hidden" aria-label="Enterprise Module Workspace"><div class="panel"><div class="panel-header"><div><h3 id="modulePanelTitle">Enterprise Module</h3><div class="panel-subtitle" id="modulePanelDescription">Select a module to view its workspace.</div></div><span class="panel-tag">MQEIP</span></div><div id="modulePanelBody" class="dashboard-placeholder"><strong>Module Workspace</strong>Secure module-specific API integration will be configured in the next stages.</div></div></section>
 <div class="mqeip-security-banner"><strong>MQEIP Enterprise Security</strong><div>Authenticated API access &middot; Multi-tenant backend authorization &middot; Session-based access token &middot; Enterprise operational intelligence</div><div>Operational data is displayed only after successful API retrieval. Frontend navigation does not replace backend role-based access control.</div></div>
 </div></main></div>
-
 <div id="mqeipToast" class="mqeip-toast hidden" role="status" aria-live="polite"></div>
 <div id="mqeipLoginModal" class="mqeip-modal hidden" role="dialog" aria-modal="true" aria-labelledby="mqeipLoginTitle"><div class="mqeip-login-card">
 <div class="mqeip-login-title" id="mqeipLoginTitle">MQEIP Secure Operations Portal</div><div class="mqeip-login-description">Authenticate to access the enterprise maritime intelligence environment.</div>
@@ -190,378 +316,624 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 <div class="mqeip-login-actions"><button type="submit" class="btn btn-gold" id="mqeipLoginSubmit">Secure Login</button><button type="button" class="btn" id="mqeipLoginCancel">Cancel</button></div></form>
 <div id="mqeipLoginMessage" class="mqeip-message" role="status" aria-live="polite"></div><div class="mqeip-security-note">Credentials are sent to the configured HTTPS backend. Access tokens are retained only in browser memory for this session. Enterprise access is enforced by the backend.</div>
 </div></div>
-
 <button id="aisLiveButton" type="button">&#9875; AIS LIVE TRACKING</button>
 <div id="aisLiveModal" class="hidden" role="dialog" aria-modal="true" aria-label="AIS Live Tracking">
-  <div id="aisLivePanel">
-    <div id="aisLiveHeader"><span>&#9875; MQEIP &mdash; AIS LIVE TRACKING &middot; INDONESIA</span><div><button id="aisLiveRefresh" type="button">&#8635; Refresh</button> <button id="aisLiveClose" type="button">&#10005; Close</button></div></div>
-    <div id="aisLiveStatus" role="status" aria-live="polite">Menunggu koneksi AIS...</div>
-    <div id="aisLiveMap" aria-label="Peta posisi kapal AIS Indonesia"></div>
-  </div>
+<div id="aisLivePanel">
+<div id="aisLiveHeader"><span>&#9875; MQEIP - AIS LIVE TRACKING &middot; INDONESIA</span><div><button id="aisLiveRefresh" type="button">&#8635; Refresh</button> <button id="aisLiveClose" type="button">&#10005; Close</button></div></div>
+<div id="aisLiveStatus" role="status" aria-live="polite">Initializing AIS tracking system...</div>
+<div id="aisLiveMap" aria-label="Peta posisi kapal AIS Indonesia"></div>
 </div>
-
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 "use strict";
+/* =====================================================================
+   MQEIP - MARITIME QUANTUM ERP & INTELLIGENCE PLATFORM
+   AIS LIVE TRACKING WITH AISSTREAM INTEGRATION
+   ===================================================================== */
 
-/* Sesuaikan URL ini dengan backend yang sudah di-deploy. */
-// WAJIB disesuaikan dengan URL backend MQEIP yang benar-benar aktif dan memiliki CORS.
-const MQEIP_API_BASE = "https://mqeip-backend.onrender.com";
-const MQEIP_COMMAND_API = "/api/v1/quantum-command";
-const MQEIP_REQUEST_TIMEOUT = 30000;
-const MQEIP_LOGIN_TIMEOUT = 75000;
-const DASH = "\u2014";
-const DOT = " \u00B7 ";
-
-let mqeipAccessToken = null;
-let mqeipAuthenticatedUser = null;
-let mqeipRequestVersion = 0;
-let mqeipLoginInFlight = false;
-let mqeipToastTimeout = null;
-let mqeipCurrentPage = "executive";
-let mqeipFleetLoadId = 0;
-
-function mqeipElement(id){return document.getElementById(id)}
-function mqeipSetText(id,value){const el=mqeipElement(id);if(el)el.textContent=value===null||value===undefined?DASH:String(value)}
-function mqeipSetConnection(state,message){
-  const dot=mqeipElement("connectionDot");
-  if(dot){dot.classList.remove("connected","disconnected");dot.classList.add(state==="connected"?"connected":"disconnected")}
-  mqeipSetText("connectionText",message);
-  mqeipSetText("dataConnectionState",state==="connected"?"Online":"Offline");
-}
-function mqeipSetLoginMessage(message,type=""){const el=mqeipElement("mqeipLoginMessage");if(el){el.textContent=message;el.className="mqeip-message"+(type?" "+type:"")}}
-function mqeipShowToast(message,type=""){
-  const toast=mqeipElement("mqeipToast");if(!toast)return;
-  if(mqeipToastTimeout)clearTimeout(mqeipToastTimeout);
-  toast.textContent=String(message);toast.className="mqeip-toast"+(type==="error"||type==="success"?" "+type:"");
-  mqeipToastTimeout=setTimeout(()=>{toast.classList.add("hidden");mqeipToastTimeout=null},5000);
-}
-function mqeipOpenLogin(){const modal=mqeipElement("mqeipLoginModal");if(!modal)return;mqeipSetLoginMessage("");modal.classList.remove("hidden");mqeipElement("mqeipUsername")?.focus()}
-function mqeipCloseLogin(){mqeipElement("mqeipLoginModal")?.classList.add("hidden");const p=mqeipElement("mqeipPassword");if(p)p.value=""}
-function mqeipExtractDetail(payload){
-  if(!payload)return "";const detail=payload.detail??payload.message??payload.error;
-  if(typeof detail==="string")return detail;
-  if(Array.isArray(detail))return detail.map(item=>{if(typeof item==="string")return item;const where=Array.isArray(item.loc)?item.loc.join("."):"";return(where?where+": ":"")+(item.msg||"")}).join("; ");
-  return "";
-}
-async function mqeipApiRequest(endpoint,options={}){
-  if(typeof endpoint!=="string"||!endpoint.startsWith("/")||endpoint.startsWith("//"))throw new Error("Invalid API endpoint.");
-  const {timeoutMs=MQEIP_REQUEST_TIMEOUT,...fetchOptions}=options;
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);const hadToken=Boolean(mqeipAccessToken);
-  try{
-    const headers={"Accept":"application/json",...(fetchOptions.body?{"Content-Type":"application/json"}:{}),...(mqeipAccessToken?{"Authorization":"Bearer "+mqeipAccessToken}:{}),...(fetchOptions.headers||{})};
-    const response=await fetch(MQEIP_API_BASE+endpoint,{...fetchOptions,headers,signal:controller.signal,cache:"no-store"});
-    const raw=await response.text();let payload=null;
-    try{payload=raw?JSON.parse(raw):null}catch(_){payload=null}
-    if(!response.ok){
-      const detail=mqeipExtractDetail(payload);let message;
-      if(response.status===401){if(hadToken){mqeipLogout();message="Sesi berakhir atau token ditolak."}else message="Username atau password salah."}
-      else if(response.status===403)message="Akses ditolak. Akun tidak memiliki izin untuk operasi ini.";
-      else message="HTTP "+response.status;
-      if(detail)message+=" ("+detail+")";const err=new Error(message);err.status=response.status;throw err;
-    }
-    return payload;
-  }catch(error){
-    if(error.name==="AbortError")throw new Error("Request timeout. Server mungkin sedang bangun; silakan coba lagi.");
-    if(error instanceof TypeError)throw new Error("Koneksi API gagal. Pastikan backend aktif dan izin CORS sesuai.");
-    throw error;
-  }finally{clearTimeout(timer)}
-}
-async function mqeipRequestToken(username,password){
-  const attempts=[
-    {headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})},
-    {headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({username,password,grant_type:"password"}).toString()}
-  ];const errors=[];
-  for(const attempt of attempts){try{return await mqeipApiRequest("/api/v1/login",{method:"POST",timeoutMs:MQEIP_LOGIN_TIMEOUT,...attempt})}catch(error){errors.push(error);if(![400,415,422].includes(error.status))throw error}}
-  throw errors.find(e=>e.status===400)||errors[errors.length-1];
-}
-async function mqeipLogin(username,password){
-  const button=mqeipElement("mqeipLoginSubmit");const cleanUsername=String(username||"").trim();
-  if(mqeipLoginInFlight)return false;
-  if(!cleanUsername||!password){mqeipSetLoginMessage("Username dan password wajib diisi.","error");return false}
-  mqeipLoginInFlight=true;if(button){button.disabled=true;button.textContent="Authenticating..."}
-  try{
-    mqeipSetLoginMessage("Menghubungkan ke MQEIP Backend...");
-    const loginData=await mqeipRequestToken(cleanUsername,password);
-    const token=loginData?.access_token||loginData?.token||loginData?.jwt;
-    if(!token)throw new Error("Backend tidak mengirim access_token.");
-    mqeipAccessToken=token;mqeipSetLoginMessage("Memverifikasi token...");
-    const user=await mqeipApiRequest("/api/v1/me");
-    if(!user||typeof user!=="object"||Array.isArray(user)||(user.username&&String(user.username).toLowerCase()!==cleanUsername.toLowerCase()))throw new Error("Verifikasi pengguna gagal.");
-    mqeipAuthenticatedUser=user;mqeipSetConnection("connected","API Connected");mqeipUpdateSessionControls();
-    mqeipSetLoginMessage("Login berhasil.","success");return true;
-  }catch(error){
-    mqeipAccessToken=null;mqeipAuthenticatedUser=null;mqeipSetConnection("disconnected","Not Connected");
-    mqeipSetLoginMessage("Login gagal: "+error.message,"error");mqeipUpdateSessionControls();return false;
-  }finally{mqeipLoginInFlight=false;if(button){button.disabled=false;button.textContent="Secure Login"}}
-}
-function mqeipLogout(){
-  mqeipAccessToken=null;mqeipAuthenticatedUser=null;mqeipRequestVersion++;
-  mqeipSetConnection("disconnected","Not Connected");mqeipResetDashboard();mqeipUpdateSessionControls();
-  if(typeof window.mqeipAisReset==="function")window.mqeipAisReset();
-}
-function mqeipResetDashboard(){
-  ["kpiTotalEvents","kpiCriticalEvents","kpiActiveEvents","kpiResolvedEvents","overviewOpen","overviewInProgress","overviewHigh","overviewUnassigned","performanceResolutionRate","performanceResolutionHours"].forEach(id=>mqeipSetText(id,DASH));
-  mqeipSetText("executiveAttentionLevel","Awaiting Secure Connection");mqeipSetText("executiveAttentionDescription","Authenticate to load operational intelligence.");mqeipSetText("dashboardLastUpdated","Last updated: Not connected");
-  const domain=mqeipElement("domainIntelligenceList");if(domain)domain.textContent="Connect to load domain intelligence.";
-  const alerts=mqeipElement("criticalAlertsList");if(alerts)alerts.textContent="Connect to load critical events.";
-  const body=mqeipElement("priorityBoardBody");if(body){body.replaceChildren();const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="Connect to load operational priorities.";row.appendChild(cell);body.appendChild(row)}
-}
-function mqeipRenderDomains(domains){
-  const container=mqeipElement("domainIntelligenceList");if(!container)return;container.replaceChildren();
-  if(!Array.isArray(domains)||!domains.length){container.textContent="No command events recorded by domain.";return}
-  const maxCount=Math.max(1,...domains.map(item=>Number(item.active_events)||0));
-  for(const domain of domains){const row=document.createElement("div");row.className="domain-row";const name=document.createElement("div");name.className="domain-name";name.textContent=String(domain.domain||"Unknown").replaceAll("_"," ");
-    const track=document.createElement("div");track.className="domain-track";const fill=document.createElement("div");fill.className="domain-fill";const count=Number(domain.active_events)||0;fill.style.width=Math.min(100,Math.max(0,count/maxCount*100))+"%";track.appendChild(fill);
-    const value=document.createElement("div");value.className="domain-count";value.textContent=String(count);row.append(name,track,value);container.appendChild(row)}
-}
-function mqeipRenderCriticalAlerts(events){
-  const container=mqeipElement("criticalAlertsList");if(!container)return;container.replaceChildren();
-  if(!Array.isArray(events)||!events.length){container.textContent="No active critical command events recorded.";return}
-  for(const event of events){const item=document.createElement("div");item.className="command-alert";const symbol=document.createElement("div");symbol.className="alert-symbol";symbol.textContent="!";
-    const body=document.createElement("div");body.className="alert-body";const title=document.createElement("div");title.className="alert-title";title.textContent=event.title||"Untitled event";
-    const meta=document.createElement("div");meta.className="alert-meta";meta.textContent=[event.domain,event.vessel_id,event.command_status].filter(Boolean).join(DOT);body.append(title,meta);item.append(symbol,body);container.appendChild(item)}
-}
-function mqeipRenderPriorityBoard(events){
-  const body=mqeipElement("priorityBoardBody");if(!body)return;body.replaceChildren();
-  if(!Array.isArray(events)||!events.length){const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="No active command priorities recorded.";row.appendChild(cell);body.appendChild(row);return}
-  for(const event of events){const row=document.createElement("tr");for(const value of [event.priority,event.domain,event.title,event.command_status]){const cell=document.createElement("td");cell.textContent=String(value??DASH).replaceAll("_"," ");row.appendChild(cell)}body.appendChild(row)}
-}
-async function mqeipLoadExecutiveDashboard(){
-  if(!mqeipAccessToken){mqeipOpenLogin();return}const requestVersion=++mqeipRequestVersion;
-  mqeipSetText("dashboardLastUpdated","Loading live Command Center data...");
-  try{
-    const results=await Promise.allSettled([
-      mqeipApiRequest(MQEIP_COMMAND_API+"/executive/dashboard"),
-      mqeipApiRequest(MQEIP_COMMAND_API+"/operations/priority-board?limit=50"),
-      mqeipApiRequest(MQEIP_COMMAND_API+"/executive/performance")
-    ]);
-    if(requestVersion!==mqeipRequestVersion||!mqeipAccessToken)return;
-    if(results.every(r=>r.status==="rejected"))throw results[0].reason;
-    const failures=results.filter(r=>r.status==="rejected").map(r=>r.reason?.message||"Unknown error");
-    const dashboard=results[0].status==="fulfilled"?(results[0].value||{}):{};
-    const board=results[1].status==="fulfilled"?(results[1].value||{}):{};
-    const performance=results[2].status==="fulfilled"?(results[2].value||{}):{};
-    const summary=dashboard.event_summary||{};const total=Number(summary.total_events)||0;const open=Number(summary.open_events)||0;const progress=Number(summary.in_progress_events)||0;
-    mqeipSetText("kpiTotalEvents",total);mqeipSetText("kpiCriticalEvents",Number(summary.active_critical_events)||0);mqeipSetText("kpiActiveEvents",open+progress);mqeipSetText("kpiResolvedEvents",Number(summary.resolved_events)||0);
-    mqeipSetText("overviewOpen",open);mqeipSetText("overviewInProgress",progress);mqeipSetText("overviewHigh",Number(summary.active_high_events)||0);mqeipSetText("overviewUnassigned",Number(summary.unassigned_active_events)||0);
-    mqeipSetText("executiveAttentionLevel",String(dashboard.executive_attention_level||"unknown").toUpperCase()+" ATTENTION");mqeipSetText("executiveAttentionDescription","Based on recorded Command Center events.");
-    mqeipRenderDomains(dashboard.domain_overview||[]);mqeipRenderCriticalAlerts(dashboard.critical_priority_events||[]);mqeipRenderPriorityBoard(board.events||[]);
-    const rate=performance.resolution_rate_percent;mqeipSetText("performanceResolutionRate",rate==null?DASH:rate+"%");mqeipSetText("performanceResolutionHours",performance.average_resolution_hours??DASH);
-    mqeipSetText("dataIntegrationState","Pending");mqeipSetText("dashboardLastUpdated","Last updated: "+new Date().toLocaleString()+(failures.length?" "+DASH+" Partial failures: "+failures.join(" | "):""));mqeipSetConnection("connected","API Connected");
-  }catch(error){if(requestVersion!==mqeipRequestVersion)return;mqeipSetText("dashboardLastUpdated","Data loading failed: "+(error.message||"Unknown error"));mqeipShowToast(error.message||"Dashboard data failed to load.","error")}
-}
-function mqeipCreateElement(tag,className,textValue){const el=document.createElement(tag);if(className)el.className=className;if(textValue!==undefined)el.textContent=String(textValue);return el}
-const MQEIP_MODULE_REGISTRY={
- executive:{title:"Executive Command Center",icon:"\u25C8",description:"Enterprise maritime operational intelligence, strategic monitoring and executive decision support.",capabilities:["Enterprise KPI Monitoring","Critical Operational Alerts","Executive Decision Support"]},
- quantum:{title:"Maritime Quantum Command Center",icon:"\u2726",description:"Enterprise command events, operational priorities, risk intelligence and command snapshots.",capabilities:["Command Event Management","Operational Priority Board","Executive Risk Intelligence"]},
- analytics:{title:"Business Intelligence",icon:"\u25A3",description:"Enterprise analytics and management intelligence.",capabilities:["Management Reporting","Enterprise Analytics","Performance Intelligence"]},
- fleet:{title:"Fleet Management",icon:"\u2693",description:"Vessel registry and fleet operational administration.",capabilities:["Vessel Registry","Fleet Monitoring","Fleet Operational Records"]},
- marine:{title:"Marine Operations",icon:"\u25CE",description:"Marine operational control and voyage management.",capabilities:["Voyage Operations","Marine Performance","Operational Reporting"]},
- crew:{title:"Crew & Certificates",icon:"\u263A",description:"Seafarer management and certificate intelligence.",capabilities:["Crew Records","Certificate Tracking","Crew Compliance"]},
- technical:{title:"Technical & PMS",icon:"\u2699",description:"Technical engineering and planned maintenance control.",capabilities:["Technical Records","Maintenance Planning","Engineering Intelligence"]},
- hsse:{title:"HSSE & Compliance",icon:"\u26D1",description:"Health, safety, security, environment and compliance.",capabilities:["Safety Monitoring","Incident Management","Compliance Intelligence"]},
- finance:{title:"Finance & Accounting",icon:"\u25A4",description:"Enterprise maritime financial administration.",capabilities:["Financial Records","Cost Management","Financial Intelligence"]},
- supply:{title:"Supply Chain & Procurement",icon:"\u25A6",description:"Procurement, vendor coordination and purchasing.",capabilities:["RFQ Management","Purchase Orders","Procurement Monitoring"]},
- inventory:{title:"Inventory & Vessel Stores",icon:"\u25A5",description:"Vessel inventory and enterprise stores management.",capabilities:["Inventory Records","Stock Monitoring","Vessel Stores"]},
- commercial:{title:"Commercial & Chartering",icon:"\u25C9",description:"Commercial maritime contracts and chartering.",capabilities:["Chartering Records","Commercial Performance","Contract Monitoring"]},
- hr:{title:"Human Resources",icon:"\u263B",description:"Shore workforce and enterprise HR administration.",capabilities:["Employee Records","Workforce Management","HR Intelligence"]},
- ai:{title:"AI Intelligence Center",icon:"\u2727",description:"Enterprise AI agents and intelligent analysis.",capabilities:["AI Intelligence","AI Agent Operations","Automated Analysis"]},
- optimization:{title:"Quantum Optimization",icon:"\u232C",description:"Quantum-inspired enterprise optimization.",capabilities:["Optimization Models","Scenario Analysis","Decision Optimization"]},
- twin:{title:"Maritime Digital Twin",icon:"\u25CD",description:"Digital representation and analysis of vessel operations.",capabilities:["Digital Twin Models","Operational Scenarios","Performance Analysis"]},
- esg:{title:"ESG & Sustainability",icon:"\u267B",description:"Environmental, social and governance intelligence.",capabilities:["Sustainability Records","ESG Monitoring","Environmental Reporting"]},
- documents:{title:"Document Management",icon:"\u25A7",description:"Enterprise document administration and control.",capabilities:["Document Registry","Document Governance","Document Tracking"]},
- workflow:{title:"Workflow & Approvals",icon:"\u21C4",description:"Enterprise business processes and approval workflows.",capabilities:["Workflow Records","Approval Tracking","Process Monitoring"]},
- audit:{title:"Audit & Internal Control",icon:"\u2714",description:"Internal audit, governance and control monitoring.",capabilities:["Audit Records","Internal Controls","Governance Monitoring"]},
- administration:{title:"Administration & IAM",icon:"\u26BF",description:"Enterprise administration, identities and access management.",capabilities:["Identity Management","Role Administration","Enterprise Security"]}
-};
-function mqeipRenderModuleWorkspace(pageKey){
-  const module=MQEIP_MODULE_REGISTRY[pageKey],container=mqeipElement("modulePanelBody");if(!module||!container)return;
-  container.replaceChildren();container.className="mqeip-workspace";
-  if(pageKey==="fleet"){mqeipRenderFleetWorkspace(container);return}
-  const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
-  info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
-  const grid=mqeipCreateElement("div","mqeip-workspace-grid");
-  module.capabilities.forEach(capability=>{const card=mqeipCreateElement("div","mqeip-workspace-card");card.append(mqeipCreateElement("div","mqeip-workspace-card-title",capability),mqeipCreateElement("div","mqeip-workspace-card-value",DASH),mqeipCreateElement("div","mqeip-workspace-card-note","Live module data not connected."));grid.appendChild(card)});container.appendChild(grid);
-  const status=mqeipCreateElement("div","mqeip-workspace-status","This module workspace is available for navigation. Its dedicated ERP API integration is not yet configured. No operational figures are simulated.");container.appendChild(status);
-  const actions=mqeipCreateElement("div","mqeip-workspace-actions"),back=mqeipCreateElement("button","btn btn-outline","Return to Executive Command");back.type="button";back.addEventListener("click",()=>mqeipNavigate("executive"));actions.appendChild(back);
-  if(pageKey==="quantum"){const load=mqeipCreateElement("button","btn btn-gold","Load Command Intelligence");load.type="button";load.addEventListener("click",mqeipLoadQuantumWorkspace);actions.appendChild(load)}container.appendChild(actions);
-  const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
-}
-const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
-function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
-function mqeipFleetMessage(message,isError=false){const el=mqeipElement("mqeipFleetMessage");if(el){el.textContent=message;el.style.color=isError?"var(--red)":"var(--muted)"}}
-function mqeipRenderFleetWorkspace(container){
-  container.replaceChildren();
-  const heading=mqeipFleetNode("h3","\u2693 Fleet Management "+DASH+" Live Vessel Registry"),note=mqeipFleetNode("p","Authenticated fleet records from MQEIP Backend.");note.style.color="var(--muted)";
-  const actions=mqeipFleetNode("div","","mqeip-workspace-actions"),reload=mqeipFleetNode("button","\u21BB Refresh Fleet","btn btn-outline");reload.type="button";reload.addEventListener("click",mqeipLoadFleet);
-  const add=mqeipFleetNode("button","+ Add Vessel","btn btn-gold");add.type="button";add.addEventListener("click",()=>mqeipElement("mqeipFleetForm")?.classList.toggle("hidden"));actions.append(reload,add);
-  const form=document.createElement("form");form.id="mqeipFleetForm";form.className="panel hidden";form.style.margin="16px 0";
-  const title=mqeipFleetNode("h3","Register Vessel"),nameLabel=mqeipFleetNode("label","Vessel Name (required)","mqeip-form-label"),name=document.createElement("input");name.name="vessel_name";name.required=true;name.maxLength=160;name.className="mqeip-form-input";
-  const typeLabel=mqeipFleetNode("label","Vessel Type (optional)","mqeip-form-label");typeLabel.style.marginTop="12px";const type=document.createElement("input");type.name="vessel_type";type.maxLength=100;type.className="mqeip-form-input";
-  const submit=mqeipFleetNode("button","Save Vessel","btn btn-gold");submit.type="submit";submit.style.marginTop="14px";form.append(title,nameLabel,name,typeLabel,type,submit);
-  form.addEventListener("submit",async event=>{event.preventDefault();if(!mqeipAccessToken){mqeipOpenLogin();return}submit.disabled=true;try{const payload={vessel_name:name.value.trim()};if(type.value.trim())payload.vessel_type=type.value.trim();await mqeipApiRequest(MQEIP_FLEET_ENDPOINT,{method:"POST",body:JSON.stringify(payload)});form.reset();form.classList.add("hidden");await mqeipLoadFleet();mqeipFleetMessage("Vessel saved successfully.")}catch(error){mqeipFleetMessage("Save failed: "+error.message,true)}finally{submit.disabled=false}});
-  const message=mqeipFleetNode("p","","mqeip-message");message.id="mqeipFleetMessage";message.setAttribute("role","status");
-  const wrap=mqeipFleetNode("div","","table-wrap"),table=mqeipFleetNode("table","","data-table"),thead=document.createElement("thead"),tr=document.createElement("tr");["Vessel","Type","IMO","Record ID","Actions"].forEach(t=>tr.appendChild(mqeipFleetNode("th",t)));thead.appendChild(tr);
-  const body=document.createElement("tbody");body.id="mqeipFleetTableBody";table.append(thead,body);wrap.appendChild(table);container.append(heading,note,actions,form,message,wrap);void mqeipLoadFleet();
-}
-function mqeipFleetRecords(payload){if(Array.isArray(payload))return payload;if(payload&&typeof payload==="object")for(const key of ["vessels","fleet","items","results","data"])if(Array.isArray(payload[key]))return payload[key];throw new Error("Fleet API returned an unexpected response format.")}
-async function mqeipLoadFleet(){
-  const loadId=++mqeipFleetLoadId,body=mqeipElement("mqeipFleetTableBody");if(!body||mqeipCurrentPage!=="fleet")return;body.replaceChildren();mqeipFleetMessage("Loading vessel registry...");
-  if(!mqeipAccessToken){mqeipFleetMessage("Secure login is required to view Fleet.");mqeipOpenLogin();return}
-  try{const records=mqeipFleetRecords(await mqeipApiRequest(MQEIP_FLEET_ENDPOINT));if(loadId!==mqeipFleetLoadId||mqeipCurrentPage!=="fleet"||body!==mqeipElement("mqeipFleetTableBody"))return;
-    if(!records.length){const row=document.createElement("tr"),cell=mqeipFleetNode("td","No vessels registered for this account.");cell.colSpan=5;row.appendChild(cell);body.appendChild(row)}
-    for(const vessel of records){const row=document.createElement("tr"),name=vessel.vessel_name??vessel.name??DASH,type=vessel.vessel_type??vessel.type??DASH,id=vessel.id??vessel.vessel_id??null,imo=vessel.imo_number??vessel.imo??DASH;
-      [name,type,imo,id??DASH].forEach(val=>row.appendChild(mqeipFleetNode("td",String(val))));const action=document.createElement("td");
-      if(id!==null&&id!==undefined){const remove=mqeipFleetNode("button","Delete","btn btn-outline");remove.type="button";remove.addEventListener("click",async()=>{if(!confirm("Delete vessel "+String(name)+"? This cannot be undone."))return;remove.disabled=true;try{await mqeipApiRequest(MQEIP_FLEET_ENDPOINT+"/"+encodeURIComponent(String(id)),{method:"DELETE"});await mqeipLoadFleet();mqeipFleetMessage("Vessel deleted.")}catch(error){mqeipFleetMessage("Delete failed: "+error.message,true);remove.disabled=false}});action.appendChild(remove)}else action.textContent="No record ID";
-      row.appendChild(action);body.appendChild(row)}mqeipFleetMessage(records.length+" vessel(s) loaded from backend.")
-  }catch(error){if(loadId===mqeipFleetLoadId&&mqeipCurrentPage==="fleet")mqeipFleetMessage("Unable to load Fleet: "+error.message,true)}
-}
-async function mqeipLoadQuantumWorkspace(){
-  if(mqeipCurrentPage!=="quantum")return;if(!mqeipAccessToken){mqeipOpenLogin();return}
-  const target=mqeipElement("mqeipWorkspaceData");if(!target)return;target.textContent="Loading authenticated Command Center data...";
-  try{const data=await mqeipApiRequest(MQEIP_COMMAND_API+"/intelligence/events");if(mqeipCurrentPage!=="quantum"||target!==mqeipElement("mqeipWorkspaceData")||!mqeipAccessToken)return;
-    target.replaceChildren();target.appendChild(mqeipCreateElement("h4","","Live Command Event Intelligence"));const summary=data.summary||{},list=document.createElement("ul");
-    [["Total Events","total_events"],["Open Events","open_events"],["In Progress","in_progress_events"],["Resolved Events","resolved_events"],["Active Critical","active_critical_events"],["Active High","active_high_events"]].forEach(([label,key])=>{const item=document.createElement("li"),value=summary[key];item.textContent=label+": "+(value==null?"Unavailable":String(value));list.appendChild(item)});target.appendChild(list)
-  }catch(error){if(target===mqeipElement("mqeipWorkspaceData"))target.textContent="Unable to load Command Center data: "+(error.message||"Unknown error")}
-}
-function mqeipNavigate(pageKey){
-  const module=MQEIP_MODULE_REGISTRY[pageKey];if(!module)return;mqeipCurrentPage=pageKey;
-  document.querySelectorAll(".nav-link[data-page]").forEach(button=>{const active=button.dataset.page===pageKey;button.classList.toggle("active",active);if(active)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current")});
-  mqeipSetText("topbarTitle",module.title);mqeipSetText("pageTitle",module.title);mqeipSetText("pageDescription",module.description);
-  const dashboard=mqeipElement("executiveDashboard"),workspace=mqeipElement("moduleContent");
-  if(pageKey==="executive"){dashboard?.classList.remove("hidden");workspace?.classList.add("hidden")}else{dashboard?.classList.add("hidden");workspace?.classList.remove("hidden");mqeipSetText("modulePanelTitle",module.title);mqeipSetText("modulePanelDescription",module.description);mqeipRenderModuleWorkspace(pageKey)}
-  mqeipElement("sidebar")?.classList.remove("open");mqeipElement("menuToggle")?.setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});
-}
-function mqeipToggleSidebar(){const sidebar=mqeipElement("sidebar"),toggle=mqeipElement("menuToggle");if(!sidebar)return;const open=sidebar.classList.toggle("open");toggle?.setAttribute("aria-expanded",String(open))}
-function mqeipUpdateSessionControls(){
-  const authenticated=Boolean(mqeipAccessToken),login=mqeipElement("mqeipTopbarLogin"),logout=mqeipElement("mqeipTopbarLogout");
-  if(login)login.classList.toggle("hidden",authenticated);if(logout)logout.classList.toggle("hidden",!authenticated);
-  const avatar=document.querySelector(".user-avatar");if(avatar){avatar.textContent=authenticated?"\u2726":"U";avatar.setAttribute("aria-label",authenticated?"Authenticated user":"Unauthenticated user")}
-  const connect=mqeipElement("connectButton");if(connect){connect.textContent=authenticated?"API Connected":"Connect Secure API";connect.disabled=authenticated}
-}
-function mqeipCreateSessionControls(){
-  const topbar=document.querySelector(".topbar-right");if(!topbar||mqeipElement("mqeipSessionControls"))return;
-  const controls=document.createElement("div");controls.id="mqeipSessionControls";controls.className="mqeip-session-controls";
-  const login=mqeipCreateElement("button","mqeip-session-button","Login");login.id="mqeipTopbarLogin";login.type="button";login.addEventListener("click",mqeipOpenLogin);
-  const logout=mqeipCreateElement("button","mqeip-session-button logout","Logout");logout.id="mqeipTopbarLogout";logout.type="button";logout.addEventListener("click",()=>{if(!mqeipAccessToken)return;mqeipLogout();mqeipNavigate("executive");mqeipShowToast("Local session cleared successfully.","success")});
-  controls.append(login,logout);topbar.appendChild(controls);mqeipUpdateSessionControls();
-}
-function mqeipValidateApplication(){
-  const required=["sidebar","topbarTitle","pageTitle","executiveDashboard","moduleContent","connectButton","refreshButton","mqeipLoginModal","mqeipLoginForm","connectionStatus"];
-  const missing=required.filter(id=>!mqeipElement(id));if(missing.length){console.error("MQEIP frontend elements missing:",missing);mqeipShowToast("Application initialization incomplete.","error");return false}return true;
-}
-document.addEventListener("DOMContentLoaded",()=>{
-  mqeipSetConnection("disconnected","Not Connected");mqeipCreateSessionControls();mqeipValidateApplication();
-  mqeipElement("connectButton")?.addEventListener("click",mqeipOpenLogin);
-  mqeipElement("mqeipLoginCancel")?.addEventListener("click",mqeipCloseLogin);
-  mqeipElement("refreshButton")?.addEventListener("click",()=>{if(mqeipCurrentPage==="fleet")void mqeipLoadFleet();else if(mqeipCurrentPage==="quantum")void mqeipLoadQuantumWorkspace();else if(mqeipCurrentPage==="executive")void mqeipLoadExecutiveDashboard();else mqeipShowToast("API untuk modul ini belum dikonfigurasi.","error")});
-  mqeipElement("mqeipLoginForm")?.addEventListener("submit",async event=>{event.preventDefault();const username=mqeipElement("mqeipUsername")?.value.trim(),password=mqeipElement("mqeipPassword")?.value;if(!username||!password){mqeipSetLoginMessage("Username dan password wajib diisi.","error");return}const ok=await mqeipLogin(username,password);if(ok){mqeipCloseLogin();mqeipShowToast("Login berhasil.","success");await mqeipLoadExecutiveDashboard();if(typeof window.mqeipAisLoad==="function")void window.mqeipAisLoad()}});
-  document.querySelectorAll(".nav-link[data-page]").forEach(button=>button.addEventListener("click",()=>mqeipNavigate(button.dataset.page)));
-  mqeipElement("menuToggle")?.addEventListener("click",mqeipToggleSidebar);
-  mqeipNavigate("executive");
-});
-</script>
-
-<script>
-"use strict";
-/* AIS LIVE TRACKING: memakai token JWT di memori dan helper mqeipApiRequest. */
-(() => {
-  let map = null, vesselLayer = null, refreshTimer = null, busy = false, resizeObserver = null;
-  const el = id => document.getElementById(id);
-  const status = message => { const target=el("aisLiveStatus"); if(target) target.textContent=message; };
-  const bounds = () => L.latLngBounds([[-12,94],[7,142]]);
-  const isOpen = () => !el("aisLiveModal").classList.contains("hidden");
-  const extractRecords = result => {
-    if (Array.isArray(result)) return result;
-    const candidates = [
-      result?.items, result?.positions, result?.vessels, result?.results,
-      result?.data, result?.data?.items, result?.data?.positions,
-      result?.data?.vessels, result?.data?.results,
-      result?.result, result?.result?.items, result?.result?.positions,
-      result?.result?.vessels, result?.payload?.positions
-    ];
-    for (const value of candidates) if (Array.isArray(value)) return value;
-    throw new Error("Format respons AIS tidak dikenali. Endpoint harus mengembalikan array posisi kapal, misalnya {positions:[...]}.");
-  };
-  const resizeMap = () => { if(map && isOpen()) map.invalidateSize({pan:false}); };
-
-  async function loadVessels() {
-    if(busy || !isOpen()) return;
-    if(!mqeipAccessToken){status("Silakan login ke MQEIP terlebih dahulu. Posisi AIS memerlukan akses backend.");if(typeof mqeipOpenLogin==="function")mqeipOpenLogin();return;}
-    if(!map){status("Peta belum siap.");return;}
-    busy=true;
-    status("Mengambil data posisi AIS dari MQEIP Backend...");
-    try {
-      const result=await mqeipApiRequest("/api/v1/ais/positions?limit=1000",{timeoutMs:45000});
-      if(!isOpen()||!mqeipAccessToken) return;
-      const records=extractRecords(result);
-      vesselLayer.clearLayers();
-      let visible=0;
-      const area=bounds();
-      for(const v of records){
-        const lat=Number(v.latitude ?? v.lat ?? v.position?.latitude ?? v.position?.lat);
-        const lon=Number(v.longitude ?? v.lon ?? v.lng ?? v.position?.longitude ?? v.position?.lon);
-        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!area.contains([lat,lon]))continue;
-        const marker=L.circleMarker([lat,lon],{radius:6,color:"#d8b46a",weight:2,fillColor:"#48c7df",fillOpacity:.9});
-        const popup=document.createElement("div");
-        const title=document.createElement("strong");title.textContent=String(v.vessel_name ?? v.name ?? v.ship_name ?? "Unknown Vessel");popup.appendChild(title);
-        for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo ?? v.imo_number],["Speed",v.sog == null ? null : v.sog+" kn"],["Course",v.cog == null ? null : v.cog+"\u00B0"],["Updated",v.timestamp ?? v.last_updated ?? v.updated_at]]){
-          if(value==null)continue;
-          const line=document.createElement("div");line.textContent=label+": "+String(value);popup.appendChild(line);
+// ==========================================
+// CONFIGURATION - UPDATE THIS WITH YOUR BACKEND URL
+// ==========================================
+const MQEIP_CONFIG = {
+    // GANTI URL INI DENGAN BACKEND RENDER ANDA YANG SUDAH DI-DEPLOY
+    API_BASE_URL: 'https://mqeip-backend.onrender.com', // <-- UPDATE INI!
+    
+    // API Endpoints
+    ENDPOINTS: {
+        LOGIN: '/api/auth/login',
+        AIS_POSITIONS: '/api/v1/ais/positions',
+        AIS_STREAM: '/api/v1/ais/stream',
+        FLEET: '/api/v1/fleet'
+    },
+    
+    // Timeout settings
+    TIMEOUTS: {
+        REQUEST: 30000,
+        LOGIN: 75000,
+        AIS_REFRESH: 60000  // Refresh AIS setiap 60 detik
+    },
+    
+    // AIS Configuration
+    AIS: {
+        // Area Indonesia
+        BOUNDS: {
+            NORTH: 7,
+            SOUTH: -12,
+            EAST: 142,
+            WEST: 94
+        },
+        INITIAL_VIEW: {
+            LAT: -2,
+            LNG: 118,
+            ZOOM: 5
+        },
+        MARKER: {
+            RADIUS: 6,
+            COLOR: '#d8b46a',
+            WEIGHT: 2,
+            FILL_COLOR: '#48c7df',
+            FILL_OPACITY: 0.9
         }
-        marker.bindPopup(popup).addTo(vesselLayer);visible++;
-      }
-      status(visible+" kapal ditampilkan di Indonesia \u00B7 "+records.length+" posisi diterima \u00B7 "+new Date().toLocaleTimeString("id-ID")+(records.length===0?" \u00B7 Sumber AIS belum mengirim posisi.":(visible===0?" \u00B7 Semua posisi berada di luar area Indonesia.":"")));
-      resizeMap();
-    }catch(error){
-      const message=error?.message||"Kesalahan koneksi";
-      status("AIS belum tersedia: "+message+(message.includes("404")?" \u00B7 Endpoint /api/v1/ais/positions belum terpasang pada backend.":""));
-    }finally{busy=false;}
-  }
-
-  function stopTimer(){ if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;} }
-
-  function openAIS(){
-    el("aisLiveModal").classList.remove("hidden");
-    if(typeof L==="undefined"){status("Pustaka Leaflet gagal dimuat. Periksa akses CDN dan internet.");return;}
-    if(!map){
-      map=L.map("aisLiveMap",{zoomControl:true,preferCanvas:true}).setView([-2,118],5);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap contributors',maxZoom:18,subdomains:'abc',crossOrigin:true}).addTo(map);
-      vesselLayer=L.layerGroup().addTo(map);
-      if(typeof ResizeObserver!=="undefined"){
-        resizeObserver=new ResizeObserver(()=>resizeMap());
-        resizeObserver.observe(el("aisLiveMap"));
-      }
     }
-    requestAnimationFrame(()=>{resizeMap();requestAnimationFrame(resizeMap);});
-    setTimeout(resizeMap,250);setTimeout(resizeMap,700);
-    void loadVessels();
-    stopTimer();
-    refreshTimer=setInterval(()=>void loadVessels(),60000);
-  }
-  function closeAIS(){el("aisLiveModal").classList.add("hidden");stopTimer();}
+};
 
-  /* Dapat dipanggil setelah login berhasil untuk langsung memuat posisi kapal. */
-  window.mqeipAisLoad = () => {
-    if (!isOpen()) return;
-    resizeMap();
-    return loadVessels();
-  };
+// Global state
+const MQEIP_STATE = {
+    accessToken: null,
+    user: null,
+    currentPage: 'executive',
+    aisMap: null,
+    aisLayer: null,
+    aisTimer: null,
+    aisBusy: false,
+    resizeObserver: null
+};
 
-  /* Dipanggil mqeipLogout(): hentikan refresh dan kosongkan peta. */
-  window.mqeipAisReset = () => {
-    stopTimer();
-    if(vesselLayer) vesselLayer.clearLayers();
-    status("Sesi berakhir. Silakan login ke MQEIP untuk melihat posisi AIS.");
-  };
+// Utility functions
+const $ = (id) => document.getElementById(id);
+const DASH = '\u2014';
 
-  el("aisLiveButton")?.addEventListener("click",openAIS);
-  el("aisLiveRefresh")?.addEventListener("click",()=>{resizeMap();void loadVessels();});
-  el("aisLiveClose")?.addEventListener("click",closeAIS);
-  window.addEventListener("resize",resizeMap);
-  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&isOpen())closeAIS();});
-})();
+function setConnectionState(state, message) {
+    const dot = $('connectionDot');
+    const text = $('connectionText');
+    if (dot) {
+        dot.classList.remove('connected', 'disconnected');
+        dot.classList.add(state === 'connected' ? 'connected' : 'disconnected');
+    }
+    if (text) text.textContent = message;
+    $('dataConnectionState')?.textContent = state === 'connected' ? 'Online' : 'Offline';
+}
+
+function showToast(message, type = '') {
+    const toast = $('mqeipToast');
+    if (!toast) return;
+    
+    if (window.mqeipToastTimeout) clearTimeout(window.mqeipToastTimeout);
+    
+    toast.textContent = String(message);
+    toast.className = 'mqeip-toast' + (type ? ' ' + type : '');
+    
+    window.mqeipToastTimeout = setTimeout(() => {
+        toast.classList.add('hidden');
+        window.mqeipToastTimeout = null;
+    }, 5000);
+}
+
+// API Request Handler
+async function apiRequest(endpoint, options = {}) {
+    const { timeoutMs = MQEIP_CONFIG.TIMEOUTS.REQUEST, ...fetchOptions } = options;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            ...(fetchOptions.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(MQEIP_STATE.accessToken ? { 'Authorization': 'Bearer ' + MQEIP_STATE.accessToken } : {}),
+            ...(fetchOptions.headers || {})
+        };
+        
+        const url = MQEIP_CONFIG.API_BASE_URL + endpoint;
+        console.log('API Request:', url);
+        
+        const response = await fetch(url, {
+            ...fetchOptions,
+            headers,
+            signal: controller.signal,
+            cache: 'no-store'
+        });
+        
+        const raw = await response.text();
+        const payload = raw ? JSON.parse(raw) : null;
+        
+        if (!response.ok) {
+            const detail = payload?.detail || payload?.message || payload?.error || '';
+            let message = 'HTTP ' + response.status;
+            if (detail) message += ' (' + detail + ')';
+            
+            if (response.status === 401) {
+                if (MQEIP_STATE.accessToken) {
+                    logout();
+                    message = 'Sesi berakhir atau token ditolak.';
+                } else {
+                    message = 'Username atau password salah.';
+                }
+            } else if (response.status === 403) {
+                message = 'Akses ditolak. Akun tidak memiliki izin.';
+            }
+            
+            const error = new Error(message);
+            error.status = response.status;
+            throw error;
+        }
+        
+        return payload;
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout. Server mungkin sedang bangun; silakan coba lagi.');
+        }
+        if (error instanceof TypeError) {
+            throw new Error('Tidak dapat menghubungi server. Periksa URL backend dan CORS.');
+        }
+        throw error;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// Login function
+async function login(username, password) {
+    const button = $('mqeipLoginSubmit');
+    if (!username || !password) {
+        $('mqeipLoginMessage')?.textContent = 'Username dan password wajib diisi.';
+        $('mqeipLoginMessage')?.classList.add('error');
+        return false;
+    }
+    
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Authenticating...';
+    }
+    
+    try {
+        $('mqeipLoginMessage')?.textContent = 'Menghubungkan ke MQEIP Backend...';
+        
+        const loginData = await apiRequest(MQEIP_CONFIG.ENDPOINTS.LOGIN, {
+            method: 'POST',
+            timeoutMs: MQEIP_CONFIG.TIMEOUTS.LOGIN,
+            body: JSON.stringify({ username, password })
+        });
+        
+        const token = loginData?.access_token || loginData?.token || loginData?.jwt;
+        if (!token) throw new Error('Backend tidak mengirim access_token.');
+        
+        MQEIP_STATE.accessToken = token;
+        
+        // Get user info
+        const user = await apiRequest('/api/v1/me');
+        MQEIP_STATE.user = user;
+        
+        setConnectionState('connected', 'API Connected');
+        updateSessionControls();
+        
+        $('mqeipLoginMessage')?.textContent = 'Login berhasil.';
+        $('mqeipLoginMessage')?.classList.remove('error');
+        $('mqeipLoginMessage')?.classList.add('success');
+        
+        return true;
+    } catch (error) {
+        MQEIP_STATE.accessToken = null;
+        MQEIP_STATE.user = null;
+        setConnectionState('disconnected', 'Not Connected');
+        
+        $('mqeipLoginMessage')?.textContent = 'Login gagal: ' + error.message;
+        $('mqeipLoginMessage')?.classList.remove('success');
+        $('mqeipLoginMessage')?.classList.add('error');
+        
+        return false;
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Secure Login';
+        }
+    }
+}
+
+function logout() {
+    MQEIP_STATE.accessToken = null;
+    MQEIP_STATE.user = null;
+    setConnectionState('disconnected', 'Not Connected');
+    updateSessionControls();
+    
+    // Reset AIS
+    if (typeof window.mqeipAisReset === 'function') {
+        window.mqeipAisReset();
+    }
+    
+    showToast('Local session cleared successfully.', 'success');
+}
+
+function updateSessionControls() {
+    const authenticated = Boolean(MQEIP_STATE.accessToken);
+    const login = $('mqeipTopbarLogin');
+    const logout = $('mqeipTopbarLogout');
+    
+    if (login) login.classList.toggle('hidden', authenticated);
+    if (logout) logout.classList.toggle('hidden', !authenticated);
+    
+    const avatar = document.querySelector('.user-avatar');
+    if (avatar) {
+        avatar.textContent = authenticated ? '\u2726' : 'U';
+    }
+    
+    const connect = $('connectButton');
+    if (connect) {
+        connect.textContent = authenticated ? 'API Connected' : 'Connect Secure API';
+        connect.disabled = authenticated;
+    }
+}
+
+// ==========================================
+// AIS LIVE TRACKING - IMPROVED VERSION
+// ==========================================
+function initAISTracking() {
+    const button = $('aisLiveButton');
+    if (!button) return;
+    
+    button.addEventListener('click', openAISModal);
+    $('aisLiveRefresh')?.addEventListener('click', refreshAIS);
+    $('aisLiveClose')?.addEventListener('click', closeAISModal);
+    
+    // Keyboard shortcut
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !$('aisLiveModal').classList.contains('hidden')) {
+            closeAISModal();
+        }
+    });
+}
+
+function openAISModal() {
+    $('aisLiveModal')?.classList.remove('hidden');
+    
+    // Check if Leaflet is loaded
+    if (typeof L === 'undefined') {
+        updateAISStatus('Pustaka Leaflet gagal dimuat. Periksa akses CDN dan internet.', 'error');
+        return;
+    }
+    
+    // Initialize map if not exists
+    if (!MQEIP_STATE.aisMap) {
+        initAISMap();
+    }
+    
+    // Load vessel data
+    setTimeout(() => {
+        if (MQEIP_STATE.aisMap) {
+            MQEIP_STATE.aisMap.invalidateSize({ pan: false, animate: false });
+            MQEIP_STATE.aisMap.setView(
+                [MQEIP_CONFIG.AIS.INITIAL_VIEW.LAT, MQEIP_CONFIG.AIS.INITIAL_VIEW.LNG],
+                MQEIP_CONFIG.AIS.INITIAL_VIEW.ZOOM,
+                { animate: false }
+            );
+        }
+        loadAISData();
+    }, 100);
+    
+    // Start auto-refresh
+    stopAISTimer();
+    MQEIP_STATE.aisTimer = setInterval(() => loadAISData(), MQEIP_CONFIG.TIMEOUTS.AIS_REFRESH);
+}
+
+function initAISMap() {
+    try {
+        const mapContainer = $('aisLiveMap');
+        if (!mapContainer) return;
+        
+        // Create map
+        MQEIP_STATE.aisMap = L.map('aisLiveMap', {
+            zoomControl: true,
+            preferCanvas: true,
+            minZoom: 3,
+            maxZoom: 18
+        }).setView(
+            [MQEIP_CONFIG.AIS.INITIAL_VIEW.LAT, MQEIP_CONFIG.AIS.INITIAL_VIEW.LNG],
+            MQEIP_CONFIG.AIS.INITIAL_VIEW.ZOOM
+        );
+        
+        // Add tile layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors | MQEIP AIS Tracking',
+            maxZoom: 18,
+            subdomains: 'abc',
+            crossOrigin: true
+        }).addTo(MQEIP_STATE.aisMap);
+        
+        // Create vessel layer
+        MQEIP_STATE.aisLayer = L.layerGroup().addTo(MQEIP_STATE.aisMap);
+        
+        // Setup resize observer
+        if (typeof ResizeObserver !== 'undefined') {
+            MQEIP_STATE.resizeObserver = new ResizeObserver(() => {
+                if (MQEIP_STATE.aisMap && !$('aisLiveModal').classList.contains('hidden')) {
+                    MQEIP_STATE.aisMap.invalidateSize({ pan: false, animate: false });
+                }
+            });
+            MQEIP_STATE.resizeObserver.observe(mapContainer);
+        }
+        
+        console.log('AIS Map initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize AIS map:', error);
+        updateAISStatus('Gagal menginisialisasi peta: ' + error.message, 'error');
+    }
+}
+
+async function loadAISData() {
+    if (MQEIP_STATE.aisBusy || $('aisLiveModal').classList.contains('hidden')) return;
+    
+    if (!MQEIP_STATE.accessToken) {
+        updateAISStatus('Silakan login ke MQEIP terlebih dahulu. Posisi AIS memerlukan akses backend.', 'error');
+        return;
+    }
+    
+    if (!MQEIP_STATE.aisMap) {
+        updateAISStatus('Peta belum siap.', 'error');
+        return;
+    }
+    
+    MQEIP_STATE.aisBusy = true;
+    updateAISStatus('Mengambil data posisi AIS dari MQEIP Backend...', 'loading');
+    
+    try {
+        const result = await apiRequest(MQEIP_CONFIG.ENDPOINTS.AIS_POSITIONS, {
+            timeoutMs: 45000
+        });
+        
+        if ($('aisLiveModal').classList.contains('hidden') || !MQEIP_STATE.accessToken) return;
+        
+        const records = extractAISRecords(result);
+        
+        // Clear existing markers
+        MQEIP_STATE.aisLayer.clearLayers();
+        
+        let visible = 0;
+        const bounds = getIndonesiaBounds();
+        
+        // Process each vessel
+        for (const vessel of records) {
+            const lat = Number(vessel.latitude ?? vessel.lat ?? vessel.position?.latitude ?? vessel.position?.lat);
+            const lon = Number(vessel.longitude ?? vessel.lon ?? vessel.lng ?? vessel.position?.longitude ?? vessel.position?.lon);
+            
+            // Validate coordinates
+            if (!Number.isFinite(lat) || !Number.isFinite(lon) || 
+                Math.abs(lat) > 90 || Math.abs(lon) > 180 || 
+                !bounds.contains([lat, lon])) {
+                continue;
+            }
+            
+            // Create marker
+            const marker = L.circleMarker([lat, lon], {
+                radius: MQEIP_CONFIG.AIS.MARKER.RADIUS,
+                color: MQEIP_CONFIG.AIS.MARKER.COLOR,
+                weight: MQEIP_CONFIG.AIS.MARKER.WEIGHT,
+                fillColor: MQEIP_CONFIG.AIS.MARKER.FILL_COLOR,
+                fillOpacity: MQEIP_CONFIG.AIS.MARKER.FILL_OPACITY
+            });
+            
+            // Create popup content
+            const popup = createVesselPopup(vessel);
+            marker.bindPopup(popup).addTo(MQEIP_STATE.aisLayer);
+            visible++;
+        }
+        
+        // Update status
+        const statusMsg = visible + ' kapal ditampilkan di Indonesia \u00B7 ' + 
+                         records.length + ' posisi diterima \u00B7 ' + 
+                         new Date().toLocaleTimeString('id-ID') +
+                         (records.length === 0 ? ' \u00B7 Sumber AIS belum mengirim posisi.' : 
+                          visible === 0 ? ' \u00B7 Semua posisi berada di luar area Indonesia.' : '');
+        
+        updateAISStatus(statusMsg, 'connected');
+        
+    } catch (error) {
+        const message = error?.message || 'Kesalahan koneksi';
+        const statusMsg = 'AIS belum tersedia: ' + message + 
+                         (message.includes('404') ? ' \u00B7 Endpoint /api/v1/ais/positions belum terpasang pada backend.' : '');
+        updateAISStatus(statusMsg, 'error');
+        console.error('AIS load error:', error);
+    } finally {
+        MQEIP_STATE.aisBusy = false;
+    }
+}
+
+function extractAISRecords(result) {
+    if (Array.isArray(result)) return result;
+    
+    for (const key of ['items', 'positions', 'vessels', 'data', 'results']) {
+        if (result?.[key] && Array.isArray(result[key])) {
+            return result[key];
+        }
+    }
+    
+    throw new Error('Format respons AIS tidak dikenali. Periksa struktur JSON endpoint AIS.');
+}
+
+function createVesselPopup(vessel) {
+    const popup = document.createElement('div');
+    popup.style.minWidth = '200px';
+    
+    const title = document.createElement('strong');
+    title.textContent = vessel.vessel_name ?? vessel.name ?? vessel.ship_name ?? 'Unknown Vessel';
+    title.style.display = 'block';
+    title.style.marginBottom = '8px';
+    title.style.fontSize = '14px';
+    title.style.color = '#f0d69a';
+    popup.appendChild(title);
+    
+    const fields = [
+        ['MMSI', vessel.mmsi],
+        ['IMO', vessel.imo ?? vessel.imo_number],
+        ['Speed', vessel.sog == null ? null : vessel.sog + ' kn'],
+        ['Course', vessel.cog == null ? null : vessel.cog + '\u00B0'],
+        ['Heading', vessel.heading == null ? null : vessel.heading + '\u00B0'],
+        ['Updated', vessel.timestamp ?? vessel.last_updated ?? vessel.updated_at]
+    ];
+    
+    for (const [label, value] of fields) {
+        if (value == null) continue;
+        const line = document.createElement('div');
+        line.textContent = label + ': ' + String(value);
+        line.style.fontSize = '11px';
+        line.style.marginBottom = '3px';
+        line.style.color = '#d9e4f1';
+        popup.appendChild(line);
+    }
+    
+    return popup;
+}
+
+function getIndonesiaBounds() {
+    return L.latLngBounds(
+        [MQEIP_CONFIG.AIS.BOUNDS.SOUTH, MQEIP_CONFIG.AIS.BOUNDS.WEST],
+        [MQEIP_CONFIG.AIS.BOUNDS.NORTH, MQEIP_CONFIG.AIS.BOUNDS.EAST]
+    );
+}
+
+function updateAISStatus(message, type = '') {
+    const statusEl = $('aisLiveStatus');
+    if (!statusEl) return;
+    
+    statusEl.textContent = message;
+    statusEl.className = '';
+    
+    if (type === 'connected') {
+        statusEl.classList.add('connected');
+    } else if (type === 'error') {
+        statusEl.classList.add('error');
+    }
+}
+
+function refreshAIS() {
+    if (MQEIP_STATE.aisMap) {
+        MQEIP_STATE.aisMap.invalidateSize({ pan: false, animate: false });
+    }
+    loadAISData();
+}
+
+function closeAISModal() {
+    $('aisLiveModal')?.classList.add('hidden');
+    stopAISTimer();
+}
+
+function stopAISTimer() {
+    if (MQEIP_STATE.aisTimer) {
+        clearInterval(MQEIP_STATE.aisTimer);
+        MQEIP_STATE.aisTimer = null;
+    }
+}
+
+// Expose reset function for logout
+window.mqeipAisReset = () => {
+    stopAISTimer();
+    if (MQEIP_STATE.aisLayer) {
+        MQEIP_STATE.aisLayer.clearLayers();
+    }
+    updateAISStatus('Sesi berakhir. Silakan login ke MQEIP untuk melihat posisi AIS.');
+};
+
+// ==========================================
+// INITIALIZATION
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('MQEIP Application Initializing...');
+    
+    // Set initial connection state
+    setConnectionState('disconnected', 'Not Connected');
+    
+    // Initialize AIS Tracking
+    initAISTracking();
+    
+    // Setup login form
+    $('mqeipLoginForm')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const username = $('mqeipUsername')?.value.trim();
+        const password = $('mqeipPassword')?.value;
+        
+        const success = await login(username, password);
+        if (success) {
+            $('mqeipLoginModal')?.classList.add('hidden');
+            showToast('Login berhasil. Selamat datang di MQEIP!', 'success');
+        }
+    });
+    
+    // Setup login modal controls
+    $('connectButton')?.addEventListener('click', () => {
+        $('mqeipLoginModal')?.classList.remove('hidden');
+    });
+    
+    $('mqeipLoginCancel')?.addEventListener('click', () => {
+        $('mqeipLoginModal')?.classList.add('hidden');
+        $('mqeipLoginMessage')?.textContent = '';
+    });
+    
+    // Setup navigation
+    document.querySelectorAll('.nav-link[data-page]').forEach(button => {
+        button.addEventListener('click', () => {
+            const page = button.dataset.page;
+            navigateToPage(page);
+        });
+    });
+    
+    // Setup menu toggle
+    $('menuToggle')?.addEventListener('click', () => {
+        const sidebar = $('sidebar');
+        const toggle = $('menuToggle');
+        if (sidebar) {
+            sidebar.classList.toggle('open');
+            if (toggle) {
+                toggle.setAttribute('aria-expanded', sidebar.classList.contains('open'));
+            }
+        }
+    });
+    
+    console.log('MQEIP Application Ready');
+    console.log('Backend URL:', MQEIP_CONFIG.API_BASE_URL);
+    console.log('AIS Endpoint:', MQEIP_CONFIG.ENDPOINTS.AIS_POSITIONS);
+});
+
+function navigateToPage(pageKey) {
+    MQEIP_STATE.currentPage = pageKey;
+    
+    // Update nav links
+    document.querySelectorAll('.nav-link[data-page]').forEach(button => {
+        const isActive = button.dataset.page === pageKey;
+        button.classList.toggle('active', isActive);
+        if (isActive) {
+            button.setAttribute('aria-current', 'page');
+        } else {
+            button.removeAttribute('aria-current');
+        }
+    });
+    
+    // Show/hide sections
+    const dashboard = $('executiveDashboard');
+    const moduleContent = $('moduleContent');
+    
+    if (pageKey === 'executive') {
+        dashboard?.classList.remove('hidden');
+        moduleContent?.classList.add('hidden');
+    } else {
+        dashboard?.classList.add('hidden');
+        moduleContent?.classList.remove('hidden');
+    }
+    
+    // Close sidebar on mobile
+    $('sidebar')?.classList.remove('open');
+    $('menuToggle')?.setAttribute('aria-expanded', 'false');
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 </script>
 </body>
 </html>
