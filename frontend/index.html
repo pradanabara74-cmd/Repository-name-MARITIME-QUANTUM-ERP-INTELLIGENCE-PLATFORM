@@ -147,6 +147,11 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 #aisLiveMap .leaflet-tile{max-width:none!important;max-height:none!important;object-fit:fill!important}
 #aisLiveMap .leaflet-pane{position:absolute}
 @media(max-width:600px){#aisLivePanel{height:90dvh}#aisLiveHeader{padding:10px}#aisLiveStatus{padding:8px 10px}}
+#aisLiveTools{display:flex;align-items:center;gap:12px;padding:0 16px 10px;flex-wrap:wrap}
+#aisLiveSearch{flex:1;min-width:170px;max-width:380px;border:1px solid #53657a;border-radius:8px;background:#091626;color:#edf3fa;padding:10px 12px}
+#aisLiveCount{font-size:12px;color:#95a7bd}
+.ais-ship-icon{background:transparent;border:0}
+.ais-ship-symbol{display:block;width:24px;height:24px;filter:drop-shadow(0 1px 2px #001);transform-origin:center}
 </style>
 </head>
 <body>
@@ -234,7 +239,8 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 <div id="aisLiveModal" class="hidden" role="dialog" aria-modal="true" aria-label="AIS Live Tracking">
   <div id="aisLivePanel">
     <div id="aisLiveHeader"><span>&#9875; MQEIP &mdash; AIS LIVE TRACKING &middot; INDONESIA</span><div><button id="aisLiveRefresh" type="button">&#8635; Refresh</button> <button id="aisLiveClose" type="button">&#10005; Close</button></div></div>
-    <div id="aisLiveStatus" role="status" aria-live="polite">Menunggu koneksi AIS...</div>
+    <div id="aisLiveTools"><input id="aisLiveSearch" type="search" placeholder="Cari nama kapal atau MMSI..." aria-label="Cari kapal berdasarkan nama atau MMSI"><span id="aisLiveCount"></span></div>
+  <div id="aisLiveStatus" role="status" aria-live="polite">Menunggu koneksi AIS...</div>
     <div id="aisLiveMap" aria-label="Peta posisi kapal AIS Indonesia"></div>
   </div>
 </div>
@@ -515,95 +521,95 @@ document.addEventListener("DOMContentLoaded",()=>{
 "use strict";
 /* AIS LIVE TRACKING: memakai token JWT di memori dan helper mqeipApiRequest. */
 (() => {
-  let map = null, vesselLayer = null, refreshTimer = null, busy = false, resizeObserver = null, retryAfter = 0;
-  const el = id => document.getElementById(id);
-  const status = message => { const target=el("aisLiveStatus"); if(target) target.textContent=message; };
-  const bounds = () => L.latLngBounds([[-12,94],[7,142]]);
-  const isOpen = () => Boolean(el("aisLiveModal") && !el("aisLiveModal").classList.contains("hidden"));
-  const extractRecords = result => {
-    if(Array.isArray(result)) return result;
-    for(const value of [result?.items,result?.positions,result?.vessels,result?.data,result?.results,result?.data?.items,result?.data?.positions]) {
-      if(Array.isArray(value)) return value;
-    }
-    throw new Error("Format respons AIS tidak dikenali. Periksa struktur JSON endpoint AIS.");
+  let map=null, vesselLayer=null, refreshTimer=null, busy=false, resizeObserver=null, retryAfter=0;
+  let recordsCache=[], generation=0, lastLoaded=null;
+  const el=id=>document.getElementById(id);
+  const status=message=>{const target=el("aisLiveStatus");if(target)target.textContent=message;};
+  const bounds=()=>L.latLngBounds([[-12,94],[7,142]]);
+  const isOpen=()=>Boolean(el("aisLiveModal")&&!el("aisLiveModal").classList.contains("hidden"));
+  const extractRecords=result=>{
+    if(Array.isArray(result))return result;
+    for(const value of [result?.items,result?.positions,result?.vessels,result?.data,result?.results,result?.data?.items,result?.data?.positions])if(Array.isArray(value))return value;
+    throw new Error("Format respons AIS tidak dikenali. Periksa JSON endpoint AIS.");
   };
-  const resizeMap = () => { if(map && isOpen()) map.invalidateSize({pan:false}); };
-
-  async function loadVessels() {
-    if(busy || !isOpen()) return;
-    if(Date.now()<retryAfter){status("AIS sedang dalam jeda setelah gangguan provider. Coba lagi nanti.");return;}
-    if(!mqeipAccessToken){status("Silakan login ke MQEIP terlebih dahulu. Posisi AIS memerlukan akses backend.");mqeipOpenLogin();return;}
-    if(!map){status("Peta belum siap.");return;}
-    busy=true;
-    status("Mengambil data posisi AIS dari MQEIP Backend...");
-    try {
-      const result=await mqeipApiRequest("/api/v1/ais/positions?limit=200",{timeoutMs:45000});
-      if(!isOpen()||!mqeipAccessToken) return;
-      const records=extractRecords(result);
-      let providerNote="";
-      try {
-        const health=await mqeipApiRequest(MQEIP_AIS_STATUS_ENDPOINT,{timeoutMs:12000});
-        if(health?.connected===false) providerNote=" | AIS provider disconnected"+(health.last_error?": "+String(health.last_error):"");
-        else if(health && records.length===0) providerNote=" | Provider: "+(health.connected===true?"connected, menunggu data":"status "+JSON.stringify(health).slice(0,160));
-      } catch (_) { providerNote=" | Status provider tidak tersedia"; }
-      vesselLayer.clearLayers();
-      let visible=0;
-      const area=bounds();
-      for(const v of records){
-        const lat=Number(v.latitude ?? v.lat ?? v.position?.latitude ?? v.position?.lat);
-        const lon=Number(v.longitude ?? v.lon ?? v.lng ?? v.position?.longitude ?? v.position?.lon);
-        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!area.contains([lat,lon]))continue;
-        const marker=L.circleMarker([lat,lon],{radius:6,color:"#d8b46a",weight:2,fillColor:"#48c7df",fillOpacity:.9});
-        const popup=document.createElement("div");
-        const title=document.createElement("strong");title.textContent=String(v.vessel_name ?? v.name ?? v.ship_name ?? "Unknown Vessel");popup.appendChild(title);
-        for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo ?? v.imo_number],["Speed",v.sog == null ? null : v.sog+" kn"],["Course",v.cog == null ? null : v.cog+"\u00B0"],["Updated",v.timestamp ?? v.last_updated ?? v.updated_at]]){
-          if(value==null)continue;
-          const line=document.createElement("div");line.textContent=label+": "+String(value);popup.appendChild(line);
-        }
-        marker.bindPopup(popup).addTo(vesselLayer);visible++;
+  const resizeMap=()=>{if(map&&isOpen())map.invalidateSize({pan:false});};
+  function renderVessels(){
+    if(!vesselLayer||!map)return;
+    vesselLayer.clearLayers();
+    const term=(el("aisLiveSearch")?.value||"").trim().toLowerCase();
+    const area=bounds();let visible=0;
+    for(const v of recordsCache){
+      const name=String(v.vessel_name??v.name??v.ship_name??"Unknown Vessel");
+      const mmsi=String(v.mmsi??"");
+      if(term&&!name.toLowerCase().includes(term)&&!mmsi.includes(term))continue;
+      const lat=Number(v.latitude??v.lat??v.position?.latitude??v.position?.lat);
+      const lon=Number(v.longitude??v.lon??v.lng??v.position?.longitude??v.position?.lon);
+      if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!area.contains([lat,lon]))continue;
+      const heading=Number(v.heading);
+      const course=Number(v.cog);
+      const direction=Number.isFinite(heading)&&heading>=0&&heading<360?heading:(Number.isFinite(course)&&course>=0&&course<360?course:null);
+      let marker;
+      if(direction!==null){
+        const icon=L.divIcon({className:"ais-ship-icon",iconSize:[24,24],iconAnchor:[12,12],html:'<svg class="ais-ship-symbol" viewBox="0 0 24 24" style="transform:rotate('+direction+'deg)" aria-hidden="true"><path d="M12 1 L20 21 L12 17 L4 21 Z" fill="#48c7df" stroke="#10253b" stroke-width="1.8"/></svg>'});
+        marker=L.marker([lat,lon],{icon});
+      }else marker=L.circleMarker([lat,lon],{radius:6,color:"#d8b46a",weight:2,fillColor:"#48c7df",fillOpacity:.9});
+      const popup=document.createElement("div");
+      const title=document.createElement("strong");title.textContent=name;popup.appendChild(title);
+      for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo??v.imo_number],["SOG",v.sog==null?null:v.sog+" kn"],["COG",v.cog==null?null:v.cog+"掳"],["Heading",v.heading==null?null:v.heading+"掳"],["Latitude",lat.toFixed(5)],["Longitude",lon.toFixed(5)],["AIS UTC",v.time_utc??v.timestamp??v.last_updated??v.updated_at]]){
+        if(value==null)continue;const line=document.createElement("div");line.textContent=label+": "+String(value);popup.appendChild(line);
       }
-      status(visible+" kapal ditampilkan di Indonesia \u00B7 "+records.length+" posisi diterima \u00B7 "+new Date().toLocaleTimeString("id-ID")+(records.length===0?" \u00B7 Sumber AIS belum mengirim posisi.":(visible===0?" \u00B7 Semua posisi berada di luar area Indonesia.":""))+providerNote);
+      marker.bindPopup(popup).addTo(vesselLayer);visible++;
+    }
+    const count=el("aisLiveCount");if(count)count.textContent=visible+" kapal pada peta"+(term?" (hasil pencarian)":"");
+    return visible;
+  }
+  async function loadVessels(){
+    if(busy||!isOpen())return;
+    if(Date.now()<retryAfter){status("AIS dalam jeda setelah pembatasan provider. Coba kembali nanti.");return;}
+    if(!mqeipAccessToken){status("Silakan login MQEIP untuk mengakses AIS.");mqeipOpenLogin();return;}
+    if(!map)return;
+    const requestGeneration=generation;busy=true;status("Mengambil posisi AIS dari MQEIP Backend...");
+    try{
+      const result=await mqeipApiRequest("/api/v1/ais/positions?limit=200",{timeoutMs:45000});
+      if(requestGeneration!==generation||!isOpen()||!mqeipAccessToken)return;
+      recordsCache=extractRecords(result);lastLoaded=new Date();
+      const visible=renderVessels();
+      status(visible+" kapal ditampilkan 路 "+recordsCache.length+" posisi diterima 路 "+lastLoaded.toLocaleTimeString("id-ID")+(recordsCache.length===0?" 路 Belum ada posisi AIS.":""));
       resizeMap();
     }catch(error){
+      if(requestGeneration!==generation||!isOpen())return;
       const message=error?.message||"Kesalahan koneksi";
-      if(error?.status===429 || message.includes("429"))retryAfter=Date.now()+5*60*1000;
-      status("AIS belum tersedia: "+message+(message.includes("429")?" | Batas koneksi AIS provider tercapai. Periksa limit paket, koneksi paralel, dan backoff di backend.":"")+(message.includes("404")?" \u00B7 Endpoint /api/v1/ais/positions belum terpasang pada backend.":""));
+      if(error?.status===429||message.includes("429"))retryAfter=Date.now()+5*60*1000;
+      status("AIS belum tersedia: "+message+(recordsCache.length?" 路 Posisi sebelumnya masih ditampilkan, bukan data terbaru.":""));
     }finally{busy=false;}
   }
-
-  function stopTimer(){ if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;} }
-
+  function stopTimer(){if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;}}
   function openAIS(){
-    el("aisLiveModal").classList.remove("hidden");
-    if(typeof L==="undefined"){status("Pustaka Leaflet gagal dimuat. Periksa akses CDN dan internet.");return;}
+    el("aisLiveModal")?.classList.remove("hidden");
+    if(typeof L==="undefined"){status("Leaflet gagal dimuat. Periksa koneksi CDN.");return;}
     if(!map){
       map=L.map("aisLiveMap",{zoomControl:true,preferCanvas:true}).setView([-2,118],5);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap contributors',maxZoom:18,subdomains:'abc'}).addTo(map);
       vesselLayer=L.layerGroup().addTo(map);
-      if(typeof ResizeObserver!=="undefined"){
-        resizeObserver=new ResizeObserver(()=>resizeMap());
-        resizeObserver.observe(el("aisLiveMap"));
-      }
+      if(typeof ResizeObserver!=="undefined"){resizeObserver=new ResizeObserver(resizeMap);resizeObserver.observe(el("aisLiveMap"));}
     }
     requestAnimationFrame(()=>{resizeMap();requestAnimationFrame(resizeMap);});
     setTimeout(resizeMap,250);setTimeout(resizeMap,700);
-    void loadVessels();
-    stopTimer();
-    refreshTimer=setInterval(()=>void loadVessels(),120000);
+    if(recordsCache.length)renderVessels();
+    void loadVessels();stopTimer();refreshTimer=setInterval(()=>void loadVessels(),120000);
   }
-  function closeAIS(){el("aisLiveModal")?.classList.add("hidden");stopTimer();}
-  window.mqeipAisLoad = () => { if(isOpen()){resizeMap();return loadVessels();} };
-
-  /* Dipanggil mqeipLogout(): hentikan refresh dan kosongkan peta. */
-  window.mqeipAisReset = () => {
-    stopTimer();retryAfter=0;
-    if(vesselLayer) vesselLayer.clearLayers();
-    status("Sesi berakhir. Silakan login ke MQEIP untuk melihat posisi AIS.");
+  function closeAIS(){el("aisLiveModal")?.classList.add("hidden");stopTimer();generation++;}
+  window.mqeipAisLoad=()=>{if(isOpen()){resizeMap();return loadVessels();}};
+  window.mqeipAisReset=()=>{
+    stopTimer();generation++;retryAfter=0;recordsCache=[];lastLoaded=null;
+    if(vesselLayer)vesselLayer.clearLayers();
+    if(el("aisLiveCount"))el("aisLiveCount").textContent="";
+    status("Sesi berakhir. Login kembali untuk melihat posisi AIS.");
   };
-
   el("aisLiveButton")?.addEventListener("click",openAIS);
   el("aisLiveRefresh")?.addEventListener("click",()=>{resizeMap();void loadVessels();});
   el("aisLiveClose")?.addEventListener("click",closeAIS);
+  el("aisLiveSearch")?.addEventListener("input",()=>{if(!isOpen())return;const visible=renderVessels();status(visible+" kapal cocok 路 "+recordsCache.length+" posisi diterima"+(lastLoaded?" 路 Data "+lastLoaded.toLocaleTimeString("id-ID"):""));});
   window.addEventListener("resize",resizeMap);
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&isOpen())closeAIS();});
 })();
