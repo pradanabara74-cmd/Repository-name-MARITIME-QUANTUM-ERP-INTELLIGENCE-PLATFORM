@@ -437,6 +437,7 @@ function mqeipRenderModuleWorkspace(pageKey){
   if(pageKey==="technical"){mqeipRenderPmsWorkspace(container);return;}
   if(pageKey==="hsse"){mqeipRenderHSSEWorkspace(container);return;}
   if(pageKey==="supply"){mqeipRenderSupplyWorkspace(container);return;}
+  if(pageKey==="inventory"){mqeipRenderInventoryWorkspace(container);return;}
   const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
   info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
   const grid=mqeipCreateElement("div","mqeip-workspace-grid");
@@ -491,6 +492,71 @@ function mqeipRenderModuleWorkspace(pageKey){
   refresh.type = "button";
   refresh.addEventListener("click", loadSupply);
   void loadSupply();
+
+    function mqeipRenderInventoryWorkspace(container) {
+  container.replaceChildren();
+
+  const title = mqeipCreateElement(
+    "h3", "", "Inventory & Vessel Stores — Live Intelligence"
+  );
+  const refresh = mqeipCreateElement(
+    "button", "btn btn-outline", "Refresh Inventory"
+  );
+  const status = mqeipCreateElement("p", "", "Loading...");
+  const results = mqeipCreateElement(
+    "div", "mqeip-workspace-data"
+  );
+
+  container.append(title, refresh, status, results);
+
+  async function loadInventory() {
+    status.textContent = "Loading inventory data...";
+    results.replaceChildren();
+
+    try {
+      const [inventory, dashboard] = await Promise.all([
+        mqeipApiRequest("/api/v1/supply-chain/inventory"),
+        mqeipApiRequest("/api/v1/supply-chain/inventory-dashboard")
+      ]);
+
+      const items = Array.isArray(inventory)
+        ? inventory
+        : inventory.items || inventory.inventory || [];
+
+      status.textContent =
+        items.length + " inventory record(s) loaded.";
+
+      const summary = mqeipCreateElement(
+        "div", "mqeip-workspace-card"
+      );
+      const summaryTitle = mqeipCreateElement(
+        "h4", "", "Inventory Dashboard"
+      );
+      const summaryData = document.createElement("pre");
+      summaryData.textContent = JSON.stringify(dashboard, null, 2);
+      summary.append(summaryTitle, summaryData);
+      results.append(summary);
+
+      items.forEach(item => {
+        const card = mqeipCreateElement(
+          "div", "mqeip-workspace-card"
+        );
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(item, null, 2);
+        card.append(pre);
+        results.append(card);
+      });
+
+    } catch (error) {
+      status.textContent =
+        "Inventory API: " + error.message;
+    }
+  }
+
+  refresh.type = "button";
+  refresh.addEventListener("click", loadInventory);
+  void loadInventory();
+}
 }
 const MQEIP_CREW_ENDPOINT="/api/v1/crew";
 let mqeipCrewLoadId=0;
