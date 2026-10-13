@@ -466,7 +466,7 @@ function mqeipRenderModuleWorkspace(pageKey){
     results.replaceChildren();
 
     try {
-      const data = await mqeipApiRequest("/api/v1/supply-chain/rfq");
+      const data = await mqeipApiRequest("/api/v1/supply-chain/rfqs");
       const items = Array.isArray(data)
         ? data
         : data.items || data.rfqs || [];
