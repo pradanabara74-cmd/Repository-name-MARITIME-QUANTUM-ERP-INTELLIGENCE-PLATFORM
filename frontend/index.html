@@ -115,7 +115,7 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 .mqeip-login-actions{display:flex;gap:10px;margin-top:20px}.mqeip-login-actions .btn{flex:1}
 .mqeip-message{font-size:12px;line-height:1.6;margin-top:15px;color:var(--muted);overflow-wrap:anywhere}.mqeip-message.error{color:var(--red)}.mqeip-message.success{color:var(--green)}
 .mqeip-security-note{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.7}
-.mqeip-workspace{display:flex;flex-direction:column;gap:20px;text-align:left}.mqeip-workspace-header{display:flex;align-items:flex-start;gap:16px;padding:18px;background:rgba(216,180,106,.045);border:1px solid var(--border);border-radius:12px}
+.mqeip-workspace{display:flex;flex-direction:column;gap:20px}.mqeip-workspace-header{display:flex;align-items:flex-start;gap:16px;padding:18px;background:rgba(216,180,106,.045);border:1px solid var(--border);border-radius:12px}
 .mqeip-workspace-icon{width:52px;height:52px;flex-shrink:0;display:grid;place-items:center;font-size:25px;color:var(--gold);border-radius:13px;background:rgba(216,180,106,.1)}
 .mqeip-workspace-name{font-size:19px;font-weight:800;color:var(--gold-light);margin-bottom:8px}.mqeip-workspace-description{color:var(--muted);font-size:12px;line-height:1.7}
 .mqeip-workspace-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.mqeip-workspace-card{padding:20px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:12px;min-width:0}
@@ -250,7 +250,7 @@ a{color:inherit;text-decoration:none}.hidden{display:none!important}
 "use strict";
 
 /* Sesuaikan URL ini dengan backend yang sudah di-deploy. */
-const MQEIP_API_BASE = "https://mqeip-backend.onrender.com";
+const MQEIP_API_BASE = "https://repository-name-maritime-quantum-erp-w15p.onrender.com";
 const MQEIP_COMMAND_API = "/api/v1/quantum-command";
 const MQEIP_REQUEST_TIMEOUT = 30000;
 const MQEIP_LOGIN_TIMEOUT = 75000;
@@ -448,115 +448,58 @@ function mqeipRenderModuleWorkspace(pageKey){
   const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
 }
 
-  function mqeipRenderSupplyWorkspace(container) {
+function mqeipRenderSupplyWorkspace(container) {
   container.replaceChildren();
-
-  const title = mqeipCreateElement(
-    "h3", "", "Supply Chain & Procurement — Live Intelligence"
-  );
-  const refresh = mqeipCreateElement(
-    "button", "btn btn-outline", "Refresh Supply Chain"
-  );
+  const title = mqeipCreateElement("h3", "", "Supply Chain & Procurement 鈥� Live Intelligence");
+  const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh Supply Chain");
   const status = mqeipCreateElement("p", "", "Loading...");
   const results = mqeipCreateElement("div", "mqeip-workspace-data");
-
   container.append(title, refresh, status, results);
-
   async function loadSupply() {
     status.textContent = "Loading procurement data...";
     results.replaceChildren();
-
     try {
       const data = await mqeipApiRequest("/api/v1/supply-chain/rfqs");
-      const items = Array.isArray(data)
-        ? data
-        : data.items || data.rfqs || [];
-
-      status.textContent = items.length +
-        " procurement record(s) loaded.";
-
+      const items = Array.isArray(data) ? data : data.items || data.rfqs || [];
+      status.textContent = items.length + " procurement record(s) loaded.";
       items.forEach(item => {
-        const card = mqeipCreateElement(
-          "div", "mqeip-workspace-card"
-        );
+        const card = mqeipCreateElement("div", "mqeip-workspace-card");
         const pre = document.createElement("pre");
         pre.textContent = JSON.stringify(item, null, 2);
-        card.append(pre);
-        results.append(card);
+        card.append(pre); results.append(card);
       });
-    } catch (error) {
-      status.textContent = "Supply Chain API: " + error.message;
-    }
+    } catch (error) { status.textContent = "Supply Chain API: " + error.message; }
   }
-
-  refresh.type = "button";
-  refresh.addEventListener("click", loadSupply);
-  void loadSupply();
-
-    function mqeipRenderInventoryWorkspace(container) {
+  refresh.type = "button"; refresh.addEventListener("click", loadSupply); void loadSupply();
+}
+function mqeipRenderInventoryWorkspace(container) {
   container.replaceChildren();
-
-  const title = mqeipCreateElement(
-    "h3", "", "Inventory & Vessel Stores — Live Intelligence"
-  );
-  const refresh = mqeipCreateElement(
-    "button", "btn btn-outline", "Refresh Inventory"
-  );
+  const title = mqeipCreateElement("h3", "", "Inventory & Vessel Stores 鈥� Live Intelligence");
+  const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh Inventory");
   const status = mqeipCreateElement("p", "", "Loading...");
-  const results = mqeipCreateElement(
-    "div", "mqeip-workspace-data"
-  );
-
+  const results = mqeipCreateElement("div", "mqeip-workspace-data");
   container.append(title, refresh, status, results);
-
   async function loadInventory() {
-    status.textContent = "Loading inventory data...";
-    results.replaceChildren();
-
+    status.textContent = "Loading inventory data..."; results.replaceChildren();
     try {
       const [inventory, dashboard] = await Promise.all([
         mqeipApiRequest("/api/v1/supply-chain/inventory"),
         mqeipApiRequest("/api/v1/supply-chain/inventory-dashboard")
       ]);
-
-      const items = Array.isArray(inventory)
-        ? inventory
-        : inventory.items || inventory.inventory || [];
-
-      status.textContent =
-        items.length + " inventory record(s) loaded.";
-
-      const summary = mqeipCreateElement(
-        "div", "mqeip-workspace-card"
-      );
-      const summaryTitle = mqeipCreateElement(
-        "h4", "", "Inventory Dashboard"
-      );
-      const summaryData = document.createElement("pre");
-      summaryData.textContent = JSON.stringify(dashboard, null, 2);
-      summary.append(summaryTitle, summaryData);
-      results.append(summary);
-
+      const items = Array.isArray(inventory) ? inventory : inventory.items || inventory.inventory || [];
+      status.textContent = items.length + " inventory record(s) loaded.";
+      const summary = mqeipCreateElement("div", "mqeip-workspace-card");
+      const summaryTitle = mqeipCreateElement("h4", "", "Inventory Dashboard");
+      const summaryData = document.createElement("pre"); summaryData.textContent = JSON.stringify(dashboard, null, 2);
+      summary.append(summaryTitle, summaryData); results.append(summary);
       items.forEach(item => {
-        const card = mqeipCreateElement(
-          "div", "mqeip-workspace-card"
-        );
-        const pre = document.createElement("pre");
-        pre.textContent = JSON.stringify(item, null, 2);
-        card.append(pre);
-        results.append(card);
+        const card = mqeipCreateElement("div", "mqeip-workspace-card");
+        const pre = document.createElement("pre"); pre.textContent = JSON.stringify(item, null, 2);
+        card.append(pre); results.append(card);
       });
-
-    } catch (error) {
-      status.textContent =
-        "Inventory API: " + error.message;
-    }
+    } catch (error) { status.textContent = "Inventory API: " + error.message; }
   }
-
-  refresh.type = "button";
-  refresh.addEventListener("click", loadInventory);
-  void loadInventory();
-}
+  refresh.type = "button"; refresh.addEventListener("click", loadInventory); void loadInventory();
 }
 const MQEIP_CREW_ENDPOINT="/api/v1/crew";
 let mqeipCrewLoadId=0;
@@ -574,7 +517,7 @@ function mqeipRenderCrewWorkspace(container){
   const title=mqeipCreateElement("h3","","Crew & Certificates 鈥� Live Records");
   const note=mqeipCreateElement("p","","Authenticated Crew and Certificate data from MQEIP Backend.");note.style.color="var(--muted)";
   const controls=mqeipCreateElement("div","mqeip-workspace-actions");
-  const refresh=mqeipCreateElement("button","btn btn-outline","鈫� Refresh Crew & Certificates");refresh.type="button";refresh.addEventListener("click",mqeipLoadCrew);controls.appendChild(refresh);
+  const refresh=mqeipCreateElement("button","btn btn-outline","Refresh Crew & Certificates");refresh.type="button";refresh.addEventListener("click",mqeipLoadCrew);controls.appendChild(refresh);
   const status=mqeipCreateElement("p","mqeip-message","Awaiting backend data...");status.id="mqeipCrewStatus";status.setAttribute("role","status");
   const summary=mqeipCreateElement("div","mqeip-workspace-grid");
   for(const [id,label] of [["mqeipCrewCount","Crew Records"],["mqeipCertificateCount","Certificates"],["mqeipCertificateValidity","Certificate Status"]]){
@@ -622,186 +565,79 @@ async function mqeipLoadCrew(){
     if(data.total_certificates!=null)mqeipSetText("mqeipCertificateCount",data.total_certificates);
     if(Array.isArray(data.certificates)){
       const counts={};for(const cert of data.certificates){const status=String(cert.certificate_status??cert.status??"UNKNOWN").toUpperCase();counts[status]=(counts[status]||0)+1}
-      mqeipSetText("mqeipCertificateValidity",Object.entries(counts).map(([k,v])=>k+": "+v).join(" 路 ")||"No records");
+      mqeipSetText("mqeipCertificateValidity",Object.entries(counts).map(([k,v])=>k+": "+v).join(" / ")||"No records");
     }
   }
   const errors=results.filter(r=>r.status==="rejected").map(r=>r.reason?.message||"Unknown error");
   mqeipCrewStatus(errors.length?"Partial/failed API retrieval: "+errors.join(" | "):"Crew and Certificate data loaded from backend.",Boolean(errors.length));
 }
-  function mqeipRenderPmsWorkspace(container) {
+function mqeipRenderPmsWorkspace(container) {
   container.replaceChildren();
-
-  const title = mqeipCreateElement("h3", "", "Technical & PMS — Live Intelligence");
+  const title = mqeipCreateElement("h3", "", "Technical & PMS 鈥� Live Intelligence");
   const status = mqeipCreateElement("p", "", "Loading PMS data...");
   const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh PMS");
   const summary = mqeipCreateElement("div", "mqeip-workspace-grid");
   const jobs = mqeipCreateElement("div", "mqeip-workspace-data");
-
   container.append(title, refresh, status, summary, jobs);
-
   async function loadPms() {
-    status.textContent = "Loading PMS data...";
-    summary.replaceChildren();
-    jobs.replaceChildren();
-
+    status.textContent = "Loading PMS data..."; summary.replaceChildren(); jobs.replaceChildren();
     try {
       const data = await mqeipApiRequest("/api/v1/pms/intelligence");
       const items = Array.isArray(data.jobs) ? data.jobs : [];
       const counts = data.summary || {};
-
-      const metrics = [
-        ["Total Jobs", data.total_jobs ?? items.length],
-        ["Normal", counts.NORMAL ?? 0],
-        ["Due Soon", counts["DUE SOON"] ?? 0],
-        ["Overdue", counts.OVERDUE ?? 0],
-        ["Critical", counts.CRITICAL ?? 0]
-      ];
-
+      const metrics = [["Total Jobs", data.total_jobs ?? items.length],["Normal", counts.NORMAL ?? 0],["Due Soon", counts["DUE SOON"] ?? 0],["Overdue", counts.OVERDUE ?? 0],["Critical", counts.CRITICAL ?? 0]];
       for (const [label, value] of metrics) {
         const card = mqeipCreateElement("div", "mqeip-workspace-card");
-        card.append(
-          mqeipCreateElement("div", "mqeip-workspace-card-title", label),
-          mqeipCreateElement("div", "mqeip-workspace-card-value", String(value))
-        );
+        card.append(mqeipCreateElement("div", "mqeip-workspace-card-title", label),mqeipCreateElement("div", "mqeip-workspace-card-value", String(value)));
         summary.appendChild(card);
       }
-
       for (const job of items) {
         const card = mqeipCreateElement("div", "mqeip-workspace-card");
-        const details = [
-          job.job_title || "Maintenance Job",
-          "Status: " + (job.job_status || "Unknown"),
-          "Next Due: " + (job.next_due_date || "-"),
-          "Running Hours: " + (job.next_due_hours ?? "-"),
-          "Responsible: " + (job.responsible_person || "-")
-        ];
-        for (const line of details) {
-          card.appendChild(mqeipCreateElement("p", "", String(line)));
-        }
+        for (const line of [job.job_title || "Maintenance Job","Status: " + (job.job_status || "Unknown"),"Next Due: " + (job.next_due_date || "-"),"Running Hours: " + (job.next_due_hours ?? "-"),"Responsible: " + (job.responsible_person || "-")]) card.appendChild(mqeipCreateElement("p", "", String(line)));
         jobs.appendChild(card);
       }
-
       status.textContent = items.length + " maintenance job(s) loaded from backend.";
-    } catch (error) {
-      status.textContent = "PMS API Error: " + error.message;
-    }
+    } catch (error) { status.textContent = "PMS API Error: " + error.message; }
   }
-
-  refresh.type = "button";
-  refresh.addEventListener("click", loadPms);
-  void loadPms();
+  refresh.type = "button"; refresh.addEventListener("click", loadPms); void loadPms();
 }
-  const MQEIP_HSSE_ENDPOINT = "/api/v1/sms";
-
+const MQEIP_HSSE_ENDPOINT = "/api/v1/sms";
 function mqeipRenderHSSEWorkspace(container) {
   container.replaceChildren();
-
-  const create = (tag, text = "", className = "") =>
-    mqeipCreateElement(tag, className, text);
-
-  const title = create("h3", "HSSE & Compliance — Live Intelligence");
+  const create = (tag, text = "", className = "") => mqeipCreateElement(tag, className, text);
+  const title = create("h3", "HSSE & Compliance 鈥� Live Intelligence");
   const refresh = create("button", "Refresh HSSE", "btn btn-outline");
   const status = create("p", "Loading HSSE data...");
   const summary = create("div", "", "mqeip-workspace-grid");
   const records = create("div", "", "mqeip-workspace-data");
-
-  refresh.type = "button";
-  container.append(title, refresh, status, summary, records);
-
+  refresh.type = "button"; container.append(title, refresh, status, summary, records);
   async function loadHSSE() {
-    status.textContent = "Loading HSSE records...";
-    summary.replaceChildren();
-    records.replaceChildren();
-
+    status.textContent = "Loading HSSE records..."; summary.replaceChildren(); records.replaceChildren();
     try {
       const data = await mqeipApiRequest(MQEIP_HSSE_ENDPOINT);
-
-      const items = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.items)
-          ? data.items
-          : Array.isArray(data?.results)
-            ? data.results
-            : Array.isArray(data?.data)
-              ? data.data
-              : [];
-
-      const counts = {
-        total: items.length,
-        open: 0,
-        closed: 0,
-        overdue: 0
-      };
-
+      const items = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : Array.isArray(data?.results) ? data.results : Array.isArray(data?.data) ? data.data : [];
+      const counts = {total:items.length,open:0,closed:0,overdue:0};
       const today = new Date().toISOString().slice(0, 10);
-
       for (const item of items) {
         const state = String(item.status || "").toLowerCase();
-
         if (state === "open") counts.open++;
         if (["closed", "completed"].includes(state)) counts.closed++;
-
-        if (
-          item.due_date &&
-          item.due_date < today &&
-          !["closed", "completed"].includes(state)
-        ) {
-          counts.overdue++;
-        }
+        if (item.due_date && item.due_date < today && !["closed", "completed"].includes(state)) counts.overdue++;
       }
-
-      const metrics = [
-        ["Total HSSE Records", counts.total],
-        ["Open Findings", counts.open],
-        ["Closed Records", counts.closed],
-        ["Overdue Records", counts.overdue]
-      ];
-
-      for (const [label, value] of metrics) {
+      for (const [label, value] of [["Total HSSE Records",counts.total],["Open Findings",counts.open],["Closed Records",counts.closed],["Overdue Records",counts.overdue]]) {
         const card = create("div", "", "mqeip-workspace-card");
-        card.append(
-          create("div", label, "mqeip-workspace-card-title"),
-          create("div", String(value), "mqeip-workspace-card-value")
-        );
-        summary.appendChild(card);
+        card.append(create("div", label, "mqeip-workspace-card-title"),create("div", String(value), "mqeip-workspace-card-value")); summary.appendChild(card);
       }
-
       for (const item of items) {
         const card = create("div", "", "mqeip-workspace-card");
-
-        const details = [
-          item.title || "HSSE Record",
-          "Vessel: " + (item.vessel_id || "-"),
-          "Category: " + (item.category || "-"),
-          "Status: " + (item.status || "-"),
-          "Responsible: " + (item.responsible_person || "-"),
-          "Due Date: " + (item.due_date || "-"),
-          "Description: " + (item.description || "-")
-        ];
-
-        for (const line of details) {
-          card.appendChild(create("p", String(line)));
-        }
-
+        for (const line of [item.title || "HSSE Record","Vessel: " + (item.vessel_id || "-"),"Category: " + (item.category || "-"),"Status: " + (item.status || "-"),"Responsible: " + (item.responsible_person || "-"),"Due Date: " + (item.due_date || "-"),"Description: " + (item.description || "-")]) card.appendChild(create("p", String(line)));
         records.appendChild(card);
       }
-
-      if (!items.length) {
-        records.appendChild(
-          create("p", "No HSSE records available.")
-        );
-      }
-
-      status.textContent =
-        items.length + " HSSE record(s) loaded from backend.";
-
-    } catch (error) {
-      status.textContent = "HSSE API Error: " + error.message;
-    }
+      if (!items.length) records.appendChild(create("p", "No HSSE records available."));
+      status.textContent = items.length + " HSSE record(s) loaded from backend.";
+    } catch (error) { status.textContent = "HSSE API Error: " + error.message; }
   }
-
-  refresh.addEventListener("click", loadHSSE);
-  void loadHSSE();
+  refresh.addEventListener("click", loadHSSE); void loadHSSE();
 }
 const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
 function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
@@ -876,6 +712,80 @@ document.addEventListener("DOMContentLoaded",()=>{
   mqeipElement("menuToggle")?.addEventListener("click",mqeipToggleSidebar);
   mqeipNavigate("executive");
 });
+</script>
+
+<style>
+.mqeip-ext-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.mqeip-ext-toolbar label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:12px;flex:1;min-width:220px}.mqeip-ext-toolbar input{width:100%;background:#091626;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px}.mqeip-ext-results{max-height:520px;overflow:auto}.mqeip-ext-table{width:100%;border-collapse:collapse;font-size:12px}.mqeip-ext-table th,.mqeip-ext-table td{padding:11px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;max-width:300px;overflow-wrap:anywhere}.mqeip-ext-table th{color:var(--gold-light);position:sticky;top:0;background:#101f34}.mqeip-ext-message{padding:15px;border:1px solid var(--border);border-radius:10px;line-height:1.7;color:var(--muted)}
+</style>
+<script>
+"use strict";
+/* Enterprise module extension. Existing live workspaces, auth and AIS are unchanged. */
+(() => {
+ const modules={
+ analytics:{path:"/api/v1/analytics",columns:["name","type","status","created_at"]},
+ marine:{path:"/api/v1/voyages",columns:["vessel_name","voyage_number","status","departure_port","arrival_port"]},
+ finance:{path:"/api/v1/finance",columns:["reference","description","amount","currency","status"]},
+ commercial:{path:"/api/v1/chartering",columns:["vessel_name","charterer","contract_number","status"]},
+ hr:{path:"/api/v1/hr",columns:["name","department","position","status"]},
+ ai:{path:"/api/v1/ai",columns:["agent_name","task","status"]},
+ optimization:{path:"/api/v1/optimization",columns:["scenario","objective","status"]},
+ twin:{path:"/api/v1/digital-twin",columns:["vessel_name","model","status"]},
+ esg:{path:"/api/v1/esg",columns:["vessel_name","metric","value","period"]},
+ documents:{path:"/api/v1/documents",columns:["name","document_type","version","status"]},
+ workflow:{path:"/api/v1/workflows",columns:["title","approver","status","created_at"]},
+ audit:{path:"/api/v1/audits",columns:["title","finding","severity","status"]},
+ administration:{path:"/api/v1/users",columns:["username","role","tenant_id","status"]}
+ };
+ const original=mqeipRenderModuleWorkspace;
+ const node=(tag,cls,text)=>mqeipCreateElement(tag,cls,text);
+ const readRows=(data)=>{
+   if(Array.isArray(data))return data;
+   if(!data||typeof data!=="object")return [];
+   for(const candidate of [data.items,data.records,data.results,data.data,data.data?.items,data.users,data.documents,data.events])if(Array.isArray(candidate))return candidate;
+   return [];
+ };
+ const pretty=(v)=>v==null?"鈥�":typeof v==="object"?JSON.stringify(v):String(v);
+ const validPath=(p)=>/^\/(?!\/)[a-zA-Z0-9_/?=&.%-]+$/.test(p)&&p.startsWith("/api/v1/")&&!p.includes("..")&&!p.includes("#");
+ let currentRequest=0;
+ function render(key,root){
+  const cfg=modules[key],meta=MQEIP_MODULE_REGISTRY[key];root.replaceChildren();root.className="mqeip-workspace";
+  const header=node("div","mqeip-workspace-header");header.append(node("div","mqeip-workspace-icon",meta.icon));
+  const info=node("div","");info.append(node("div","mqeip-workspace-name",meta.title),node("div","mqeip-workspace-description",meta.description));header.append(info);root.append(header);
+  const note=node("div","mqeip-ext-message","Workspace tersedia. Endpoint awal adalah kandidat konfigurasi, bukan bukti bahwa API backend sudah tersedia. Gunakan path GET yang tercantum di Swagger untuk modul ini. Tidak ada data simulasi.");root.append(note);
+  const toolbar=node("div","mqeip-ext-toolbar");const label=node("label","","API endpoint (GET, same backend)");const input=node("input","");input.type="text";input.value=cfg.path;input.setAttribute("aria-label","API endpoint");label.append(input);
+  const load=node("button","btn btn-gold","Load Live Data"),download=node("button","btn btn-outline","Export JSON"),filter=node("input","");filter.type="search";filter.placeholder="Filter records...";filter.setAttribute("aria-label","Filter loaded records");download.disabled=true;
+  toolbar.append(label,load,download,filter);root.append(toolbar);
+  const status=node("div","mqeip-ext-message","Belum ada permintaan API.");status.setAttribute("role","status");root.append(status);
+  const panel=node("div","panel mqeip-ext-results");root.append(panel);let records=[];
+  function draw(){panel.replaceChildren();const term=filter.value.trim().toLowerCase();const selected=records.filter(r=>JSON.stringify(r).toLowerCase().includes(term));
+   if(!selected.length){panel.append(node("div","empty-state",records.length?"Tidak ada data yang cocok.":"Backend belum mengembalikan records."));return}
+   const keys=[...new Set([...cfg.columns,...selected.slice(0,25).flatMap(r=>r&&typeof r==="object"?Object.keys(r):[])])].slice(0,14);
+   const table=node("table","mqeip-ext-table"),thead=node("thead",""),head=node("tr","");keys.forEach(k=>head.append(node("th","",k.replaceAll("_"," "))));thead.append(head);table.append(thead);
+   const body=node("tbody","");selected.slice(0,200).forEach(r=>{const tr=node("tr","");keys.forEach(k=>tr.append(node("td","",pretty(r?.[k]))));body.append(tr)});table.append(body);panel.append(table);
+   if(selected.length>200)panel.append(node("p","","Displaying first 200 filtered records; export includes all loaded records."));
+  }
+  filter.addEventListener("input",draw);
+  load.addEventListener("click",async()=>{
+   const path=input.value.trim();if(!validPath(path)){status.textContent="Invalid endpoint. Use a relative /api/v1/... GET path.";return}
+   if(!mqeipAccessToken){mqeipOpenLogin();status.textContent="Login required before accessing live data.";return}
+   const version=++currentRequest;load.disabled=true;status.textContent="Loading "+path+" ...";panel.replaceChildren();
+   try{const payload=await mqeipApiRequest(path,{method:"GET"});if(version!==currentRequest||mqeipCurrentPage!==key)return;
+    records=readRows(payload);download.disabled=false;draw();
+    status.textContent=records.length+" record(s) returned by "+path+(records.length?".":". API responded but no recognized list was found; inspect exported JSON.");
+    download.onclick=()=>{const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="MQEIP_"+key+"_API.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+   }catch(err){if(version!==currentRequest||mqeipCurrentPage!==key)return;records=[];download.disabled=true;panel.replaceChildren();status.textContent="API not available or access denied: "+err.message+". Check the endpoint in Swagger; no backend changes were made."}
+   finally{load.disabled=false}
+  });
+  const back=node("button","btn btn-outline","Return to Executive Command");back.addEventListener("click",()=>mqeipNavigate("executive"));root.append(back);
+ }
+ mqeipRenderModuleWorkspace=function(key){
+  if(!modules[key])return original(key);
+  const root=mqeipElement("modulePanelBody");if(root)render(key,root);
+ };
+ const refresh=mqeipElement("refreshButton");
+ // Preserve existing refresh logic; provide a live refresh for extension modules in capture phase.
+ refresh?.addEventListener("click",()=>{if(modules[mqeipCurrentPage])mqeipElement("modulePanelBody")?.querySelector(".btn-gold")?.click()},true);
+})();
 </script>
 
 <script>
