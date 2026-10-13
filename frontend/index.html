@@ -435,6 +435,7 @@ function mqeipRenderModuleWorkspace(pageKey){
   if(pageKey==="fleet"){mqeipRenderFleetWorkspace(container);return}
   if(pageKey==="crew"){mqeipRenderCrewWorkspace(container);return}
   if(pageKey==="technical"){mqeipRenderPmsWorkspace(container);return;}
+  if(pageKey==="hsse"){mqeipRenderHSSEWorkspace(container);return;}
   const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
   info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
   const grid=mqeipCreateElement("div","mqeip-workspace-grid");
@@ -576,6 +577,118 @@ async function mqeipLoadCrew(){
   refresh.type = "button";
   refresh.addEventListener("click", loadPms);
   void loadPms();
+}
+  const MQEIP_HSSE_ENDPOINT = "/api/v1/sms";
+
+function mqeipRenderHSSEWorkspace(container) {
+  container.replaceChildren();
+
+  const create = (tag, text = "", className = "") =>
+    mqeipCreateElement(tag, className, text);
+
+  const title = create("h3", "HSSE & Compliance — Live Intelligence");
+  const refresh = create("button", "Refresh HSSE", "btn btn-outline");
+  const status = create("p", "Loading HSSE data...");
+  const summary = create("div", "", "mqeip-workspace-grid");
+  const records = create("div", "", "mqeip-workspace-data");
+
+  refresh.type = "button";
+  container.append(title, refresh, status, summary, records);
+
+  async function loadHSSE() {
+    status.textContent = "Loading HSSE records...";
+    summary.replaceChildren();
+    records.replaceChildren();
+
+    try {
+      const data = await mqeipApiRequest(MQEIP_HSSE_ENDPOINT);
+
+      const items = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data?.results)
+            ? data.results
+            : Array.isArray(data?.data)
+              ? data.data
+              : [];
+
+      const counts = {
+        total: items.length,
+        open: 0,
+        closed: 0,
+        overdue: 0
+      };
+
+      const today = new Date().toISOString().slice(0, 10);
+
+      for (const item of items) {
+        const state = String(item.status || "").toLowerCase();
+
+        if (state === "open") counts.open++;
+        if (["closed", "completed"].includes(state)) counts.closed++;
+
+        if (
+          item.due_date &&
+          item.due_date < today &&
+          !["closed", "completed"].includes(state)
+        ) {
+          counts.overdue++;
+        }
+      }
+
+      const metrics = [
+        ["Total HSSE Records", counts.total],
+        ["Open Findings", counts.open],
+        ["Closed Records", counts.closed],
+        ["Overdue Records", counts.overdue]
+      ];
+
+      for (const [label, value] of metrics) {
+        const card = create("div", "", "mqeip-workspace-card");
+        card.append(
+          create("div", label, "mqeip-workspace-card-title"),
+          create("div", String(value), "mqeip-workspace-card-value")
+        );
+        summary.appendChild(card);
+      }
+
+      for (const item of items) {
+        const card = create("div", "", "mqeip-workspace-card");
+
+        const details = [
+          item.title || "HSSE Record",
+          "Vessel: " + (item.vessel_id || "-"),
+          "Category: " + (item.category || "-"),
+          "Status: " + (item.status || "-"),
+          "Responsible: " + (item.responsible_person || "-"),
+          "Due Date: " + (item.due_date || "-"),
+          "Description: " + (item.description || "-")
+        ];
+
+        for (const line of details) {
+          card.appendChild(create("p", String(line)));
+        }
+
+        records.appendChild(card);
+      }
+
+      if (!items.length) {
+        records.appendChild(
+          create("p", "No HSSE records available.")
+        );
+      }
+
+      status.textContent =
+        items.length + " HSSE record(s) loaded from backend.";
+
+    } catch (error) {
+      status.textContent = "HSSE API Error: " + error.message;
+    }
+  }
+
+  refresh.addEventListener("click", loadHSSE);
+  void loadHSSE();
 }
 const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
 function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
