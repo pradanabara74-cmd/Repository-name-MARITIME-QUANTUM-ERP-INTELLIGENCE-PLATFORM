@@ -434,6 +434,7 @@ function mqeipRenderModuleWorkspace(pageKey){
   container.replaceChildren();container.className="mqeip-workspace";
   if(pageKey==="fleet"){mqeipRenderFleetWorkspace(container);return}
   if(pageKey==="crew"){mqeipRenderCrewWorkspace(container);return}
+  if(pageKey==="technical"){mqeipRenderPmsWorkspace(container);return;}
   const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
   info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
   const grid=mqeipCreateElement("div","mqeip-workspace-grid");
@@ -512,6 +513,69 @@ async function mqeipLoadCrew(){
   }
   const errors=results.filter(r=>r.status==="rejected").map(r=>r.reason?.message||"Unknown error");
   mqeipCrewStatus(errors.length?"Partial/failed API retrieval: "+errors.join(" | "):"Crew and Certificate data loaded from backend.",Boolean(errors.length));
+}
+  function mqeipRenderPmsWorkspace(container) {
+  container.replaceChildren();
+
+  const title = mqeipCreateElement("h3", "", "Technical & PMS — Live Intelligence");
+  const status = mqeipCreateElement("p", "", "Loading PMS data...");
+  const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh PMS");
+  const summary = mqeipCreateElement("div", "mqeip-workspace-grid");
+  const jobs = mqeipCreateElement("div", "mqeip-workspace-data");
+
+  container.append(title, refresh, status, summary, jobs);
+
+  async function loadPms() {
+    status.textContent = "Loading PMS data...";
+    summary.replaceChildren();
+    jobs.replaceChildren();
+
+    try {
+      const data = await mqeipApiRequest("/api/v1/pms/intelligence");
+      const items = Array.isArray(data.jobs) ? data.jobs : [];
+      const counts = data.summary || {};
+
+      const metrics = [
+        ["Total Jobs", data.total_jobs ?? items.length],
+        ["Normal", counts.NORMAL ?? 0],
+        ["Due Soon", counts["DUE SOON"] ?? 0],
+        ["Overdue", counts.OVERDUE ?? 0],
+        ["Critical", counts.CRITICAL ?? 0]
+      ];
+
+      for (const [label, value] of metrics) {
+        const card = mqeipCreateElement("div", "mqeip-workspace-card");
+        card.append(
+          mqeipCreateElement("div", "mqeip-workspace-card-title", label),
+          mqeipCreateElement("div", "mqeip-workspace-card-value", String(value))
+        );
+        summary.appendChild(card);
+      }
+
+      for (const job of items) {
+        const card = mqeipCreateElement("div", "mqeip-workspace-card");
+        const details = [
+          job.job_title || "Maintenance Job",
+          "Status: " + (job.job_status || "Unknown"),
+          "Next Due: " + (job.next_due_date || "-"),
+          "Running Hours: " + (job.next_due_hours ?? "-"),
+          "Responsible: " + (job.responsible_person || "-")
+        ];
+        for (const line of details) {
+          card.appendChild(mqeipCreateElement("p", "", String(line)));
+        }
+        jobs.appendChild(card);
+      }
+
+      status.textContent = items.length + " maintenance job(s) loaded from backend.";
+    } catch (error) {
+      status.textContent = "PMS API Error: " + error.message;
+    }
+  }
+
+  refresh.type = "button";
+  refresh.addEventListener("click", loadPms);
+  void loadPms();
 }
 const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
 function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
