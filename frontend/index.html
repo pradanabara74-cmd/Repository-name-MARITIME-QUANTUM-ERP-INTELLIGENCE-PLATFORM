@@ -545,8 +545,23 @@ document.addEventListener("DOMContentLoaded",()=>{
         resizeObserver.observe(el("aisLiveMap"));
       }
     }
-    requestAnimationFrame(()=>{resizeMap();requestAnimationFrame(resizeMap);});
-    setTimeout(resizeMap,250);setTimeout(resizeMap,700);
+    requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        resizeMap();
+        map.invalidateSize({ pan: false, animate: false });
+    });
+});
+
+[250, 700, 1500, 2500].forEach(delay => {
+    setTimeout(() => {
+        if (map && isOpen()) {
+            map.invalidateSize({
+                pan: false,
+                animate: false
+            });
+        }
+    }, delay);
+});
     void loadVessels();
     stopTimer();
     refreshTimer=setInterval(()=>void loadVessels(),120000);
