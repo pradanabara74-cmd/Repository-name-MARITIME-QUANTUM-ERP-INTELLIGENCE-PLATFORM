@@ -433,6 +433,7 @@ function mqeipRenderModuleWorkspace(pageKey){
   const module=MQEIP_MODULE_REGISTRY[pageKey],container=mqeipElement("modulePanelBody");if(!module||!container)return;
   container.replaceChildren();container.className="mqeip-workspace";
   if(pageKey==="fleet"){mqeipRenderFleetWorkspace(container);return}
+  if(pageKey==="crew"){mqeipRenderCrewWorkspace(container);return}
   const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
   info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
   const grid=mqeipCreateElement("div","mqeip-workspace-grid");
@@ -441,6 +442,76 @@ function mqeipRenderModuleWorkspace(pageKey){
   const actions=mqeipCreateElement("div","mqeip-workspace-actions"),back=mqeipCreateElement("button","btn btn-outline","Return to Executive Command");back.type="button";back.addEventListener("click",()=>mqeipNavigate("executive"));actions.appendChild(back);
   if(pageKey==="quantum"){const load=mqeipCreateElement("button","btn btn-gold","Load Command Intelligence");load.type="button";load.addEventListener("click",mqeipLoadQuantumWorkspace);actions.appendChild(load)}container.appendChild(actions);
   const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
+}
+const MQEIP_CREW_ENDPOINT="/api/v1/crew";
+let mqeipCrewLoadId=0;
+function mqeipCrewRecords(payload){
+  if(Array.isArray(payload))return payload;
+  for(const key of ["crew","crew_members","items","results","data"]){if(Array.isArray(payload?.[key]))return payload[key]}
+  throw new Error("Unexpected Crew API response format.");
+}
+function mqeipCrewStatus(message,error=false){
+  const el=mqeipElement("mqeipCrewStatus");if(el){el.textContent=message;el.style.color=error?"var(--red)":"var(--muted)"}
+}
+function mqeipCrewCell(row,value){row.appendChild(mqeipCreateElement("td","",String(value??DASH)))}
+function mqeipRenderCrewWorkspace(container){
+  container.replaceChildren();
+  const title=mqeipCreateElement("h3","","Crew & Certificates 鈥� Live Records");
+  const note=mqeipCreateElement("p","","Authenticated Crew and Certificate data from MQEIP Backend.");note.style.color="var(--muted)";
+  const controls=mqeipCreateElement("div","mqeip-workspace-actions");
+  const refresh=mqeipCreateElement("button","btn btn-outline","鈫� Refresh Crew & Certificates");refresh.type="button";refresh.addEventListener("click",mqeipLoadCrew);controls.appendChild(refresh);
+  const status=mqeipCreateElement("p","mqeip-message","Awaiting backend data...");status.id="mqeipCrewStatus";status.setAttribute("role","status");
+  const summary=mqeipCreateElement("div","mqeip-workspace-grid");
+  for(const [id,label] of [["mqeipCrewCount","Crew Records"],["mqeipCertificateCount","Certificates"],["mqeipCertificateValidity","Certificate Status"]]){
+    const card=mqeipCreateElement("div","mqeip-workspace-card");card.append(mqeipCreateElement("div","mqeip-workspace-card-title",label));
+    const value=mqeipCreateElement("div","mqeip-workspace-card-value",DASH);value.id=id;card.appendChild(value);summary.appendChild(card);
+  }
+  const wrap=mqeipCreateElement("div","table-wrap"),table=mqeipCreateElement("table","data-table"),head=document.createElement("thead"),hr=document.createElement("tr");
+  ["Crew Name","Employee ID","Rank","Vessel","Status","Certificates"].forEach(t=>hr.appendChild(mqeipCreateElement("th","",t)));head.appendChild(hr);
+  const body=document.createElement("tbody");body.id="mqeipCrewTableBody";table.append(head,body);wrap.appendChild(table);
+  const detail=mqeipCreateElement("div","mqeip-workspace-data","Select View Certificates to retrieve a crew member's certificates.");detail.id="mqeipCrewDetail";
+  container.append(title,note,controls,status,summary,wrap,detail);void mqeipLoadCrew();
+}
+async function mqeipLoadCrew(){
+  const id=++mqeipCrewLoadId,body=mqeipElement("mqeipCrewTableBody");if(!body||mqeipCurrentPage!=="crew")return;
+  body.replaceChildren();["mqeipCrewCount","mqeipCertificateCount","mqeipCertificateValidity"].forEach(k=>mqeipSetText(k,DASH));
+  if(!mqeipAccessToken){mqeipCrewStatus("Secure login required.");mqeipOpenLogin();return}
+  mqeipCrewStatus("Loading live Crew and Certificate records...");
+  const results=await Promise.allSettled([mqeipApiRequest(MQEIP_CREW_ENDPOINT),mqeipApiRequest(MQEIP_CREW_ENDPOINT+"/intelligence/certificates")]);
+  if(id!==mqeipCrewLoadId||mqeipCurrentPage!=="crew"||body!==mqeipElement("mqeipCrewTableBody"))return;
+  if(results[0].status==="fulfilled"){
+    try{
+      const records=mqeipCrewRecords(results[0].value);mqeipSetText("mqeipCrewCount",records.length);
+      if(!records.length){const row=document.createElement("tr"),cell=mqeipCreateElement("td","","No crew records returned.");cell.colSpan=6;row.appendChild(cell);body.appendChild(row)}
+      for(const crew of records){
+        const row=document.createElement("tr");
+        [crew.crew_name??crew.name,crew.employee_id,crew.rank,crew.vessel_name??crew.vessel_id,crew.status].forEach(v=>mqeipCrewCell(row,v));
+        const action=document.createElement("td"),crewId=crew.id??crew.crew_id;
+        if(crewId){const btn=mqeipCreateElement("button","btn btn-outline","View Certificates");btn.type="button";btn.addEventListener("click",async()=>{
+          const detail=mqeipElement("mqeipCrewDetail");if(!detail)return;detail.textContent="Loading certificates...";btn.disabled=true;
+          try{const result=await mqeipApiRequest(MQEIP_CREW_ENDPOINT+"/"+encodeURIComponent(String(crewId))+"/certificates");
+            if(mqeipCurrentPage!=="crew"||detail!==mqeipElement("mqeipCrewDetail"))return;
+            const certs=Array.isArray(result)?result:(result?.certificates??result?.items??result?.data);
+            if(!Array.isArray(certs))throw new Error("Unexpected certificate list response.");
+            detail.replaceChildren();detail.appendChild(mqeipCreateElement("h4","","Certificates 鈥� "+String(crew.crew_name??crew.name??crewId)));
+            if(!certs.length)detail.appendChild(mqeipCreateElement("p","","No certificates recorded."));
+            for(const cert of certs){const line=mqeipCreateElement("p","",[cert.certificate_type??cert.name,cert.certificate_number,cert.expiry_date,cert.certificate_status??cert.status].filter(v=>v!=null&&v!=="").join(" | "));detail.appendChild(line)}
+          }catch(error){detail.textContent="Certificate retrieval failed: "+error.message}finally{btn.disabled=false}
+        });action.appendChild(btn)}else action.textContent="No crew ID";
+        row.appendChild(action);body.appendChild(row);
+      }
+    }catch(error){mqeipCrewStatus("Crew data error: "+error.message,true)}
+  }
+  const intel=results[1];if(intel.status==="fulfilled"){
+    const data=intel.value||{};
+    if(data.total_certificates!=null)mqeipSetText("mqeipCertificateCount",data.total_certificates);
+    if(Array.isArray(data.certificates)){
+      const counts={};for(const cert of data.certificates){const status=String(cert.certificate_status??cert.status??"UNKNOWN").toUpperCase();counts[status]=(counts[status]||0)+1}
+      mqeipSetText("mqeipCertificateValidity",Object.entries(counts).map(([k,v])=>k+": "+v).join(" 路 ")||"No records");
+    }
+  }
+  const errors=results.filter(r=>r.status==="rejected").map(r=>r.reason?.message||"Unknown error");
+  mqeipCrewStatus(errors.length?"Partial/failed API retrieval: "+errors.join(" | "):"Crew and Certificate data loaded from backend.",Boolean(errors.length));
 }
 const MQEIP_FLEET_ENDPOINT="/api/v1/fleet";
 function mqeipFleetNode(tag,text,className=""){return mqeipCreateElement(tag,className,text)}
@@ -509,7 +580,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   mqeipSetConnection("disconnected","Not Connected");mqeipCreateSessionControls();mqeipValidateApplication();
   mqeipElement("connectButton")?.addEventListener("click",mqeipOpenLogin);
   mqeipElement("mqeipLoginCancel")?.addEventListener("click",mqeipCloseLogin);
-  mqeipElement("refreshButton")?.addEventListener("click",()=>{if(mqeipCurrentPage==="fleet")void mqeipLoadFleet();else if(mqeipCurrentPage==="quantum")void mqeipLoadQuantumWorkspace();else if(mqeipCurrentPage==="executive")void mqeipLoadExecutiveDashboard();else mqeipShowToast("API untuk modul ini belum dikonfigurasi.","error")});
+  mqeipElement("refreshButton")?.addEventListener("click",()=>{if(mqeipCurrentPage==="fleet")void mqeipLoadFleet();else if(mqeipCurrentPage==="crew")void mqeipLoadCrew();else if(mqeipCurrentPage==="quantum")void mqeipLoadQuantumWorkspace();else if(mqeipCurrentPage==="executive")void mqeipLoadExecutiveDashboard();else mqeipShowToast("API untuk modul ini belum dikonfigurasi.","error")});
   mqeipElement("mqeipLoginForm")?.addEventListener("submit",async event=>{event.preventDefault();const username=mqeipElement("mqeipUsername")?.value.trim(),password=mqeipElement("mqeipPassword")?.value;if(!username||!password){mqeipSetLoginMessage("Username dan password wajib diisi.","error");return}const ok=await mqeipLogin(username,password);if(ok){mqeipCloseLogin();mqeipShowToast("Login berhasil.","success");await mqeipLoadExecutiveDashboard()}});
   document.querySelectorAll(".nav-link[data-page]").forEach(button=>button.addEventListener("click",()=>mqeipNavigate(button.dataset.page)));
   mqeipElement("menuToggle")?.addEventListener("click",mqeipToggleSidebar);
