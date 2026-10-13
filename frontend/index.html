@@ -436,6 +436,7 @@ function mqeipRenderModuleWorkspace(pageKey){
   if(pageKey==="crew"){mqeipRenderCrewWorkspace(container);return}
   if(pageKey==="technical"){mqeipRenderPmsWorkspace(container);return;}
   if(pageKey==="hsse"){mqeipRenderHSSEWorkspace(container);return;}
+  if(pageKey==="supply"){mqeipRenderSupplyWorkspace(container);return;}
   const header=mqeipCreateElement("div","mqeip-workspace-header"),icon=mqeipCreateElement("div","mqeip-workspace-icon",module.icon),info=document.createElement("div");
   info.append(mqeipCreateElement("div","mqeip-workspace-name",module.title),mqeipCreateElement("div","mqeip-workspace-description",module.description));header.append(icon,info);container.appendChild(header);
   const grid=mqeipCreateElement("div","mqeip-workspace-grid");
@@ -444,6 +445,52 @@ function mqeipRenderModuleWorkspace(pageKey){
   const actions=mqeipCreateElement("div","mqeip-workspace-actions"),back=mqeipCreateElement("button","btn btn-outline","Return to Executive Command");back.type="button";back.addEventListener("click",()=>mqeipNavigate("executive"));actions.appendChild(back);
   if(pageKey==="quantum"){const load=mqeipCreateElement("button","btn btn-gold","Load Command Intelligence");load.type="button";load.addEventListener("click",mqeipLoadQuantumWorkspace);actions.appendChild(load)}container.appendChild(actions);
   const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
+}
+
+  function mqeipRenderSupplyWorkspace(container) {
+  container.replaceChildren();
+
+  const title = mqeipCreateElement(
+    "h3", "", "Supply Chain & Procurement — Live Intelligence"
+  );
+  const refresh = mqeipCreateElement(
+    "button", "btn btn-outline", "Refresh Supply Chain"
+  );
+  const status = mqeipCreateElement("p", "", "Loading...");
+  const results = mqeipCreateElement("div", "mqeip-workspace-data");
+
+  container.append(title, refresh, status, results);
+
+  async function loadSupply() {
+    status.textContent = "Loading procurement data...";
+    results.replaceChildren();
+
+    try {
+      const data = await mqeipApiRequest("/api/v1/supply-chain/rfq");
+      const items = Array.isArray(data)
+        ? data
+        : data.items || data.rfqs || [];
+
+      status.textContent = items.length +
+        " procurement record(s) loaded.";
+
+      items.forEach(item => {
+        const card = mqeipCreateElement(
+          "div", "mqeip-workspace-card"
+        );
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(item, null, 2);
+        card.append(pre);
+        results.append(card);
+      });
+    } catch (error) {
+      status.textContent = "Supply Chain API: " + error.message;
+    }
+  }
+
+  refresh.type = "button";
+  refresh.addEventListener("click", loadSupply);
+  void loadSupply();
 }
 const MQEIP_CREW_ENDPOINT="/api/v1/crew";
 let mqeipCrewLoadId=0;
