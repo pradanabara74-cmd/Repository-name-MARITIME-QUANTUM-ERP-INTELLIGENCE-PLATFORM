@@ -50,6 +50,28 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _retry_after_from_exception(exc: BaseException) -> int | None:
+    """Read an upstream Retry-After header when the WebSocket library exposes it."""
+    candidates = [
+        getattr(exc, "response", None),
+        getattr(exc, "handshake_response", None),
+    ]
+    for response in candidates:
+        headers = getattr(response, "headers", None)
+        if headers is None:
+            continue
+        try:
+            value = headers.get("Retry-After") or headers.get("retry-after")
+            if value is not None:
+                # AISStream commonly returns a numeric number of seconds.
+                seconds = int(float(str(value).strip()))
+                if seconds >= 0:
+                    return min(seconds, 24 * 60 * 60)
+        except (TypeError, ValueError, OverflowError):
+            continue
+    return None
+
+
 def _parse_bbox() -> list[list[list[float]]]:
     raw = os.getenv("AISSTREAM_BBOX", "").strip()
 
@@ -154,7 +176,8 @@ def _store(message: dict[str, Any]) -> None:
         longitude = float(longitude)
 
         if not (
-            math.isfinite(latitude) and math.isfinite(longitude)
+            math.isfinite(latitude)
+            and math.isfinite(longitude)
             and -90 <= latitude <= 90
             and -180 <= longitude <= 180
         ):
@@ -277,9 +300,10 @@ async def stream_ais() -> None:
             # Never bypass an upstream 429 cooldown, including after a
             # previous successful session or a clean WebSocket close.
             remaining = rate_limit_until - time.monotonic()
-            if remaining > 0:
+            while remaining > 0:
                 _status["retry_after_seconds"] = int(math.ceil(remaining))
-                await asyncio.sleep(remaining)
+                await asyncio.sleep(min(remaining, 30))
+                remaining = rate_limit_until - time.monotonic()
             _status["retry_after_seconds"] = None
 
             previous_messages = _status["messages_received"]
@@ -302,16 +326,25 @@ async def stream_ais() -> None:
                     or "rate limit" in error_lower
                     or "too many requests" in error_lower
                 )
+
                 if rate_limited_this_attempt:
                     rate_limit_count += 1
-                    cooldown = min(
-                        RATE_LIMIT_COOLDOWN * (2 ** min(rate_limit_count - 1, 3)),
+                    retry_after = _retry_after_from_exception(exc)
+                    exponential_cooldown = min(
+                        RATE_LIMIT_COOLDOWN
+                        * (2 ** min(rate_limit_count - 1, 3)),
                         RATE_LIMIT_MAX_COOLDOWN,
                     )
+                    # Respect a valid Retry-After header. If absent, use a
+                    # conservative exponential cooldown; never retry immediately.
+                    cooldown = retry_after if retry_after is not None else exponential_cooldown
+                    cooldown = max(1, cooldown)
                     rate_limit_until = max(
-                        rate_limit_until, time.monotonic() + cooldown
+                        rate_limit_until,
+                        time.monotonic() + cooldown,
                     )
                     _status["rate_limited"] = True
+                    _status["retry_after_seconds"] = cooldown
                     logger.warning(
                         "AISStream HTTP 429: pausing new connections for %s seconds",
                         cooldown,
@@ -321,6 +354,7 @@ async def stream_ais() -> None:
                 _status["connected"] = False
 
             _status["reconnects"] += 1
+
             if rate_limited_this_attempt:
                 # Cooldown is applied at the top of the next iteration.
                 continue
@@ -329,6 +363,7 @@ async def stream_ais() -> None:
                 backoff = 5.0
                 rate_limit_count = 0
                 _status["rate_limited"] = False
+
             delay = min(backoff + random.uniform(0, 5), MAX_BACKOFF)
             _status["retry_after_seconds"] = int(math.ceil(delay))
             logger.info("AIS reconnect after %.1f seconds", delay)
