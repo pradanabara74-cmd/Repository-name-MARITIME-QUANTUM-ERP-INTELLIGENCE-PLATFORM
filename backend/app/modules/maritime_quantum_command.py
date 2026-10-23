@@ -15,6 +15,7 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
+    Request,
     status,
 )
 
@@ -1450,8 +1451,68 @@ def command_create_snapshot( payload: CommandSnapshotCreate, identity: TokenIden
     }
 
 
+def command_discover_erp_api_modules(app):
+    """
+    Discover which ERP API modules are registered in the running FastAPI app.
+    This checks route registration only; it does not claim that module data
+    is connected or synchronized.
+    """
+    module_aliases = {
+        "fleet": ("fleet",),
+        "marine_operations": ("marine_operations", "marine-operations", "marine operations"),
+        "technical": ("technical",),
+        "crew": ("crew",),
+        "finance": ("finance",),
+        "supply_chain": ("supply_chain", "supply-chain", "supply chain"),
+        "inventory": ("inventory",),
+        "commercial": ("commercial",),
+        "hsse": ("hsse",),
+        "compliance": ("compliance",),
+        "legal": ("legal",),
+        "audit": ("audit",),
+        "esg": ("esg",),
+        "ai_intelligence": ("ai_intelligence", "ai-intelligence", "ai intelligence"),
+        "quantum_optimization": ("quantum_optimization", "quantum-optimization", "quantum optimization"),
+        "digital_twin": ("digital_twin", "digital-twin", "digital twin"),
+    }
+
+    routes = []
+    for route in getattr(app, "routes", []):
+        path = str(getattr(route, "path", "") or "")
+        tags = getattr(route, "tags", []) or []
+        methods = sorted(
+            method for method in (getattr(route, "methods", set()) or set())
+            if method not in {"HEAD", "OPTIONS"}
+        )
+        searchable = (path + " " + " ".join(str(tag) for tag in tags)).lower()
+        if path.startswith("/api/v1/") and methods:
+            routes.append({
+                "path": path,
+                "methods": methods,
+                "searchable": searchable,
+            })
+
+    discovered = {}
+    for module, aliases in module_aliases.items():
+        matches = [
+            route for route in routes
+            if any(alias in route["searchable"] for alias in aliases)
+        ]
+        discovered[module] = {
+            "api_routes_detected": bool(matches),
+            "route_count": len(matches),
+            "sample_paths": sorted({route["path"] for route in matches})[:3],
+            "data_integration": "not_verified",
+        }
+
+    return discovered
+
+
 @router.get( "/enterprise-data-status", summary="Enterprise Data Status and Command Module Connectivity", )
-def command_enterprise_data_status( identity: TokenIdentity = Depends(verify_access_token), ):
+def command_enterprise_data_status(
+    request: Request,
+    identity: TokenIdentity = Depends(verify_access_token),
+):
     """Report real connectivity for this module; do not fake ERP status."""
     command_require_executive(identity)
     tenant_id = command_get_tenant(identity)
@@ -1476,6 +1537,12 @@ def command_enterprise_data_status( identity: TokenIdentity = Depends(verify_acc
         "api_connection": "online",
         # This file can verify only its own command tables, not all ERP modules.
         "erp_module_integration": "not_verified",
+        "erp_api_modules": command_discover_erp_api_modules(request.app),
+        "integration_note": (
+            "API route detection confirms registration only. "
+            "Operational data integration remains unverified until each ERP "
+            "module exposes and passes a tenant-scoped data integration test."
+        ),
         "tenant_id": tenant_id,
         "data": {
             "command_events": int(counts["command_events"]),
