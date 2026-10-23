@@ -446,6 +446,7 @@ function mqeipRenderModuleWorkspace(pageKey){
   const actions=mqeipCreateElement("div","mqeip-workspace-actions"),back=mqeipCreateElement("button","btn btn-outline","Return to Executive Command");back.type="button";back.addEventListener("click",()=>mqeipNavigate("executive"));actions.appendChild(back);
   if(pageKey==="quantum"){const load=mqeipCreateElement("button","btn btn-gold","Load Command Intelligence");load.type="button";load.addEventListener("click",mqeipLoadQuantumWorkspace);actions.appendChild(load)}container.appendChild(actions);
   const data=mqeipCreateElement("div","mqeip-workspace-data","Dedicated module intelligence will appear here when the corresponding authenticated API connection is implemented.");data.id="mqeipWorkspaceData";container.appendChild(data);
+  if(pageKey==="quantum")void mqeipLoadQuantumWorkspace();
 }
 
 function mqeipRenderSupplyWorkspace(container) {
@@ -668,46 +669,130 @@ async function mqeipLoadFleet(){
       row.appendChild(action);body.appendChild(row)}mqeipFleetMessage(records.length+" vessel(s) loaded from backend.")
   }catch(error){if(loadId===mqeipFleetLoadId&&mqeipCurrentPage==="fleet")mqeipFleetMessage("Unable to load Fleet: "+error.message,true)}
 }
+function mqeipAppendQuantumValue(parent, label, value, depth=0) {
+  const row = document.createElement("div");
+  row.className = "mqeip-workspace-data";
+  if (value === null || value === undefined || value === "") {
+    row.textContent = label + ": Unavailable";
+  } else if (Array.isArray(value)) {
+    const title = document.createElement("h4");
+    title.textContent = label + " (" + value.length + ")";
+    row.appendChild(title);
+    if (!value.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No records returned by backend.";
+      row.appendChild(empty);
+    } else {
+      const list = document.createElement("ul");
+      value.forEach((item, index) => {
+        const li = document.createElement("li");
+        if (item && typeof item === "object") {
+          const nested = document.createElement("div");
+          mqeipAppendQuantumValue(nested, label + " #" + (index + 1), item, depth + 1);
+          li.appendChild(nested);
+        } else {
+          li.textContent = String(item);
+        }
+        list.appendChild(li);
+      });
+      row.appendChild(list);
+    }
+  } else if (typeof value === "object") {
+    const title = document.createElement("h4");
+    title.textContent = label;
+    row.appendChild(title);
+    const list = document.createElement("ul");
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      const li = document.createElement("li");
+      li.textContent = "Empty object returned by backend.";
+      list.appendChild(li);
+    } else {
+      entries.forEach(([key, child]) => {
+        const li = document.createElement("li");
+        if (child && typeof child === "object" && depth < 4) {
+          const nested = document.createElement("div");
+          mqeipAppendQuantumValue(nested, key, child, depth + 1);
+          li.appendChild(nested);
+        } else {
+          li.textContent = key + ": " + (child === null || child === undefined ? "Unavailable" : String(child));
+        }
+        list.appendChild(li);
+      });
+    }
+    row.appendChild(list);
+  } else {
+    row.textContent = label + ": " + String(value);
+  }
+  parent.appendChild(row);
+}
+
 async function mqeipLoadQuantumWorkspace(){
   if(mqeipCurrentPage!=="quantum")return;
   if(!mqeipAccessToken){mqeipOpenLogin();return;}
   const target=mqeipElement("mqeipWorkspaceData");
   if(!target)return;
   target.replaceChildren();
-  target.textContent="Mengambil status Quantum Command dari backend...";
+  const loading=document.createElement("p");
+  loading.textContent="Mengambil status dan payload Quantum Command dari backend...";
+  target.appendChild(loading);
   try{
-    /* Endpoint ini terkonfirmasi tersedia pada Swagger: GET /api/v1/quantum-command/enterprise-data-status */
     const data=await mqeipApiRequest(MQEIP_COMMAND_API+"/enterprise-data-status",{method:"GET"});
     if(mqeipCurrentPage!=="quantum"||target!==mqeipElement("mqeipWorkspaceData")||!mqeipAccessToken)return;
-    const heading=mqeipCreateElement("h4","","Quantum Command 鈥� Live Backend Status");
-    const list=document.createElement("ul");
-    const values=[
-      ["Status",data.status],
-      ["Module",data.module],
-      ["API Connection",data.api_connection],
-      ["ERP Module Integration",data.erp_module_integration],
-      ["Tenant",data.tenant_id],
-      ["Command Events",data.data?.command_events],
-      ["Executive Notes",data.data?.executive_notes],
-      ["Snapshots",data.data?.snapshots],
-      ["Checked At",data.checked_at]
+    target.replaceChildren();
+    const heading=mqeipCreateElement("h4","","Quantum Command 鈥� Live Backend Response");
+    target.appendChild(heading);
+    const statusBox=document.createElement("div");
+    statusBox.className="mqeip-workspace-status";
+    statusBox.textContent="Status endpoint berhasil dibaca. Data yang tampil di bawah ini berasal langsung dari respons backend; bagian yang tidak dikirim backend tidak akan dibuat-buat.";
+    target.appendChild(statusBox);
+
+    const summary=document.createElement("div");
+    summary.className="mqeip-workspace-grid";
+    const summaryValues=[
+      ["Status",data?.status],
+      ["API Connection",data?.api_connection],
+      ["ERP Module Integration",data?.erp_module_integration],
+      ["Tenant",data?.tenant_id],
+      ["Checked At",data?.checked_at]
     ];
-    for(const [label,value] of values){
-      const item=document.createElement("li");
-      item.textContent=label+": "+(value===null||value===undefined||value===""?"Unavailable":String(value));
-      list.appendChild(item);
-    }
-    target.replaceChildren(heading,list);
-    if(data.erp_module_integration==="not_verified"){
-      const note=mqeipCreateElement("p","","Koneksi endpoint Quantum Command berhasil, tetapi integrasi ke modul ERP lain belum terverifikasi oleh backend.");
+    summaryValues.forEach(([label,value])=>{
+      const card=mqeipCreateElement("div","mqeip-workspace-card");
+      card.append(
+        mqeipCreateElement("div","mqeip-workspace-card-title",label),
+        mqeipCreateElement("div","mqeip-workspace-card-value",value===null||value===undefined||value===""?"Unavailable":String(value))
+      );
+      summary.appendChild(card);
+    });
+    target.appendChild(summary);
+
+    if(data?.data!==undefined){
+      mqeipAppendQuantumValue(target,"Operational Data Payload",data.data);
+    } else {
+      const note=document.createElement("p");
+      note.textContent="Backend tidak mengirim properti 'data' pada endpoint status. Ini mengindikasikan endpoint status hanya melaporkan kesehatan/integrasi; data operasional perlu disediakan oleh endpoint modul atau ditambahkan pada backend.";
       target.appendChild(note);
     }
+
+    if(data?.erp_module_integration==="not_verified"){
+      const note=mqeipCreateElement("p","","Integrasi ke modul ERP lain belum terverifikasi oleh backend. Tampilan frontend tidak dapat mengaktifkan integrasi yang belum disediakan oleh API.");
+      target.appendChild(note);
+    }
+    const rawDetails=document.createElement("details");
+    const rawSummary=document.createElement("summary");
+    rawSummary.textContent="Lihat respons JSON mentah (diagnostik)";
+    const raw=document.createElement("pre");
+    raw.style.whiteSpace="pre-wrap";
+    raw.style.overflowWrap="anywhere";
+    raw.textContent=JSON.stringify(data,null,2);
+    rawDetails.append(rawSummary,raw);
+    target.appendChild(rawDetails);
   }catch(error){
     if(target===mqeipElement("mqeipWorkspaceData")){
       target.replaceChildren();
       const heading=mqeipCreateElement("h4","","Quantum Command API Status");
       const message=mqeipCreateElement("p","","Gagal mengambil status Quantum Command: "+(error.message||"Unknown error"));
-      const hint=mqeipCreateElement("p","","Pastikan sudah login dan akun memiliki akses ke endpoint /api/v1/quantum-command/enterprise-data-status.");
+      const hint=mqeipCreateElement("p","","Pastikan login berhasil dan akun memiliki akses ke GET /api/v1/quantum-command/enterprise-data-status. Jika endpoint ini berhasil tetapi data operasional tidak ada, periksa router dan service backend Quantum Command.");
       target.append(heading,message,hint);
     }
   }
