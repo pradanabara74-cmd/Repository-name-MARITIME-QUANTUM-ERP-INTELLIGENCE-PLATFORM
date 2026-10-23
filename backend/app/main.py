@@ -26,7 +26,8 @@ from .modules.document_management import router as document_management_router
 from .modules.workflow import router as workflow_router
 from .modules.notifications import router as notifications_router
 from .modules.notifications import router as notifications_router
-from .modules.maritime_quantum_command_center import router as quantum_command_router
+from .modules import maritime_quantum_command
+quantum_command_router = maritime_quantum_command.router
 from .modules.esg import router as esg_router
 from .modules.business_intelligence import router as bi_router
 from .modules.ai_intelligence import router as ai_router
