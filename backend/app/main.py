@@ -25,9 +25,7 @@ from .modules.audit import router as audit_router
 from .modules.document_management import router as document_management_router
 from .modules.workflow import router as workflow_router
 from .modules.notifications import router as notifications_router
-from .modules.notifications import router as notifications_router
 from .modules import maritime_quantum_command
-quantum_command_router = maritime_quantum_command.router
 from .modules.esg import router as esg_router
 from .modules.business_intelligence import router as bi_router
 from .modules.ai_intelligence import router as ai_router
@@ -94,11 +92,21 @@ app = FastAPI(
 )
 from fastapi.middleware.cors import CORSMiddleware
 
+# Allow configured frontend origins. Set MQEIP_CORS_ORIGINS to a
+# comma-separated list for production/custom domains. GitHub Pages is supported.
+_cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "MQEIP_CORS_ORIGINS",
+        "https://mqeip-premium-frontend.onrender.com",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://mqeip-premium-frontend.onrender.com"
-    ],
+    allow_origins=_cors_origins,
+    allow_origin_regex=r"https://[A-Za-z0-9-]+\.github\.io",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -120,7 +128,6 @@ app.include_router(legal_router)
 app.include_router(audit_router)
 app.include_router(document_management_router)
 app.include_router(workflow_router)
-app.include_router(notifications_router)
 app.include_router(notifications_router)
 app.include_router(esg_router)
 app.include_router(bi_router)
@@ -211,8 +218,3 @@ async def current_identity(
         "role": identity.role.value,
         "email": identity.email,
     }
-
-app.include_router(quantum_command_router)
-
-app.include_router(marine_operations_router)
-    
