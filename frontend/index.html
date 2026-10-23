@@ -450,7 +450,7 @@ function mqeipRenderModuleWorkspace(pageKey){
 
 function mqeipRenderSupplyWorkspace(container) {
   container.replaceChildren();
-  const title = mqeipCreateElement("h3", "", "Supply Chain & Procurement 鈥� Live Intelligence");
+  const title = mqeipCreateElement("h3", "", "Supply Chain & Procurement \u2014 Live Intelligence");
   const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh Supply Chain");
   const status = mqeipCreateElement("p", "", "Loading...");
   const results = mqeipCreateElement("div", "mqeip-workspace-data");
@@ -474,7 +474,7 @@ function mqeipRenderSupplyWorkspace(container) {
 }
 function mqeipRenderInventoryWorkspace(container) {
   container.replaceChildren();
-  const title = mqeipCreateElement("h3", "", "Inventory & Vessel Stores 鈥� Live Intelligence");
+  const title = mqeipCreateElement("h3", "", "Inventory & Vessel Stores \u2014 Live Intelligence");
   const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh Inventory");
   const status = mqeipCreateElement("p", "", "Loading...");
   const results = mqeipCreateElement("div", "mqeip-workspace-data");
@@ -514,7 +514,7 @@ function mqeipCrewStatus(message,error=false){
 function mqeipCrewCell(row,value){row.appendChild(mqeipCreateElement("td","",String(value??DASH)))}
 function mqeipRenderCrewWorkspace(container){
   container.replaceChildren();
-  const title=mqeipCreateElement("h3","","Crew & Certificates 鈥� Live Records");
+  const title=mqeipCreateElement("h3","","Crew & Certificates \u2014 Live Records");
   const note=mqeipCreateElement("p","","Authenticated Crew and Certificate data from MQEIP Backend.");note.style.color="var(--muted)";
   const controls=mqeipCreateElement("div","mqeip-workspace-actions");
   const refresh=mqeipCreateElement("button","btn btn-outline","Refresh Crew & Certificates");refresh.type="button";refresh.addEventListener("click",mqeipLoadCrew);controls.appendChild(refresh);
@@ -551,7 +551,7 @@ async function mqeipLoadCrew(){
             if(mqeipCurrentPage!=="crew"||detail!==mqeipElement("mqeipCrewDetail"))return;
             const certs=Array.isArray(result)?result:(result?.certificates??result?.items??result?.data);
             if(!Array.isArray(certs))throw new Error("Unexpected certificate list response.");
-            detail.replaceChildren();detail.appendChild(mqeipCreateElement("h4","","Certificates 鈥� "+String(crew.crew_name??crew.name??crewId)));
+            detail.replaceChildren();detail.appendChild(mqeipCreateElement("h4","","Certificates \u2014 "+String(crew.crew_name??crew.name??crewId)));
             if(!certs.length)detail.appendChild(mqeipCreateElement("p","","No certificates recorded."));
             for(const cert of certs){const line=mqeipCreateElement("p","",[cert.certificate_type??cert.name,cert.certificate_number,cert.expiry_date,cert.certificate_status??cert.status].filter(v=>v!=null&&v!=="").join(" | "));detail.appendChild(line)}
           }catch(error){detail.textContent="Certificate retrieval failed: "+error.message}finally{btn.disabled=false}
@@ -573,7 +573,7 @@ async function mqeipLoadCrew(){
 }
 function mqeipRenderPmsWorkspace(container) {
   container.replaceChildren();
-  const title = mqeipCreateElement("h3", "", "Technical & PMS 鈥� Live Intelligence");
+  const title = mqeipCreateElement("h3", "", "Technical & PMS \u2014 Live Intelligence");
   const status = mqeipCreateElement("p", "", "Loading PMS data...");
   const refresh = mqeipCreateElement("button", "btn btn-outline", "Refresh PMS");
   const summary = mqeipCreateElement("div", "mqeip-workspace-grid");
@@ -605,7 +605,7 @@ const MQEIP_HSSE_ENDPOINT = "/api/v1/sms";
 function mqeipRenderHSSEWorkspace(container) {
   container.replaceChildren();
   const create = (tag, text = "", className = "") => mqeipCreateElement(tag, className, text);
-  const title = create("h3", "HSSE & Compliance 鈥� Live Intelligence");
+  const title = create("h3", "HSSE & Compliance \u2014 Live Intelligence");
   const refresh = create("button", "Refresh HSSE", "btn btn-outline");
   const status = create("p", "Loading HSSE data...");
   const summary = create("div", "", "mqeip-workspace-grid");
@@ -669,12 +669,48 @@ async function mqeipLoadFleet(){
   }catch(error){if(loadId===mqeipFleetLoadId&&mqeipCurrentPage==="fleet")mqeipFleetMessage("Unable to load Fleet: "+error.message,true)}
 }
 async function mqeipLoadQuantumWorkspace(){
-  if(mqeipCurrentPage!=="quantum")return;if(!mqeipAccessToken){mqeipOpenLogin();return}
-  const target=mqeipElement("mqeipWorkspaceData");if(!target)return;target.textContent="Loading authenticated Command Center data...";
-  try{const data=await mqeipApiRequest(MQEIP_COMMAND_API+"/intelligence/events");if(mqeipCurrentPage!=="quantum"||target!==mqeipElement("mqeipWorkspaceData")||!mqeipAccessToken)return;
-    target.replaceChildren();target.appendChild(mqeipCreateElement("h4","","Live Command Event Intelligence"));const summary=data.summary||{},list=document.createElement("ul");
-    [["Total Events","total_events"],["Open Events","open_events"],["In Progress","in_progress_events"],["Resolved Events","resolved_events"],["Active Critical","active_critical_events"],["Active High","active_high_events"]].forEach(([label,key])=>{const item=document.createElement("li"),value=summary[key];item.textContent=label+": "+(value==null?"Unavailable":String(value));list.appendChild(item)});target.appendChild(list)
-  }catch(error){if(target===mqeipElement("mqeipWorkspaceData"))target.textContent="Unable to load Command Center data: "+(error.message||"Unknown error")}
+  if(mqeipCurrentPage!=="quantum")return;
+  if(!mqeipAccessToken){mqeipOpenLogin();return;}
+  const target=mqeipElement("mqeipWorkspaceData");
+  if(!target)return;
+  target.replaceChildren();
+  target.textContent="Mengambil status Quantum Command dari backend...";
+  try{
+    /* Endpoint ini terkonfirmasi tersedia pada Swagger: GET /api/v1/quantum-command/enterprise-data-status */
+    const data=await mqeipApiRequest(MQEIP_COMMAND_API+"/enterprise-data-status",{method:"GET"});
+    if(mqeipCurrentPage!=="quantum"||target!==mqeipElement("mqeipWorkspaceData")||!mqeipAccessToken)return;
+    const heading=mqeipCreateElement("h4","","Quantum Command 鈥� Live Backend Status");
+    const list=document.createElement("ul");
+    const values=[
+      ["Status",data.status],
+      ["Module",data.module],
+      ["API Connection",data.api_connection],
+      ["ERP Module Integration",data.erp_module_integration],
+      ["Tenant",data.tenant_id],
+      ["Command Events",data.data?.command_events],
+      ["Executive Notes",data.data?.executive_notes],
+      ["Snapshots",data.data?.snapshots],
+      ["Checked At",data.checked_at]
+    ];
+    for(const [label,value] of values){
+      const item=document.createElement("li");
+      item.textContent=label+": "+(value===null||value===undefined||value===""?"Unavailable":String(value));
+      list.appendChild(item);
+    }
+    target.replaceChildren(heading,list);
+    if(data.erp_module_integration==="not_verified"){
+      const note=mqeipCreateElement("p","","Koneksi endpoint Quantum Command berhasil, tetapi integrasi ke modul ERP lain belum terverifikasi oleh backend.");
+      target.appendChild(note);
+    }
+  }catch(error){
+    if(target===mqeipElement("mqeipWorkspaceData")){
+      target.replaceChildren();
+      const heading=mqeipCreateElement("h4","","Quantum Command API Status");
+      const message=mqeipCreateElement("p","","Gagal mengambil status Quantum Command: "+(error.message||"Unknown error"));
+      const hint=mqeipCreateElement("p","","Pastikan sudah login dan akun memiliki akses ke endpoint /api/v1/quantum-command/enterprise-data-status.");
+      target.append(heading,message,hint);
+    }
+  }
 }
 function mqeipNavigate(pageKey){
   const module=MQEIP_MODULE_REGISTRY[pageKey];if(!module)return;mqeipCurrentPage=pageKey;
@@ -744,7 +780,7 @@ document.addEventListener("DOMContentLoaded",()=>{
    for(const candidate of [data.items,data.records,data.results,data.data,data.data?.items,data.users,data.documents,data.events])if(Array.isArray(candidate))return candidate;
    return [];
  };
- const pretty=(v)=>v==null?"鈥�":typeof v==="object"?JSON.stringify(v):String(v);
+ const pretty=(v)=>v==null?DASH:typeof v==="object"?JSON.stringify(v):String(v);
  const validPath=(p)=>/^\/(?!\/)[a-zA-Z0-9_/?=&.%-]+$/.test(p)&&p.startsWith("/api/v1/")&&!p.includes("..")&&!p.includes("#");
  let currentRequest=0;
  function render(key,root){
@@ -826,7 +862,7 @@ document.addEventListener("DOMContentLoaded",()=>{
       }else marker=L.circleMarker([lat,lon],{radius:6,color:"#d8b46a",weight:2,fillColor:"#48c7df",fillOpacity:.9});
       const popup=document.createElement("div");
       const title=document.createElement("strong");title.textContent=name;popup.appendChild(title);
-      for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo??v.imo_number],["SOG",v.sog==null?null:v.sog+" kn"],["COG",v.cog==null?null:v.cog+"掳"],["Heading",v.heading==null?null:v.heading+"掳"],["Latitude",lat.toFixed(5)],["Longitude",lon.toFixed(5)],["AIS UTC",v.time_utc??v.timestamp??v.last_updated??v.updated_at]]){
+      for(const [label,value] of [["MMSI",v.mmsi],["IMO",v.imo??v.imo_number],["SOG",v.sog==null?null:v.sog+" kn"],["COG",v.cog==null?null:v.cog+"\u00B0"],["Heading",v.heading==null?null:v.heading+"\u00B0"],["Latitude",lat.toFixed(5)],["Longitude",lon.toFixed(5)],["AIS UTC",v.time_utc??v.timestamp??v.last_updated??v.updated_at]]){
         if(value==null)continue;const line=document.createElement("div");line.textContent=label+": "+String(value);popup.appendChild(line);
       }
       marker.bindPopup(popup).addTo(vesselLayer);visible++;
@@ -845,13 +881,13 @@ document.addEventListener("DOMContentLoaded",()=>{
       if(requestGeneration!==generation||!isOpen()||!mqeipAccessToken)return;
       recordsCache=extractRecords(result);lastLoaded=new Date();
       const visible=renderVessels();
-      status(visible+" kapal ditampilkan 路 "+recordsCache.length+" posisi diterima 路 "+lastLoaded.toLocaleTimeString("id-ID")+(recordsCache.length===0?" 路 Belum ada posisi AIS.":""));
+      status(visible+" kapal ditampilkan \u00B7 "+recordsCache.length+" posisi diterima \u00B7 "+lastLoaded.toLocaleTimeString("id-ID")+(recordsCache.length===0?" \u00B7 Belum ada posisi AIS.":""));
       resizeMap();
     }catch(error){
       if(requestGeneration!==generation||!isOpen())return;
       const message=error?.message||"Kesalahan koneksi";
       if(error?.status===429||message.includes("429"))retryAfter=Date.now()+5*60*1000;
-      status("AIS belum tersedia: "+message+(recordsCache.length?" 路 Posisi sebelumnya masih ditampilkan, bukan data terbaru.":""));
+      status("AIS belum tersedia: "+message+(recordsCache.length?" \u00B7 Posisi sebelumnya masih ditampilkan, bukan data terbaru.":""));
     }finally{busy=false;}
   }
   function stopTimer(){if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;}}
@@ -880,7 +916,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   el("aisLiveButton")?.addEventListener("click",openAIS);
   el("aisLiveRefresh")?.addEventListener("click",()=>{resizeMap();void loadVessels();});
   el("aisLiveClose")?.addEventListener("click",closeAIS);
-  el("aisLiveSearch")?.addEventListener("input",()=>{if(!isOpen())return;const visible=renderVessels();status(visible+" kapal cocok 路 "+recordsCache.length+" posisi diterima"+(lastLoaded?" 路 Data "+lastLoaded.toLocaleTimeString("id-ID"):""));});
+  el("aisLiveSearch")?.addEventListener("input",()=>{if(!isOpen())return;const visible=renderVessels();status(visible+" kapal cocok \u00B7 "+recordsCache.length+" posisi diterima"+(lastLoaded?" \u00B7 Data "+lastLoaded.toLocaleTimeString("id-ID"):""));});
   window.addEventListener("resize",resizeMap);
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&isOpen())closeAIS();});
 })();
