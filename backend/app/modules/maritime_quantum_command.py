@@ -1507,37 +1507,72 @@ COMMAND_ERP_ROW_COUNT_CAP = 1000
 _COMMAND_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z0-9_]+$")
 
 
+COMMAND_ERP_MODULE_PREFIXES = {
+    "fleet": ("/api/v1/fleet",),
+    "marine_operations": ("/api/v1/marine-operations",),
+    "technical": ("/api/v1/technical", "/api/v1/pms"),
+    "crew": ("/api/v1/crew",),
+    "finance": ("/api/v1/finance",),
+    "supply_chain": ("/api/v1/supply-chain",),
+    "inventory": ("/api/v1/inventory",),
+    "commercial": ("/api/v1/commercial",),
+    "hsse": ("/api/v1/hsse",),
+    "compliance": ("/api/v1/hsse/compliance",),
+    "legal": ("/api/v1/legal",),
+    "audit": ("/api/v1/audit",),
+    "esg": ("/api/v1/esg",),
+    "ai_intelligence": ("/api/v1/ai/",),
+    "quantum_optimization": ("/api/v1/quantum/",),
+    "digital_twin": ("/api/v1/digital-twin",),
+    "business_intelligence": ("/api/v1/bi/",),
+}
+
+_COMMAND_HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
+
+
+def command_collect_app_paths(app):
+    """ Kumpulkan path API dari OpenAPI schema (sumber yang sama dengan Swagger /docs). Jika OpenAPI gagal/kosong, fallback ke app.routes. Mengembalikan dict {path: [methods]}. """
+    paths = {}
+    try:
+        schema = app.openapi()
+        for path, operations in (schema.get("paths") or {}).items():
+            methods = [
+                method.upper() for method in (operations or {})
+                if str(method).lower() in _COMMAND_HTTP_METHODS
+            ]
+            if methods:
+                paths[str(path)] = methods
+    except Exception:
+        logger.exception("Gagal membaca OpenAPI schema untuk deteksi modul ERP")
+
+    if not paths:
+        for route in getattr(app, "routes", []):
+            path = str(getattr(route, "path", "") or "")
+            methods = sorted(
+                method for method in (getattr(route, "methods", None) or set())
+                if method not in {"HEAD", "OPTIONS"}
+            )
+            if path and methods:
+                paths[path] = methods
+    return paths
+
+
 def command_discover_erp_api_modules(app):
-    """ Discover which ERP API modules are registered in the running FastAPI app. This checks route registration only; data integration is verified separately by command_verify_erp_data_integration(). """
-    routes = []
-    for route in getattr(app, "routes", []):
-        path = str(getattr(route, "path", "") or "")
-        tags = getattr(route, "tags", []) or []
-        methods = sorted(
-            method for method in (getattr(route, "methods", set()) or set())
-            if method not in {"HEAD", "OPTIONS"}
-        )
-        # Route milik Command Center sendiri tidak dihitung sebagai modul ERP lain.
-        if path.startswith("/api/v1/quantum-command"):
-            continue
-        searchable = (path + " " + " ".join(str(tag) for tag in tags)).lower()
-        if path.startswith("/api/v1/") and methods:
-            routes.append({
-                "path": path,
-                "methods": methods,
-                "searchable": searchable,
-            })
+    """ Discover which ERP API modules are registered in the running FastAPI app. Membaca path dari OpenAPI schema (sama seperti Swagger) dan mencocokkan dengan prefix modul. Hanya memeriksa registrasi route; integrasi data diverifikasi terpisah oleh command_verify_erp_data_integration(). """
+    paths = {
+        path: methods
+        for path, methods in command_collect_app_paths(app).items()
+        if path.startswith("/api/v1/")
+        and not path.startswith("/api/v1/quantum-command")
+    }
 
     discovered = {}
-    for module, aliases in COMMAND_ERP_MODULE_ALIASES.items():
-        matches = [
-            route for route in routes
-            if any(alias in route["searchable"] for alias in aliases)
-        ]
+    for module, prefixes in COMMAND_ERP_MODULE_PREFIXES.items():
+        matches = sorted(path for path in paths if path.startswith(prefixes))
         discovered[module] = {
             "api_routes_detected": bool(matches),
             "route_count": len(matches),
-            "sample_paths": sorted({route["path"] for route in matches})[:3],
+            "sample_paths": matches[:3],
             "data_integration": (
                 "not_verified" if matches else "routes_not_registered"
             ),
