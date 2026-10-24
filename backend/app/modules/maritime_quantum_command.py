@@ -5,8 +5,10 @@
 
 import json
 import logging
+import re
 import threading
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Any, Literal, Optional
 from uuid import UUID, uuid4
 
@@ -373,6 +375,8 @@ def command_claim(identity, *names):
             value = identity.get(name)
         else:
             value = getattr(identity, name, None)
+        if isinstance(value, Enum):
+            value = value.value
         if value is not None and value != "":
             return value
     return None
@@ -1451,31 +1455,57 @@ def command_create_snapshot( payload: CommandSnapshotCreate, identity: TokenIden
     }
 
 
-def command_discover_erp_api_modules(app):
-    """
-    Discover which ERP API modules are registered in the running FastAPI app.
-    This checks route registration only; it does not claim that module data
-    is connected or synchronized.
-    """
-    module_aliases = {
-        "fleet": ("fleet",),
-        "marine_operations": ("marine_operations", "marine-operations", "marine operations"),
-        "technical": ("technical",),
-        "crew": ("crew",),
-        "finance": ("finance",),
-        "supply_chain": ("supply_chain", "supply-chain", "supply chain"),
-        "inventory": ("inventory",),
-        "commercial": ("commercial",),
-        "hsse": ("hsse",),
-        "compliance": ("compliance",),
-        "legal": ("legal",),
-        "audit": ("audit",),
-        "esg": ("esg",),
-        "ai_intelligence": ("ai_intelligence", "ai-intelligence", "ai intelligence"),
-        "quantum_optimization": ("quantum_optimization", "quantum-optimization", "quantum optimization"),
-        "digital_twin": ("digital_twin", "digital-twin", "digital twin"),
-    }
+# ============================================================
+# ENTERPRISE DATA STATUS & ERP INTEGRATION VERIFICATION
+# ============================================================
 
+COMMAND_ERP_MODULE_ALIASES = {
+    "fleet": ("fleet",),
+    "marine_operations": ("marine_operations", "marine-operations", "marine operations"),
+    "technical": ("technical",),
+    "crew": ("crew",),
+    "finance": ("finance",),
+    "supply_chain": ("supply_chain", "supply-chain", "supply chain"),
+    "inventory": ("inventory",),
+    "commercial": ("commercial",),
+    "hsse": ("hsse",),
+    "compliance": ("compliance",),
+    "legal": ("legal",),
+    "audit": ("audit",),
+    "esg": ("esg",),
+    "ai_intelligence": ("ai_intelligence", "ai-intelligence", "ai intelligence"),
+    "quantum_optimization": ("quantum_optimization", "quantum-optimization", "quantum optimization"),
+    "digital_twin": ("digital_twin", "digital-twin", "digital twin"),
+}
+
+# Kata kunci nama tabel untuk mencocokkan modul ERP dengan tabel database.
+# Pencocokan berdasarkan nama tabel (heuristik); daftar tabel yang dicek
+# selalu ikut dilaporkan agar bisa diaudit.
+COMMAND_ERP_TABLE_HINTS = {
+    "fleet": ("fleet", "vessel"),
+    "marine_operations": ("marine_operation", "voyage", "noon_report", "bunker", "port_call"),
+    "technical": ("technical", "maintenance", "work_order", "defect", "pms"),
+    "crew": ("crew", "seafarer"),
+    "finance": ("finance", "invoice", "payment", "budget", "ledger"),
+    "supply_chain": ("supply_chain", "purchase_order", "supplier", "requisition"),
+    "inventory": ("inventory", "stock", "warehouse"),
+    "commercial": ("commercial", "charter", "cargo", "freight"),
+    "hsse": ("hsse", "incident", "safety"),
+    "compliance": ("compliance",),
+    "legal": ("legal", "contract"),
+    "audit": ("audit",),
+    "esg": ("esg", "emission"),
+    "ai_intelligence": ("ai_intelligence", "ai_insight"),
+    "quantum_optimization": ("quantum_optimization",),
+    "digital_twin": ("digital_twin",),
+}
+
+COMMAND_ERP_MAX_TABLES_PER_MODULE = 3
+_COMMAND_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z0-9_]+$")
+
+
+def command_discover_erp_api_modules(app):
+    """ Discover which ERP API modules are registered in the running FastAPI app. This checks route registration only; data integration is verified separately by command_verify_erp_data_integration(). """
     routes = []
     for route in getattr(app, "routes", []):
         path = str(getattr(route, "path", "") or "")
@@ -1484,6 +1514,9 @@ def command_discover_erp_api_modules(app):
             method for method in (getattr(route, "methods", set()) or set())
             if method not in {"HEAD", "OPTIONS"}
         )
+        # Route milik Command Center sendiri tidak dihitung sebagai modul ERP lain.
+        if path.startswith("/api/v1/quantum-command"):
+            continue
         searchable = (path + " " + " ".join(str(tag) for tag in tags)).lower()
         if path.startswith("/api/v1/") and methods:
             routes.append({
@@ -1493,7 +1526,7 @@ def command_discover_erp_api_modules(app):
             })
 
     discovered = {}
-    for module, aliases in module_aliases.items():
+    for module, aliases in COMMAND_ERP_MODULE_ALIASES.items():
         matches = [
             route for route in routes
             if any(alias in route["searchable"] for alias in aliases)
@@ -1502,18 +1535,128 @@ def command_discover_erp_api_modules(app):
             "api_routes_detected": bool(matches),
             "route_count": len(matches),
             "sample_paths": sorted({route["path"] for route in matches})[:3],
-            "data_integration": "not_verified",
+            "data_integration": (
+                "not_verified" if matches else "routes_not_registered"
+            ),
+            "tables_checked": [],
         }
 
     return discovered
 
 
+def command_verify_erp_data_integration(discovered, tenant_id):
+    """ Verifikasi nyata (read-only) per modul: mencari tabel ber-kolom tenant_id yang cocok dengan modul, lalu menjalankan COUNT terbatas tenant. Status 'verified' hanya diberikan jika query tenant-scoped benar-benar berhasil dijalankan. Mengubah dict `discovered` di tempat. """
+    try:
+        with get_engine().connect() as conn:
+            rows = conn.execute(text(
+                "SELECT DISTINCT c.table_name "
+                "FROM information_schema.columns c "
+                "JOIN information_schema.tables t "
+                " ON t.table_schema = c.table_schema "
+                " AND t.table_name = c.table_name "
+                "WHERE c.table_schema = current_schema() "
+                " AND c.column_name = 'tenant_id' "
+                " AND t.table_type = 'BASE TABLE'"
+            )).all()
+        tenant_tables = sorted(
+            name for (name,) in rows
+            if not name.startswith("quantum_command_")
+            and _COMMAND_SAFE_IDENTIFIER.match(name)
+        )
+    except Exception:
+        logger.exception("ERP table discovery failed")
+        for item in discovered.values():
+            if item["api_routes_detected"]:
+                item["data_integration"] = "check_failed"
+        return discovered
+
+    for module, item in discovered.items():
+        if not item["api_routes_detected"]:
+            continue
+
+        hints = COMMAND_ERP_TABLE_HINTS.get(module, (module,))
+        matched = [
+            table for table in tenant_tables
+            if any(hint in table for hint in hints)
+        ][:COMMAND_ERP_MAX_TABLES_PER_MODULE]
+
+        if not matched:
+            item["data_integration"] = "no_tenant_tables_detected"
+            continue
+
+        checked = []
+        try:
+            with get_engine().connect() as conn:
+                for table in matched:
+                    try:
+                        conn.execute(text("SET LOCAL statement_timeout = 3000"))
+                        count = conn.execute(
+                            text(
+                                f'SELECT COUNT(*) FROM "{table}" '
+                                "WHERE CAST(tenant_id AS TEXT) = :tenant_id"
+                            ),
+                            {"tenant_id": tenant_id},
+                        ).scalar()
+                        checked.append({
+                            "table": table,
+                            "tenant_rows": int(count or 0),
+                        })
+                    except Exception:
+                        logger.warning(
+                            "ERP integration check failed for table %s", table,
+                            exc_info=True,
+                        )
+                        conn.rollback()
+        except Exception:
+            logger.exception("ERP integration check failed for module %s", module)
+
+        item["tables_checked"] = checked
+        item["data_integration"] = "verified" if checked else "check_failed"
+
+    return discovered
+
+
+def command_summarize_erp_integration(discovered):
+    with_routes = [
+        name for name, item in discovered.items()
+        if item["api_routes_detected"]
+    ]
+    verified = [
+        name for name in with_routes
+        if discovered[name]["data_integration"] == "verified"
+    ]
+    unverified = [name for name in with_routes if name not in verified]
+
+    if with_routes and len(verified) == len(with_routes):
+        overall = "verified"
+    elif verified:
+        overall = "partial"
+    else:
+        overall = "not_verified"
+
+    return {
+        "overall": overall,
+        "total_modules": len(discovered),
+        "routes_registered": len(with_routes),
+        "verified": len(verified),
+        "verified_modules": verified,
+        "unverified_modules": unverified,
+        "modules_without_routes": [
+            name for name, item in discovered.items()
+            if not item["api_routes_detected"]
+        ],
+    }
+
+
+def command_build_erp_integration(app, tenant_id):
+    modules = command_discover_erp_api_modules(app)
+    command_verify_erp_data_integration(modules, tenant_id)
+    return modules, command_summarize_erp_integration(modules)
+
+
 @router.get( "/enterprise-data-status", summary="Enterprise Data Status and Command Module Connectivity", )
-def command_enterprise_data_status(
-    request: Request,
-    identity: TokenIdentity = Depends(verify_access_token),
-):
-    """Report real connectivity for this module; do not fake ERP status."""
+def command_enterprise_data_status( request: Request, identity: TokenIdentity = Depends(verify_access_token), ):
+    """Report real connectivity and verified ERP data integration per module."""
     command_require_executive(identity)
     tenant_id = command_get_tenant(identity)
 
@@ -1531,17 +1674,20 @@ def command_enterprise_data_status(
             },
         )
 
+    modules, summary = command_build_erp_integration(request.app, tenant_id)
+
     return {
         "status": "success",
         "module": "Maritime Quantum Command Center",
         "api_connection": "online",
-        # This file can verify only its own command tables, not all ERP modules.
-        "erp_module_integration": "not_verified",
-        "erp_api_modules": command_discover_erp_api_modules(request.app),
+        "erp_module_integration": summary["overall"],
+        "erp_integration_summary": summary,
+        "erp_api_modules": modules,
         "integration_note": (
-            "API route detection confirms registration only. "
-            "Operational data integration remains unverified until each ERP "
-            "module exposes and passes a tenant-scoped data integration test."
+            "Status 'verified' berarti route modul terdaftar dan query "
+            "read-only terbatas tenant pada tabel modul tersebut berhasil. "
+            "Pencocokan tabel berdasarkan nama tabel; daftar tabel yang dicek "
+            "tercantum di tables_checked setiap modul."
         ),
         "tenant_id": tenant_id,
         "data": {
@@ -1551,3 +1697,127 @@ def command_enterprise_data_status(
         },
         "checked_at": command_now().isoformat(),
     }
+
+
+# ============================================================
+# SNAPSHOTS: GENERATE FROM LIVE DATA, LIST, DETAIL
+# ============================================================
+
+def command_parse_snapshot_row(row):
+    result = command_serialize_row(row)
+    raw = result.get("snapshot_data")
+    if isinstance(raw, str):
+        try:
+            result["snapshot_data"] = json.loads(raw)
+        except ValueError:
+            pass
+    return result
+
+
+@router.post( "/snapshots/generate", status_code=status.HTTP_201_CREATED, summary="Generate Enterprise Snapshot From Live Command Data", )
+def command_generate_snapshot( request: Request, identity: TokenIdentity = Depends(verify_access_token), ):
+    """Buat snapshot dari data nyata Command Center (tanpa input manual)."""
+    command_require_executive(identity)
+
+    tenant_id = command_get_tenant(identity)
+    actor_id = command_get_actor(identity)
+
+    with get_engine().connect() as conn:
+        event_summary = conn.execute(
+            text(""" SELECT COUNT(*) AS total_events, COUNT(*) FILTER ( WHERE command_status = 'open' ) AS open_events, COUNT(*) FILTER ( WHERE command_status = 'in_progress' ) AS in_progress_events, COUNT(*) FILTER ( WHERE command_status = 'resolved' ) AS resolved_events, COUNT(*) FILTER ( WHERE command_status = 'cancelled' ) AS cancelled_events, COUNT(*) FILTER ( WHERE priority = 'critical' AND command_status IN ( 'open', 'in_progress' ) ) AS active_critical_events, COUNT(*) FILTER ( WHERE priority = 'high' AND command_status IN ( 'open', 'in_progress' ) ) AS active_high_events FROM quantum_command_events WHERE tenant_id = :tenant_id """),
+            {"tenant_id": tenant_id},
+        ).mappings().one()
+        notes_count = conn.execute(
+            text("SELECT COUNT(*) FROM quantum_command_notes WHERE tenant_id = :tenant_id"),
+            {"tenant_id": tenant_id},
+        ).scalar()
+
+    modules, summary = command_build_erp_integration(request.app, tenant_id)
+
+    snapshot_payload = {
+        "event_summary": command_serialize_row(event_summary),
+        "executive_notes": int(notes_count or 0),
+        "erp_integration": {
+            "overall": summary["overall"],
+            "verified_modules": summary["verified_modules"],
+            "unverified_modules": summary["unverified_modules"],
+            "modules_without_routes": summary["modules_without_routes"],
+        },
+        "source": "live_command_data",
+    }
+    snapshot_data = command_validate_snapshot_data(snapshot_payload)
+
+    snapshot_id = uuid4()
+    now = command_now()
+
+    with get_engine().begin() as conn:
+        conn.execute(
+            text(""" INSERT INTO quantum_command_snapshots ( id, tenant_id, snapshot_type, snapshot_data, generated_by, generated_at ) VALUES ( :id, :tenant_id, :snapshot_type, :snapshot_data, :generated_by, :generated_at ) """),
+            {
+                "id": str(snapshot_id),
+                "tenant_id": tenant_id,
+                "snapshot_type": "enterprise",
+                "snapshot_data": snapshot_data,
+                "generated_by": actor_id,
+                "generated_at": now,
+            },
+        )
+        command_record_audit(
+            conn, identity, "command_snapshot", snapshot_id, "generated",
+            {"snapshot_type": "enterprise", "source": "live_command_data"},
+        )
+
+    return {
+        "snapshot_id": str(snapshot_id),
+        "snapshot_type": "enterprise",
+        "generated_at": now.isoformat(),
+        "status": "created",
+        "snapshot_data": snapshot_payload,
+    }
+
+
+@router.get( "/snapshots", summary="List Enterprise Intelligence Snapshots", )
+def command_list_snapshots( snapshot_type: Optional[ Literal[ "enterprise", "fleet", "marine_operations", "technical", "crew", "finance", "supply_chain", "hsse", "executive", ] ] = None, limit: int = Query(default=50, ge=1, le=200), offset: int = Query(default=0, ge=0), identity: TokenIdentity = Depends(verify_access_token), ):
+    command_require_executive(identity)
+    tenant_id = command_get_tenant(identity)
+
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            text(""" SELECT id, snapshot_type, snapshot_data, generated_by, generated_at FROM quantum_command_snapshots WHERE tenant_id = :tenant_id AND ( CAST(:snapshot_type AS TEXT) IS NULL OR snapshot_type = :snapshot_type ) ORDER BY generated_at DESC, id DESC LIMIT :limit OFFSET :offset """),
+            {
+                "tenant_id": tenant_id,
+                "snapshot_type": snapshot_type,
+                "limit": limit,
+                "offset": offset,
+            },
+        ).mappings().all()
+
+    return {
+        "module": "Maritime Quantum Command Center",
+        "count": len(rows),
+        "limit": limit,
+        "offset": offset,
+        "snapshots": [command_parse_snapshot_row(row) for row in rows],
+    }
+
+
+@router.get( "/snapshots/{snapshot_id}", summary="Get Enterprise Intelligence Snapshot", )
+def command_get_snapshot( snapshot_id: UUID, identity: TokenIdentity = Depends(verify_access_token), ):
+    command_require_executive(identity)
+
+    with get_engine().connect() as conn:
+        row = conn.execute(
+            text(""" SELECT id, snapshot_type, snapshot_data, generated_by, generated_at FROM quantum_command_snapshots WHERE id = :snapshot_id AND tenant_id = :tenant_id """),
+            {
+                "snapshot_id": str(snapshot_id),
+                "tenant_id": command_get_tenant(identity),
+            },
+        ).mappings().first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Snapshot not found.",
+        )
+
+    return {"snapshot": command_parse_snapshot_row(row)}
