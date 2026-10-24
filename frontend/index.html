@@ -1006,5 +1006,173 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&isOpen())closeAIS();});
 })();
 </script>
+<script>
+"use strict";
+/* MQEIP Quantum Command patch.
+   Menghubungkan 3 kartu ke endpoint backend, memperbaiki judul yang rusak,
+   format waktu, ringkasan verifikasi ERP, dan menambah tombol Create Snapshot.
+   Tidak mengubah kode lama: hanya menimpa mqeipLoadQuantumWorkspace dan
+   membungkus mqeipRenderModuleWorkspace. Tempel SEBELUM baris </body>. */
+(() => {
+  const el = id => document.getElementById(id);
+  const node = (tag, cls, text) => mqeipCreateElement(tag, cls, text);
+  const label = value => String(value ?? "").replaceAll("_", " ");
+
+  const fmtTime = value => {
+    if (!value) return "Unavailable";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString("id-ID", {
+      timeZone: "Asia/Jakarta", day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+    }) + " WIB";
+  };
+
+  function setCard(i, value, note) {
+    const v = el("mqeipQuantumCardValue" + i), n = el("mqeipQuantumCardNote" + i);
+    if (v) v.textContent = String(value);
+    if (n) n.textContent = note;
+  }
+
+  async function loadCards(statusData) {
+    if (!el("mqeipQuantumCardValue0")) return;
+    const [ev, pb, rk] = await Promise.allSettled([
+      mqeipApiRequest(MQEIP_COMMAND_API + "/events?limit=50"),
+      mqeipApiRequest(MQEIP_COMMAND_API + "/operations/priority-board?limit=50"),
+      mqeipApiRequest(MQEIP_COMMAND_API + "/executive/risk-intelligence")
+    ]);
+    if (mqeipCurrentPage !== "quantum" || !mqeipAccessToken) return;
+
+    if (ev.status === "fulfilled") {
+      const events = Array.isArray(ev.value?.events) ? ev.value.events : [];
+      const total = statusData?.data?.command_events ?? ev.value?.count ?? events.length;
+      const byStatus = {};
+      events.forEach(e => { const s = e.command_status || "unknown"; byStatus[s] = (byStatus[s] || 0) + 1; });
+      const parts = Object.entries(byStatus).map(([k, v]) => v + " " + label(k));
+      const sample = events[0]?.title;
+      setCard(0, total, (parts.length ? parts.join(" \u00B7 ") : "Belum ada command event") + (sample ? " \u00B7 Contoh: " + sample : ""));
+    } else setCard(0, "Unavailable", "Gagal memuat: " + (ev.reason?.message || "Unknown error"));
+
+    if (pb.status === "fulfilled") {
+      const p = pb.value || {};
+      const first = Array.isArray(p.events) ? p.events[0] : null;
+      setCard(1, p.count ?? 0, (p.critical_count ?? 0) + " critical \u00B7 " + (p.high_count ?? 0) + " high" + (first ? " \u00B7 Prioritas pertama: " + first.title : ""));
+    } else setCard(1, "Unavailable", "Gagal memuat: " + (pb.reason?.message || "Unknown error"));
+
+    if (rk.status === "fulfilled") {
+      const risks = Array.isArray(rk.value?.domain_risks) ? rk.value.domain_risks : [];
+      const top = risks[0];
+      setCard(2, risks.length + " domain", top
+        ? "Tertinggi: " + label(top.domain) + " (" + top.risk_level + ") \u00B7 " + (top.critical_events ?? 0) + " critical, " + (top.high_events ?? 0) + " high"
+        : "Tidak ada event aktif yang berisiko");
+    } else setCard(2, "Unavailable", "Gagal memuat: " + (rk.reason?.message || "Unknown error"));
+  }
+
+  function renderErp(parent, data) {
+    const overall = data?.erp_module_integration;
+    const sum = data?.erp_integration_summary;
+    const message = overall === "verified"
+      ? "Integrasi ERP terverifikasi untuk seluruh modul yang route-nya terdeteksi."
+      : overall === "partial"
+        ? "Integrasi ERP terverifikasi sebagian. Modul yang belum terverifikasi ada pada tabel di bawah."
+        : "Integrasi ke modul ERP lain belum terverifikasi oleh backend. Tampilan frontend tidak dapat mengaktifkan integrasi yang belum disediakan oleh API.";
+    parent.appendChild(node("div", "mqeip-workspace-status", message + (sum ? " (" + sum.verified + " dari " + sum.routes_registered + " modul ber-route terverifikasi)" : "")));
+    const modules = data?.erp_api_modules;
+    if (!modules || typeof modules !== "object") return;
+    const wrap = node("div", "table-wrap"), table = node("table", "mqeip-ext-table");
+    const thead = document.createElement("thead"), hr = document.createElement("tr");
+    ["Modul", "Route", "Integrasi", "Tabel yang dicek (baris tenant)"].forEach(t => hr.appendChild(node("th", "", t)));
+    thead.appendChild(hr);
+    const body = document.createElement("tbody");
+    for (const [name, m] of Object.entries(modules)) {
+      const tr = document.createElement("tr");
+      const tables = (m.tables_checked || []).map(t => t.table + " (" + t.tenant_rows + (t.tenant_rows_capped ? "+" : "") + ")").join(", ");
+      [label(name), m.api_routes_detected ? "terdeteksi (" + m.route_count + ")" : "tidak terdeteksi", label(m.data_integration), tables || DASH]
+        .forEach(v => tr.appendChild(node("td", "", v)));
+      body.appendChild(tr);
+    }
+    table.append(thead, body); wrap.appendChild(table); parent.appendChild(wrap);
+  }
+
+  mqeipLoadQuantumWorkspace = async function () {
+    if (mqeipCurrentPage !== "quantum") return;
+    if (!mqeipAccessToken) { mqeipOpenLogin(); return; }
+    const target = el("mqeipWorkspaceData");
+    if (!target) return;
+    target.replaceChildren(node("p", "", "Mengambil status dan payload Quantum Command dari backend..."));
+    try {
+      const data = await mqeipApiRequest(MQEIP_COMMAND_API + "/enterprise-data-status", { method: "GET" });
+      if (mqeipCurrentPage !== "quantum" || target !== el("mqeipWorkspaceData") || !mqeipAccessToken) return;
+      target.replaceChildren();
+      target.appendChild(node("h4", "", "Quantum Command \u2014 Live Backend Response"));
+      target.appendChild(node("div", "mqeip-workspace-status", "Status endpoint berhasil dibaca. Data yang tampil di bawah ini berasal langsung dari respons backend; bagian yang tidak dikirim backend tidak akan dibuat-buat."));
+
+      const summary = node("div", "mqeip-workspace-grid");
+      [["Status", data?.status], ["API Connection", data?.api_connection], ["ERP Module Integration", data?.erp_module_integration],
+       ["Tenant", data?.tenant_id], ["Checked At", data?.checked_at ? fmtTime(data.checked_at) : null]].forEach(([title, value]) => {
+        const card = node("div", "mqeip-workspace-card");
+        card.append(node("div", "mqeip-workspace-card-title", title),
+          node("div", "mqeip-workspace-card-value", value == null || value === "" ? "Unavailable" : String(value)));
+        summary.appendChild(card);
+      });
+      target.appendChild(summary);
+
+      if (data?.data !== undefined) mqeipAppendQuantumValue(target, "Operational Data Payload", data.data);
+      renderErp(target, data);
+
+      const rawDetails = document.createElement("details"), rawSummary = document.createElement("summary"), raw = document.createElement("pre");
+      rawSummary.textContent = "Lihat respons JSON mentah (diagnostik)";
+      raw.style.whiteSpace = "pre-wrap"; raw.style.overflowWrap = "anywhere";
+      raw.textContent = JSON.stringify(data, null, 2);
+      rawDetails.append(rawSummary, raw); target.appendChild(rawDetails);
+
+      void loadCards(data);
+    } catch (error) {
+      if (target === el("mqeipWorkspaceData")) {
+        target.replaceChildren(node("h4", "", "Quantum Command API Status"),
+          node("p", "", "Gagal mengambil status Quantum Command: " + (error.message || "Unknown error")),
+          node("p", "", "Pastikan login berhasil dan akun memiliki akses ke GET /api/v1/quantum-command/enterprise-data-status."));
+        for (let i = 0; i < 3; i++) setCard(i, "Unavailable", "Gagal memuat: " + (error.message || "Unknown error"));
+      }
+    }
+  };
+
+  function enhanceQuantum() {
+    const root = el("modulePanelBody");
+    if (!root) return;
+    root.querySelectorAll(".mqeip-workspace-grid .mqeip-workspace-card").forEach((card, i) => {
+      if (i > 2) return;
+      const v = card.querySelector(".mqeip-workspace-card-value"), n = card.querySelector(".mqeip-workspace-card-note");
+      if (v) v.id = "mqeipQuantumCardValue" + i;
+      if (n) { n.id = "mqeipQuantumCardNote" + i; n.textContent = mqeipAccessToken ? "Memuat data dari backend..." : "Login diperlukan, lalu klik Load Command Intelligence."; }
+    });
+    const statusBox = root.querySelector(".mqeip-workspace-status");
+    if (statusBox) statusBox.textContent = "Modul ini terhubung ke API Quantum Command. Angka pada kartu diambil langsung dari backend setelah login; tidak ada angka simulasi.";
+    const actions = root.querySelector(".mqeip-workspace-actions");
+    if (actions && !el("mqeipQuantumSnapshotButton")) {
+      const btn = node("button", "btn btn-outline", "Create Snapshot");
+      btn.id = "mqeipQuantumSnapshotButton"; btn.type = "button";
+      btn.addEventListener("click", async () => {
+        if (!mqeipAccessToken) { mqeipOpenLogin(); return; }
+        btn.disabled = true;
+        try {
+          const result = await mqeipApiRequest(MQEIP_COMMAND_API + "/snapshots/generate", { method: "POST" });
+          mqeipShowToast("Snapshot berhasil dibuat" + (result?.snapshot_id ? " (" + result.snapshot_id + ")" : "") + ".", "success");
+          await mqeipLoadQuantumWorkspace();
+        } catch (error) {
+          mqeipShowToast("Gagal membuat snapshot: " + error.message, "error");
+        } finally { btn.disabled = false; }
+      });
+      actions.appendChild(btn);
+    }
+  }
+
+  const previousRender = mqeipRenderModuleWorkspace;
+  mqeipRenderModuleWorkspace = function (key) {
+    previousRender(key);
+    if (key === "quantum") enhanceQuantum();
+  };
+})();
+</script>
 </body>
 </html>
