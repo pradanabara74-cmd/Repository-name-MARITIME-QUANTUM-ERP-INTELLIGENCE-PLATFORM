@@ -1476,31 +1476,34 @@ COMMAND_ERP_MODULE_ALIASES = {
     "ai_intelligence": ("ai_intelligence", "ai-intelligence", "ai intelligence"),
     "quantum_optimization": ("quantum_optimization", "quantum-optimization", "quantum optimization"),
     "digital_twin": ("digital_twin", "digital-twin", "digital twin"),
+    "business_intelligence": ("business_intelligence", "business-intelligence", "business intelligence"),
 }
 
-# Kata kunci nama tabel untuk mencocokkan modul ERP dengan tabel database.
-# Pencocokan berdasarkan nama tabel (heuristik); daftar tabel yang dicek
-# selalu ikut dilaporkan agar bisa diaudit.
-COMMAND_ERP_TABLE_HINTS = {
-    "fleet": ("fleet", "vessel"),
-    "marine_operations": ("marine_operation", "voyage", "noon_report", "bunker", "port_call"),
-    "technical": ("technical", "maintenance", "work_order", "defect", "pms"),
-    "crew": ("crew", "seafarer"),
-    "finance": ("finance", "invoice", "payment", "budget", "ledger"),
-    "supply_chain": ("supply_chain", "purchase_order", "supplier", "requisition"),
-    "inventory": ("inventory", "stock", "warehouse"),
-    "commercial": ("commercial", "charter", "cargo", "freight"),
-    "hsse": ("hsse", "incident", "safety"),
-    "compliance": ("compliance",),
-    "legal": ("legal", "contract"),
-    "audit": ("audit",),
-    "esg": ("esg", "emission"),
-    "ai_intelligence": ("ai_intelligence", "ai_insight"),
-    "quantum_optimization": ("quantum_optimization",),
+# Awalan nama tabel per modul ERP (disesuaikan dengan skema database MQEIP).
+# Tabel cocok jika namanya sama persis atau diawali salah satu entri.
+# Daftar tabel yang dicek selalu dilaporkan agar bisa diaudit.
+COMMAND_ERP_TABLE_PREFIXES = {
+    "fleet": ("vessels",),
+    "marine_operations": ("marine_",),
+    "technical": ("technical_", "pms_"),
+    "crew": ("crew_",),
+    "finance": ("finance_",),
+    "supply_chain": ("supply_chain_", "purchase_requisition"),
+    "inventory": ("inventory_",),
+    "commercial": ("commercial_",),
+    "hsse": ("hsse_",),
+    "compliance": ("hsse_compliance",),
+    "legal": ("legal_",),
+    "audit": ("audit_",),
+    "esg": ("esg_",),
+    "ai_intelligence": ("ai_",),
+    "quantum_optimization": ("quantum_optimization", "quantum_audit"),
     "digital_twin": ("digital_twin",),
+    "business_intelligence": ("bi_",),
 }
 
-COMMAND_ERP_MAX_TABLES_PER_MODULE = 3
+COMMAND_ERP_MAX_TABLES_PER_MODULE = 4
+COMMAND_ERP_ROW_COUNT_CAP = 1000
 _COMMAND_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z0-9_]+$")
 
 
@@ -1574,10 +1577,10 @@ def command_verify_erp_data_integration(discovered, tenant_id):
         if not item["api_routes_detected"]:
             continue
 
-        hints = COMMAND_ERP_TABLE_HINTS.get(module, (module,))
+        prefixes = COMMAND_ERP_TABLE_PREFIXES.get(module, (module + "_",))
         matched = [
             table for table in tenant_tables
-            if any(hint in table for hint in hints)
+            if any(table.startswith(prefix) for prefix in prefixes)
         ][:COMMAND_ERP_MAX_TABLES_PER_MODULE]
 
         if not matched:
@@ -1592,14 +1595,21 @@ def command_verify_erp_data_integration(discovered, tenant_id):
                         conn.execute(text("SET LOCAL statement_timeout = 3000"))
                         count = conn.execute(
                             text(
-                                f'SELECT COUNT(*) FROM "{table}" '
-                                "WHERE CAST(tenant_id AS TEXT) = :tenant_id"
+                                "SELECT COUNT(*) FROM ("
+                                f'SELECT 1 FROM "{table}" '
+                                "WHERE CAST(tenant_id AS TEXT) = :tenant_id "
+                                "LIMIT :row_cap) AS limited_rows"
                             ),
-                            {"tenant_id": tenant_id},
+                            {
+                                "tenant_id": tenant_id,
+                                "row_cap": COMMAND_ERP_ROW_COUNT_CAP,
+                            },
                         ).scalar()
+                        count = int(count or 0)
                         checked.append({
                             "table": table,
-                            "tenant_rows": int(count or 0),
+                            "tenant_rows": count,
+                            "tenant_rows_capped": count >= COMMAND_ERP_ROW_COUNT_CAP,
                         })
                     except Exception:
                         logger.warning(
@@ -1822,25 +1832,30 @@ def command_get_snapshot( snapshot_id: UUID, identity: TokenIdentity = Depends(v
 
     return {"snapshot": command_parse_snapshot_row(row)}
 
+
+# ============================================================
+# TEMPORARY ADMIN DIAGNOSTIC: DATABASE TABLE NAMES
+# Hanya nama tabel (tanpa isi data). Khusus platform/tenant admin.
+# Boleh dihapus setelah kata kunci integrasi ERP selesai disesuaikan.
+# ============================================================
+
 @router.get( "/admin/tables", summary="Admin: List Database Table Names (Diagnostic)", )
-def command_admin_list_tables(
-    identity: TokenIdentity = Depends(verify_access_token),
-):
+def command_admin_list_tables( identity: TokenIdentity = Depends(verify_access_token), ):
     command_require_admin(identity)
 
     try:
         with get_engine().connect() as conn:
             rows = conn.execute(text(
                 "SELECT t.table_name, "
-                "       EXISTS ( "
-                "         SELECT 1 FROM information_schema.columns c "
-                "         WHERE c.table_schema = t.table_schema "
-                "           AND c.table_name = t.table_name "
-                "           AND c.column_name = 'tenant_id' "
-                "       ) AS has_tenant_id "
+                " EXISTS ( "
+                " SELECT 1 FROM information_schema.columns c "
+                " WHERE c.table_schema = t.table_schema "
+                " AND c.table_name = t.table_name "
+                " AND c.column_name = 'tenant_id' "
+                " ) AS has_tenant_id "
                 "FROM information_schema.tables t "
                 "WHERE t.table_schema = current_schema() "
-                "  AND t.table_type = 'BASE TABLE' "
+                " AND t.table_type = 'BASE TABLE' "
                 "ORDER BY t.table_name"
             )).all()
     except Exception:
