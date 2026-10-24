@@ -1821,3 +1821,47 @@ def command_get_snapshot( snapshot_id: UUID, identity: TokenIdentity = Depends(v
         )
 
     return {"snapshot": command_parse_snapshot_row(row)}
+
+@router.get( "/admin/tables", summary="Admin: List Database Table Names (Diagnostic)", )
+def command_admin_list_tables(
+    identity: TokenIdentity = Depends(verify_access_token),
+):
+    command_require_admin(identity)
+
+    try:
+        with get_engine().connect() as conn:
+            rows = conn.execute(text(
+                "SELECT t.table_name, "
+                "       EXISTS ( "
+                "         SELECT 1 FROM information_schema.columns c "
+                "         WHERE c.table_schema = t.table_schema "
+                "           AND c.table_name = t.table_name "
+                "           AND c.column_name = 'tenant_id' "
+                "       ) AS has_tenant_id "
+                "FROM information_schema.tables t "
+                "WHERE t.table_schema = current_schema() "
+                "  AND t.table_type = 'BASE TABLE' "
+                "ORDER BY t.table_name"
+            )).all()
+    except Exception:
+        logger.exception("Admin table listing failed")
+        raise HTTPException(
+            status_code=503,
+            detail="Database table listing is temporarily unavailable.",
+        )
+
+    tables = [
+        {"table": name, "has_tenant_id": bool(has_tenant)}
+        for name, has_tenant in rows
+    ]
+
+    return {
+        "table_count": len(tables),
+        "tables_with_tenant_id": [
+            item["table"] for item in tables if item["has_tenant_id"]
+        ],
+        "tables_without_tenant_id": [
+            item["table"] for item in tables if not item["has_tenant_id"]
+        ],
+        "generated_at": command_now().isoformat(),
+    }
