@@ -740,7 +740,7 @@ async function mqeipLoadQuantumWorkspace(){
     const data=await mqeipApiRequest(MQEIP_COMMAND_API+"/enterprise-data-status",{method:"GET"});
     if(mqeipCurrentPage!=="quantum"||target!==mqeipElement("mqeipWorkspaceData")||!mqeipAccessToken)return;
     target.replaceChildren();
-    const heading=mqeipCreateElement("h4","","Quantum Command 鈥� Live Backend Response");
+    const heading=mqeipCreateElement("h4","","Quantum Command \u2014 Live Backend Response");
     target.appendChild(heading);
     const statusBox=document.createElement("div");
     statusBox.className="mqeip-workspace-status";
@@ -840,30 +840,33 @@ document.addEventListener("DOMContentLoaded",()=>{
 </style>
 <script>
 "use strict";
-/* Enterprise module extension. Existing live workspaces, auth and AIS are unchanged. */
+/* Enterprise module extension. Existing live workspaces, auth and AIS are unchanged.
+   Endpoint awal tiap modul sudah dicocokkan dengan daftar GET di Swagger backend. */
 (() => {
  const modules={
- analytics:{path:"/api/v1/analytics",columns:["name","type","status","created_at"]},
- marine:{path:"/api/v1/voyages",columns:["vessel_name","voyage_number","status","departure_port","arrival_port"]},
- finance:{path:"/api/v1/finance",columns:["reference","description","amount","currency","status"]},
- commercial:{path:"/api/v1/chartering",columns:["vessel_name","charterer","contract_number","status"]},
- hr:{path:"/api/v1/hr",columns:["name","department","position","status"]},
- ai:{path:"/api/v1/ai",columns:["agent_name","task","status"]},
- optimization:{path:"/api/v1/optimization",columns:["scenario","objective","status"]},
- twin:{path:"/api/v1/digital-twin",columns:["vessel_name","model","status"]},
- esg:{path:"/api/v1/esg",columns:["vessel_name","metric","value","period"]},
- documents:{path:"/api/v1/documents",columns:["name","document_type","version","status"]},
- workflow:{path:"/api/v1/workflows",columns:["title","approver","status","created_at"]},
- audit:{path:"/api/v1/audits",columns:["title","finding","severity","status"]},
- administration:{path:"/api/v1/users",columns:["username","role","tenant_id","status"]}
+ analytics:{path:"/api/v1/bi/kpis",columns:[],alts:["/api/v1/bi/dashboard","/api/v1/bi/reports","/api/v1/bi/intelligence/performance"]},
+ marine:{path:"/api/v1/marine-operations/voyages",columns:[],alts:["/api/v1/marine-operations/command-center","/api/v1/marine-operations/fleet/live","/api/v1/marine-operations/alerts","/api/v1/marine-operations/weather/latest"]},
+ finance:{path:"/api/v1/finance/invoices",columns:[],alts:["/api/v1/finance/dashboard","/api/v1/finance/accounts","/api/v1/finance/budgets","/api/v1/finance/voyage-costs"]},
+ commercial:{path:"/api/v1/commercial/voyages",columns:[],alts:["/api/v1/commercial/dashboard","/api/v1/commercial/charterers","/api/v1/commercial/charter-parties"]},
+ hr:{path:"/api/v1/hr/employees",columns:[],alts:["/api/v1/hr/dashboard","/api/v1/hr/leave-requests","/api/v1/hr/training","/api/v1/hr/performance-reviews"]},
+ ai:{path:"/api/v1/ai/agents",columns:[],alts:["/api/v1/ai/dashboard","/api/v1/ai/tasks","/api/v1/ai/recommendations","/api/v1/ai/system/status"]},
+ optimization:{path:"/api/v1/quantum/optimizations",columns:[],alts:["/api/v1/quantum/intelligence/dashboard","/api/v1/quantum/intelligence/approval-queue","/api/v1/quantum/system/status"]},
+ twin:{path:"/api/v1/digital-twin/vessels",columns:[],alts:["/api/v1/digital-twin/executive/dashboard","/api/v1/digital-twin/intelligence/fleet","/api/v1/digital-twin/system/status"]},
+ esg:{path:"/api/v1/esg/emissions",columns:[],alts:["/api/v1/esg/dashboard","/api/v1/esg/energy","/api/v1/esg/incidents","/api/v1/esg/targets"]},
+ documents:{path:"/api/v1/documents",columns:[],alts:["/api/v1/documents/intelligence/dashboard","/api/v1/documents/intelligence/quality"]},
+ workflow:{path:"/api/v1/workflow/requests",columns:[],alts:["/api/v1/workflow/dashboard","/api/v1/workflow/my-approvals","/api/v1/workflow/risk-intelligence"]},
+ audit:{path:"/api/v1/audit/findings",columns:[],alts:["/api/v1/audit/dashboard","/api/v1/audit/plans","/api/v1/audit/controls","/api/v1/audit/control-tests"]},
+ administration:{path:"/api/v1/iam/users",columns:[],alts:["/api/v1/iam/roles","/api/v1/iam/permissions","/api/v1/iam/executive/dashboard","/api/v1/iam/system/status"]}
  };
  const original=mqeipRenderModuleWorkspace;
  const node=(tag,cls,text)=>mqeipCreateElement(tag,cls,text);
  const readRows=(data)=>{
    if(Array.isArray(data))return data;
    if(!data||typeof data!=="object")return [];
-   for(const candidate of [data.items,data.records,data.results,data.data,data.data?.items,data.users,data.documents,data.events])if(Array.isArray(candidate))return candidate;
-   return [];
+   for(const c of [data.items,data.records,data.results,data.data,data.data?.items])if(Array.isArray(c))return c;
+   for(const v of Object.values(data))if(Array.isArray(v)&&v.length&&typeof v[0]==="object")return v;
+   for(const v of Object.values(data))if(Array.isArray(v))return v;
+   return [data];
  };
  const pretty=(v)=>v==null?DASH:typeof v==="object"?JSON.stringify(v):String(v);
  const validPath=(p)=>/^\/(?!\/)[a-zA-Z0-9_/?=&.%-]+$/.test(p)&&p.startsWith("/api/v1/")&&!p.includes("..")&&!p.includes("#");
@@ -872,10 +875,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   const cfg=modules[key],meta=MQEIP_MODULE_REGISTRY[key];root.replaceChildren();root.className="mqeip-workspace";
   const header=node("div","mqeip-workspace-header");header.append(node("div","mqeip-workspace-icon",meta.icon));
   const info=node("div","");info.append(node("div","mqeip-workspace-name",meta.title),node("div","mqeip-workspace-description",meta.description));header.append(info);root.append(header);
-  const note=node("div","mqeip-ext-message","Workspace tersedia. Endpoint awal adalah kandidat konfigurasi, bukan bukti bahwa API backend sudah tersedia. Gunakan path GET yang tercantum di Swagger untuk modul ini. Tidak ada data simulasi.");root.append(note);
+  const note=node("div","mqeip-ext-message","Data diambil langsung dari endpoint GET backend yang tercantum di Swagger. Pilih endpoint lain lewat tombol di bawah atau ubah kolom endpoint. Tidak ada data simulasi.");root.append(note);
   const toolbar=node("div","mqeip-ext-toolbar");const label=node("label","","API endpoint (GET, same backend)");const input=node("input","");input.type="text";input.value=cfg.path;input.setAttribute("aria-label","API endpoint");label.append(input);
   const load=node("button","btn btn-gold","Load Live Data"),download=node("button","btn btn-outline","Export JSON"),filter=node("input","");filter.type="search";filter.placeholder="Filter records...";filter.setAttribute("aria-label","Filter loaded records");download.disabled=true;
   toolbar.append(label,load,download,filter);root.append(toolbar);
+  if(cfg.alts&&cfg.alts.length){const chips=node("div","mqeip-ext-toolbar");cfg.alts.forEach(p=>{const b=node("button","btn btn-outline",p.replace("/api/v1/",""));b.type="button";b.addEventListener("click",()=>{input.value=p;load.click()});chips.append(b)});root.append(chips)}
   const status=node("div","mqeip-ext-message","Belum ada permintaan API.");status.setAttribute("role","status");root.append(status);
   const panel=node("div","panel mqeip-ext-results");root.append(panel);let records=[];
   function draw(){panel.replaceChildren();const term=filter.value.trim().toLowerCase();const selected=records.filter(r=>JSON.stringify(r).toLowerCase().includes(term));
@@ -898,6 +902,7 @@ document.addEventListener("DOMContentLoaded",()=>{
    finally{load.disabled=false}
   });
   const back=node("button","btn btn-outline","Return to Executive Command");back.addEventListener("click",()=>mqeipNavigate("executive"));root.append(back);
+  if(mqeipAccessToken)load.click();
  }
  mqeipRenderModuleWorkspace=function(key){
   if(!modules[key])return original(key);
@@ -1012,7 +1017,7 @@ document.addEventListener("DOMContentLoaded",()=>{
    Menghubungkan 3 kartu ke endpoint backend, memperbaiki judul yang rusak,
    format waktu, ringkasan verifikasi ERP, dan menambah tombol Create Snapshot.
    Tidak mengubah kode lama: hanya menimpa mqeipLoadQuantumWorkspace dan
-   membungkus mqeipRenderModuleWorkspace. Tempel SEBELUM baris </body>. */
+   membungkus mqeipRenderModuleWorkspace. */
 (() => {
   const el = id => document.getElementById(id);
   const node = (tag, cls, text) => mqeipCreateElement(tag, cls, text);
